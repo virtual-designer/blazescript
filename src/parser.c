@@ -21,7 +21,7 @@ static void parser_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "Parser error: %s\n", fmt);
+    sprintf(fmt_processed, "Parse error: %s\n", fmt);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -41,7 +41,7 @@ lex_token_t parser_shift()
 
     if (!lex_token_array_shift(&conf.lexer_data, &token))
     {
-        parser_error(true, "array shift returned NULL");
+        parser_error(true, "Unexpected end of file");
     }
 
     return token;
@@ -124,6 +124,26 @@ static inline lex_token_t parser_at()
     return conf.lexer_data.tokens[0];
 }
 
+static lex_token_t parser_expect(lex_tokentype_t tokentype, const char *error_fmt, ...)
+{
+    lex_token_t token = parser_shift();
+
+    if (token.type != tokentype) {
+        va_list args;
+        char fmt_processed[strlen(error_fmt) + 50];
+
+        va_start(args, error_fmt);
+
+        sprintf(fmt_processed, "Parse error: %s", error_fmt);
+        vfprintf(stderr, fmt_processed, args);
+
+        va_end(args);
+        exit(EXIT_FAILURE);
+    }
+
+    return token;
+} 
+
 ast_stmt parser_parse_primary_expr()
 {
     ast_stmt stmt;
@@ -151,8 +171,16 @@ ast_stmt parser_parse_primary_expr()
             parser_shift();
         break;
 
+        case T_PAREN_OPEN:
+        {
+            parser_shift();
+            ast_stmt stmt = parser_parse_expr();
+            parser_expect(T_PAREN_CLOSE, "Unexpcted token found. Expecting ')' (T_PAREN_CLOSE)\n");
+        }
+        break;
+
         default:
-            parser_error(true, "unexpected token found");
+            parser_error(true, "Unexpected token '%s' found", token.value);
             parser_shift();
         break;
     } 
