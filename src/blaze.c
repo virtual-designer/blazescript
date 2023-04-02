@@ -13,6 +13,8 @@
 #include "blaze.h"
 #include "lexer.h"
 #include "parser.h"
+#include "eval.h"
+#include "runtimevalues.h"
 
 #define _GNU_SOURCE
 
@@ -85,8 +87,37 @@ int main(int argc, char **argv)
         strcat(content, tmpbuf);
     }
 
+    bool empty = true;
+
+    for (size_t i = 0; i < len; i++)
+    {
+        if (content[i] != '\n' && content[i] != ' ' && content[i] != '\r' && content[i] != '\t')
+        {
+            empty = false;
+            break;
+        }
+    }
+
+    if (empty)
+        return 0;
+
     ast_stmt prog = parser_create_ast(content);
     __debug_parser_print_ast_stmt(&prog);
+
+    runtime_val_t result = eval(prog);
+
+    if (result.type == VAL_NULL)
+        puts("null");
+    else if (result.type == VAL_NUMBER)
+    {
+        if (result.is_float)
+            printf("%Lf\n", result.floatval);
+        else
+            printf("%lld\n", result.intval);    
+    }
+    else 
+        puts("Error");
+
     // __debug_lex_print_token_array(&lex);
     
     return 0;

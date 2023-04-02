@@ -1,6 +1,9 @@
 #ifndef __AST_H__
 #define __AST_H__
 
+#include <sys/types.h>
+#include <stdbool.h>
+
 typedef enum {
     NODE_PROGRAM,
     NODE_EXPR_BINARY,
@@ -20,7 +23,7 @@ typedef enum {
 } ast_operator_t;
 
 typedef struct ast_stmt {
-    ast_nodetype_t type;                        /* Type of this statement. */
+    ast_nodetype_t type;                            /* Type of this statement. */
 
     union {
         /* if (type == NODE_PROGRAM) */  
@@ -39,11 +42,11 @@ typedef struct ast_stmt {
         /* endif */                
         
         /* if (type == NODE_IDENTIFIER) */
-        char *symbol;                           /* The identifier symbol. */
+        char *symbol;                               /* The identifier symbol. */
         /* endif */                
         
         /* if (type == NODE_NUMERIC_LITERAL) */
-        long long int value;                    /* The actual value of the numeric literal. */
+        long double value;                          /* The actual value of the numeric literal. */
         /* endif */                
     };
 } ast_stmt;

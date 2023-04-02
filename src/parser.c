@@ -70,7 +70,7 @@ static void __debug_parser_print_ast_stmt_binop(ast_stmt *binop)
     ast_stmt *left = binop->left;
 
     if (left->type == NODE_NUMERIC_LITERAL)
-        printf("\033[33m%lld\033[0m", left->value);
+        printf("\033[33m%Lf\033[0m", left->value);
     else if (left->type == NODE_IDENTIFIER)
         printf("%s", left->symbol);
     else if (left->type == NODE_EXPR_BINARY)
@@ -83,7 +83,7 @@ static void __debug_parser_print_ast_stmt_binop(ast_stmt *binop)
     ast_stmt *right = binop->right;
 
     if (right->type == NODE_NUMERIC_LITERAL)
-        printf("\033[33m%lld\033[0m", right->value);
+        printf("\033[33m%Lf\033[0m", right->value);
     else if (right->type == NODE_IDENTIFIER)
         printf("%s", right->symbol);
     else if (right->type == NODE_EXPR_BINARY)
@@ -105,7 +105,7 @@ void __debug_parser_print_ast_stmt(ast_stmt *prog)
         if (prog->body[i].type == NODE_IDENTIFIER) 
             printf(" Identifier: '%s'", prog->body[i].symbol);
         else if (prog->body[i].type == NODE_NUMERIC_LITERAL) 
-            printf(" Number: %lld", prog->body[i].value);
+            printf(" Number: %Lf", prog->body[i].value);
         else if (prog->body[i].type == NODE_EXPR_BINARY) 
         {
             printf(" Binary expression: ");
@@ -156,9 +156,10 @@ ast_stmt parser_parse_primary_expr()
             stmt.symbol = parser_shift().value;
         break;
 
-        case T_NUMBER:
+        case T_NUMBER: {
             stmt.type = NODE_NUMERIC_LITERAL;
-            stmt.value = atoll(parser_shift().value);
+            stmt.value = (long double) atof(parser_shift().value);
+        }
         break;
 
         case T_VAR:
@@ -188,6 +189,26 @@ ast_stmt parser_parse_primary_expr()
     return stmt;
 }
 
+static ast_operator_t parser_char_to_operator(char c)
+{
+    switch (c) 
+    {
+        case '+':
+            return OP_PLUS;
+        case '-':
+            return OP_MINUS;
+        case '*':
+            return OP_TIMES;
+        case '/':
+            return OP_DIVIDE;
+        case '%':
+            return OP_MOD;
+        default:
+            fprintf(stderr, "Parse error: Invalid binary operator: %c\n", c);
+            exit(-1);
+    }
+}
+
 static ast_stmt parser_parse_multiplicative_expr()
 {
     ast_stmt left = parser_parse_primary_expr();
@@ -202,7 +223,7 @@ static ast_stmt parser_parse_multiplicative_expr()
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
-            .operator = operator,
+            .operator = parser_char_to_operator(operator),
         };
 
         binop.left = xmalloc(sizeof (ast_stmt));
@@ -230,7 +251,7 @@ static ast_stmt parser_parse_additive_expr()
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
-            .operator = operator,
+            .operator = parser_char_to_operator(operator),
         };
 
         binop.left = xmalloc(sizeof (ast_stmt));

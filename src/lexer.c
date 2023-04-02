@@ -70,7 +70,7 @@ bool lex_token_array_shift(lex_t *array, lex_token_t *token)
     return true;
 }
 
-void lex_tokenize(lex_t *array, char *restrict code)
+void lex_tokenize(lex_t *array, char *code)
 {
     array->tokens = NULL;
     size_t len = strlen(code);
@@ -89,6 +89,7 @@ void lex_tokenize(lex_t *array, char *restrict code)
             case '-':
             case '*':
             case '/':
+            case '%':
                 token.type = T_BINARY_OPERATOR;
             break;
 
@@ -112,7 +113,7 @@ void lex_tokenize(lex_t *array, char *restrict code)
                 {
                     string_t number = _str(""); 
 
-                    while (i < len && isdigit(code[i]))
+                    while (i < len && (isdigit(code[i]) || code[i] == '.'))
                     {
                         concat_c(number, code[i]);
                         i++;
