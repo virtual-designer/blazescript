@@ -1,0 +1,7 @@
+*.o
+*.exe
+/blaze
+/.vscode
+*.bak
+/*.bs
+/.vscode
