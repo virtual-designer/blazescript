@@ -119,6 +119,22 @@ void *map_get(map_t *map, char *key)
     return map->array[hash] == NULL ? NULL : map->array[hash]->value;
 }
 
+bool map_has(map_t *map, char *key)
+{
+    uint32_t hash = hash_function(map, key);
+
+    while (map->size > hash && map->array[hash] != NULL)
+    {
+        if (strcmp(map->array[hash]->key, key) == 0)
+            return true;
+
+        hash++;
+        hash %= map->size;
+    }
+
+    return map->array[hash] != NULL;
+}
+
 void *map_free(map_t *map, bool __recursive_free)
 {  
     for (size_t i = 0; i < map->size; i++)

@@ -6,7 +6,8 @@
 typedef enum 
 {
     VAL_NUMBER,
-    VAL_NULL
+    VAL_NULL,
+    VAL_BOOLEAN
 } runtime_valtype_t;
 
 typedef struct 
@@ -19,6 +20,10 @@ typedef struct
             long double floatval;
             bool is_float;
         };
+        /* endif */
+        
+        /* if (type == VAL_BOOLEAN) */
+        bool boolval;
         /* endif */
     };
 } runtime_val_t;

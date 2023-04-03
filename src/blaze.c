@@ -15,6 +15,7 @@
 #include "parser.h"
 #include "eval.h"
 #include "runtimevalues.h"
+#include "scope.h"
 
 #define _GNU_SOURCE
 
@@ -45,6 +46,23 @@ void cleanup()
 {
     // lex_free(&lex);
     free(content);
+}
+
+void handle_result(runtime_val_t *result)
+{
+    if (result->type == VAL_NULL)
+        puts("null");
+    else if (result->type == VAL_BOOLEAN)
+        printf("\033[34m%s\033[0m\n", result->boolval ? "true" : "false");
+    else if (result->type == VAL_NUMBER)
+    {
+        if (result->is_float)
+            printf("\033[33m%Lf\033[0m\n", result->floatval);
+        else
+            printf("\033[33m%lld\033[0m\n", result->intval);    
+    }
+    else 
+        puts("Error");
 }
 
 int main(int argc, char **argv) 
@@ -104,19 +122,30 @@ int main(int argc, char **argv)
     ast_stmt prog = parser_create_ast(content);
     __debug_parser_print_ast_stmt(&prog);
 
-    runtime_val_t result = eval(prog);
+    scope_t global = scope_init(NULL);  
 
-    if (result.type == VAL_NULL)
-        puts("null");
-    else if (result.type == VAL_NUMBER)
-    {
-        if (result.is_float)
-            printf("%Lf\n", result.floatval);
-        else
-            printf("%lld\n", result.intval);    
-    }
-    else 
-        puts("Error");
+    scope_declare_identifier(&global, "test", & (runtime_val_t) {
+        .type = VAL_NUMBER,
+        .is_float = false,
+        .intval = 105
+    });
+
+    scope_declare_identifier(&global, "null", & (runtime_val_t) {
+        .type = VAL_NULL,
+    });
+
+    scope_declare_identifier(&global, "true", & (runtime_val_t) {
+        .type = VAL_BOOLEAN,
+        .boolval = true
+    });
+
+    scope_declare_identifier(&global, "false", & (runtime_val_t) {
+        .type = VAL_BOOLEAN,
+        .boolval = false
+    });
+
+    runtime_val_t result = eval(prog, &global);
+    handle_result(&result);
 
     // __debug_lex_print_token_array(&lex);
     

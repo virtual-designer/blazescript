@@ -1,18 +1,36 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
 
 #include "eval.h"
+#include "scope.h"
 #include "ast.h"
 #include "blaze.h"
 #include "runtimevalues.h"
+
+#define NUM(node) (node.is_float ? node.floatval : (node.type == VAL_BOOLEAN ? node.boolval : node.intval))
 
 static bool is_float(long double val) 
 {
     return ceill(val) != floorl(val);
 }
 
-#define NUM(node) (node.is_float ? node.floatval : node.intval)
+void eval_error(bool should_exit, const char *fmt, ...)
+{
+    va_list args;
+    char fmt_processed[strlen(fmt) + 50];
+    va_start(args, fmt);
+
+    sprintf(fmt_processed, "Runtime error: %s\n", fmt);
+    vfprintf(stderr, fmt_processed, args);
+
+    va_end(args);
+
+    if (should_exit)
+        exit(EXIT_FAILURE);
+}
 
 runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_operator_t operator)
 {
@@ -31,7 +49,7 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
         if (left.is_float || right.is_float)
             blaze_error(true, "modulus operator requires the operands to be int, float given");
         
-        result = left.intval % right.intval;
+        result = (long long int) NUM(left) % (long long int) NUM(right);
     }
     else
         blaze_error(true, "invalid binary operator: %d", operator);
@@ -49,19 +67,20 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
     return val;
 }
 
-runtime_val_t eval_binop(ast_stmt binop)
+runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
 {
     if (binop.type != NODE_EXPR_BINARY)
     {
         blaze_error(true, "invalid binop found");
     }
 
-    runtime_val_t right = eval(*binop.right);
-    runtime_val_t left = eval(*binop.left);
+    runtime_val_t right = eval(*binop.right, scope);
+    runtime_val_t left = eval(*binop.left, scope);
 
-    if (right.type == VAL_NUMBER && left.type == VAL_NUMBER) {
+    if ((right.type == VAL_NUMBER && left.type == VAL_NUMBER) ||
+        ((right.type == VAL_BOOLEAN || left.type == VAL_BOOLEAN) && 
+        (right.type == VAL_NUMBER || left.type == VAL_NUMBER)))
         return eval_numeric_binop(left, right, binop.operator);
-    }
 
     printf("%d %d\n", left.type, right.type);
 
@@ -70,19 +89,24 @@ runtime_val_t eval_binop(ast_stmt binop)
     };
 }
 
-runtime_val_t eval_program(ast_stmt prog)
+runtime_val_t eval_program(ast_stmt prog, scope_t *scope)
 {
     runtime_val_t last_eval = { .type = VAL_NULL };
 
     for (size_t i = 0; i < prog.size; i++)
     {
-        last_eval = eval(prog.body[i]);
+        last_eval = eval(prog.body[i], scope);
     }
 
     return last_eval;
 }
 
-runtime_val_t eval(ast_stmt astnode)
+runtime_val_t eval_identifier(ast_stmt identifier, scope_t *scope)
+{
+    return *scope_resolve_identifier(scope, identifier.symbol);
+}
+
+runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 {
     runtime_val_t val;
 
@@ -98,11 +122,14 @@ runtime_val_t eval(ast_stmt astnode)
                 val.intval = astnode.value;
         break;
 
+        case NODE_IDENTIFIER:
+            return eval_identifier(astnode, scope);
+
         case NODE_PROGRAM:
-            return eval_program(astnode);
+            return eval_program(astnode, scope);
 
         case NODE_EXPR_BINARY:
-            return eval_binop(astnode);
+            return eval_binop(astnode, scope);
 
         default:
             fprintf(stderr, "Eval error: this AST node is not supported\n");
