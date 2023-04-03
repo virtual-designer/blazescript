@@ -15,6 +15,16 @@ void *xmalloc(size_t size)
     return ptr;
 }
 
+void *xcalloc(size_t size, size_t blocks)
+{
+    void *ptr = calloc(size, blocks);
+
+    if (!ptr) 
+        blaze_error(true, "xcalloc: failed to allocate memory");
+
+    return ptr;
+}
+
 void *xrealloc(void *oldptr, size_t size) 
 {
     void *newptr = realloc(oldptr, size);

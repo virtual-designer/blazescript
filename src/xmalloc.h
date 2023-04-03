@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+void *xcalloc(size_t size, size_t blocks);
 void *xmalloc(size_t size);
 void *xrealloc(void *oldptr, size_t size);
 
