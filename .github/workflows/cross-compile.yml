@@ -25,7 +25,7 @@ jobs:
       run: git pull --all && git switch workflow
       
     - name: Move release
-      run: "sudo mv /tmp/blaze ./blaze-${{ matrix.os }}"
+      run: "sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}"
   
     - name: Commit
       run: |
