@@ -19,24 +19,24 @@ jobs:
       run: make
       
     - name: Copy release
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          move blaze ..
-        else
-          sudo cp blaze /tmp/blaze
-        fi
+      run: "move blaze .."
+      if: matrix.os == 'windows-latest'
+      
+    - name: Copy release
+      run: "sudo cp blaze /tmp/blaze"
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       
     - name: Change branch
       run: git pull --all && git switch workflow
       
     - name: Move release
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          move ../blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}
-        else
-          sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}
-        fi
-  
+      run: "move ../blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}"
+      if: matrix.os == 'windows-latest'
+      
+    - name: Move release
+      run: "sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}"
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      
     - name: Commit
       run: |
         (git config --global user.name 'GitHub Actions' &&
