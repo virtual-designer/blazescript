@@ -34,4 +34,4 @@ jobs:
         git rm --cached .gitignore src
         git add blaze-*
         git commit -m "Automated Build Workflow Commit"
-        git push
+        git push origin workflow --force
