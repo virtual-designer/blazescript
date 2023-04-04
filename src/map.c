@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include <md2.h>
 
 #include "map.h"
 #include "blaze.h"
@@ -25,22 +24,10 @@ static uint32_t hash_function(map_t *map, char *key)
 {
     uint32_t sum = 1;
     size_t len = strlen(key);
-    // unsigned char digest[16];
-    // struct MD2Context context;
-
-    // MD2Init(&context);
-    // MD2Update(&context, key, len);
-    // MD2Final(digest, &context);
-
-    // printf("\n------ Sum: ");
 
     for (int i = 0; i < len; i++) {
-        // sum += digest[i];
         sum += key[i];
-        // printf("%u ", digest[i]);
     }
-
-    // printf("\n");
 
     return sum % map->size;
 }
