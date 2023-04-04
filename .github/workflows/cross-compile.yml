@@ -33,4 +33,4 @@ jobs:
         git config --global user.email 'virtual-designer@users.noreply.github.com' &&
         git add blaze-* &&
         git commit -m "Automated Build Workflow Commit" &&
-        git push origin workflow --force) || 0
+        git push origin workflow --force) || echo 0
