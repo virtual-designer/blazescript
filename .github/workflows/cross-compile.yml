@@ -19,7 +19,7 @@ jobs:
       run: make
       
     - name: Copy release
-      run: "move blaze.exe .."
+      run: "mv blaze.exe .."
       if: matrix.os == 'windows-latest'
       
     - name: Copy release
@@ -30,7 +30,7 @@ jobs:
       run: git pull --all && git switch workflow
       
     - name: Move release
-      run: "move ../blaze.exe $GITHUB_WORKSPACE/blaze-${{ matrix.os }}.exe && ls"
+      run: "mv ../blaze.exe $GITHUB_WORKSPACE/blaze-${{ matrix.os }}.exe && ls"
       if: matrix.os == 'windows-latest'
       
     - name: Move release
