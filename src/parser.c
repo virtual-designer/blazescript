@@ -169,6 +169,7 @@ ast_stmt parser_parse_primary_expr()
             parser_shift();
             ast_stmt stmt = parser_parse_expr();
             parser_expect(T_PAREN_CLOSE, "Unexpcted token found. Expecting ')' (T_PAREN_CLOSE)\n");
+            return stmt;
         }
         break;
 

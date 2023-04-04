@@ -25,7 +25,7 @@ static uint32_t hash_function(map_t *map, char *key)
     uint32_t sum = 1;
     size_t len = strlen(key);
 
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         sum += key[i];
     }
 
@@ -122,7 +122,7 @@ bool map_has(map_t *map, char *key)
     return map->array[hash] != NULL;
 }
 
-void *map_free(map_t *map, bool __recursive_free)
+void map_free(map_t *map, bool __recursive_free)
 {  
     for (size_t i = 0; i < map->size; i++)
     {

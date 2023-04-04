@@ -119,7 +119,7 @@ runtime_val_t eval_var_decl(ast_stmt decl, scope_t *scope)
     else 
         value_heap->type = VAL_NULL;
 
-    scope_declare_identifier(scope, decl.identifier, value_heap);
+    return *scope_declare_identifier(scope, decl.identifier, value_heap);
 }
 
 runtime_val_t eval_identifier(ast_stmt identifier, scope_t *scope)
