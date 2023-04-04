@@ -45,11 +45,19 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
     else if (operator == OP_TIMES)
         result = NUM(left) * NUM(right);
     else if (operator == OP_DIVIDE)
+    {
+        if (NUM(right) == 0)
+            eval_error(true, "Result of divison by zero is undefined");
+
         result = NUM(left) / NUM(right); // TODO: Division by 0 checking
+    }
     else if (operator == OP_MOD)
     {
         if (left.is_float || right.is_float)
-            blaze_error(true, "modulus operator requires the operands to be int, float given");
+            eval_error(true, "modulus operator requires the operands to be int, float given");
+
+        if (NUM(right) == 0)
+            eval_error(true, "Result of divison by zero is undefined");
         
         result = (long long int) NUM(left) % (long long int) NUM(right); // TODO: Division by 0 checking
     }
