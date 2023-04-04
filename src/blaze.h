@@ -7,7 +7,7 @@ typedef struct {
     char *progname;
 } config_t;
 
-void blaze_error(bool shouldexit, char *format, ...);
+void blaze_error(bool shouldexit, char *format, ...)  __attribute__((noreturn));
 
 extern config_t config;
 
