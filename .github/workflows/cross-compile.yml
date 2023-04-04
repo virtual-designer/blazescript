@@ -22,7 +22,7 @@ jobs:
       run: "sudo cp blaze /tmp/blaze"
       
     - name: Change branch
-      run: git pull origin --all && git switch workflow
+      run: git pull --all && git switch workflow
       
     - name: Move release
       run: "sudo mv /tmp/blaze ./blaze-${{ matrix.os }}"
