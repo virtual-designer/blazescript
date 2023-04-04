@@ -1,0 +1,37 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+       os: [ubuntu-latest, windows-latest, macos-latest]
+       
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: make
+      run: make
+      
+    - name: Copy release
+      run: "sudo cp blaze /tmp/blaze"
+      
+    - name: Change branch
+      run: git switch workflow
+      
+    - name: Move release
+      run: "sudo mv /tmp/blaze ./blaze-${{ matrix.os }}"
+  
+    - name: Commit
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'virtual-designer@users.noreply.github.com'
+        git rm --cached *
+        git add ./blaze*
+        git commit -m "Automated Build Workflow Commit"
+        git push
