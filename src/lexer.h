@@ -10,6 +10,7 @@
 typedef enum 
 {
     T_VAR,
+    T_CONST,
     T_BINARY_OPERATOR,
     T_IDENTIFIER,
     T_NUMBER,
@@ -17,7 +18,8 @@ typedef enum
     T_PAREN_OPEN,
     T_PAREN_CLOSE,
     T_DEFAULT,
-    T_EOF
+    T_EOF,
+    T_SEMICOLON
 } lex_tokentype_t;
 
 typedef struct 

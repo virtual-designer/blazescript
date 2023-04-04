@@ -16,6 +16,7 @@
 #include "eval.h"
 #include "runtimevalues.h"
 #include "scope.h"
+#include "xmalloc.h"
 
 #define _GNU_SOURCE
 
@@ -51,7 +52,7 @@ void cleanup()
 void handle_result(runtime_val_t *result)
 {
     if (result->type == VAL_NULL)
-        puts("null");
+        puts("\033[35mnull\033[0m");
     else if (result->type == VAL_BOOLEAN)
         printf("\033[34m%s\033[0m\n", result->boolval ? "true" : "false");
     else if (result->type == VAL_NUMBER)
@@ -62,7 +63,40 @@ void handle_result(runtime_val_t *result)
             printf("\033[33m%lld\033[0m\n", result->intval);    
     }
     else 
-        puts("Error");
+        printf("Error: %d\n", result->type);
+}
+
+scope_t create_global_scope()
+{
+    scope_t global = scope_init(NULL);  
+
+    runtime_val_t _null_val = {
+        .type = VAL_NULL,
+    };
+
+    runtime_val_t _true_val = {
+        .type = VAL_BOOLEAN,
+        .boolval = true
+    };
+
+    runtime_val_t _false_val = {
+        .type = VAL_BOOLEAN,
+        .boolval = false
+    };
+
+    runtime_val_t *null_val = xmalloc(sizeof (runtime_val_t)),
+                  *true_val = xmalloc(sizeof (runtime_val_t)),
+                  *false_val = xmalloc(sizeof (runtime_val_t));
+
+    memcpy(null_val, &_null_val, sizeof _null_val);
+    memcpy(true_val, &_true_val, sizeof _true_val);
+    memcpy(false_val, &_false_val, sizeof _false_val);
+
+    scope_declare_identifier(&global, "null", null_val);
+    scope_declare_identifier(&global, "true", true_val);
+    scope_declare_identifier(&global, "false", false_val);
+
+    return global;
 }
 
 int main(int argc, char **argv) 
@@ -122,28 +156,7 @@ int main(int argc, char **argv)
     ast_stmt prog = parser_create_ast(content);
     __debug_parser_print_ast_stmt(&prog);
 
-    scope_t global = scope_init(NULL);  
-
-    scope_declare_identifier(&global, "test", & (runtime_val_t) {
-        .type = VAL_NUMBER,
-        .is_float = false,
-        .intval = 105
-    });
-
-    scope_declare_identifier(&global, "null", & (runtime_val_t) {
-        .type = VAL_NULL,
-    });
-
-    scope_declare_identifier(&global, "true", & (runtime_val_t) {
-        .type = VAL_BOOLEAN,
-        .boolval = true
-    });
-
-    scope_declare_identifier(&global, "false", & (runtime_val_t) {
-        .type = VAL_BOOLEAN,
-        .boolval = false
-    });
-
+    scope_t global = create_global_scope();
     runtime_val_t result = eval(prog, &global);
     handle_result(&result);
 

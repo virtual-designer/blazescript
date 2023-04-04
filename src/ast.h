@@ -11,7 +11,8 @@ typedef enum {
     NODE_IDENTIFIER,
     NODE_EXPR_CALL,
     NODE_EXPR_UNARY,
-    NODE_DECL_FUNCTION
+    NODE_DECL_FUNCTION,
+    NODE_DECL_VAR
 } ast_nodetype_t;
 
 typedef enum {
@@ -47,6 +48,15 @@ typedef struct ast_stmt {
         
         /* if (type == NODE_NUMERIC_LITERAL) */
         long double value;                          /* The actual value of the numeric literal. */
+        /* endif */                
+        
+        /* if (type == NODE_DECL_VAR) */
+        struct {
+            char *identifier;
+            bool is_const;
+            struct ast_stmt *varval;
+            bool has_val;
+        };                          
         /* endif */                
     };
 } ast_stmt;

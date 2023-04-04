@@ -3,12 +3,14 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 
 #include "eval.h"
 #include "scope.h"
 #include "ast.h"
 #include "blaze.h"
 #include "runtimevalues.h"
+#include "xmalloc.h"
 
 #define NUM(node) (node.is_float ? node.floatval : (node.type == VAL_BOOLEAN ? node.boolval : node.intval))
 
@@ -43,13 +45,13 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
     else if (operator == OP_TIMES)
         result = NUM(left) * NUM(right);
     else if (operator == OP_DIVIDE)
-        result = NUM(left) / NUM(right);
+        result = NUM(left) / NUM(right); // TODO: Division by 0 checking
     else if (operator == OP_MOD)
     {
         if (left.is_float || right.is_float)
             blaze_error(true, "modulus operator requires the operands to be int, float given");
         
-        result = (long long int) NUM(left) % (long long int) NUM(right);
+        result = (long long int) NUM(left) % (long long int) NUM(right); // TODO: Division by 0 checking
     }
     else
         blaze_error(true, "invalid binary operator: %d", operator);
@@ -101,6 +103,25 @@ runtime_val_t eval_program(ast_stmt prog, scope_t *scope)
     return last_eval;
 }
 
+runtime_val_t eval_var_decl(ast_stmt decl, scope_t *scope)
+{
+    printf("decl.has_val: %d\n", decl.has_val);
+
+    runtime_val_t *value_heap = xmalloc(sizeof (runtime_val_t));
+
+    assert(value_heap != NULL);
+
+    if (decl.has_val)
+    {
+        runtime_val_t value = eval(*(decl.varval), scope);
+        memcpy(value_heap, &value, sizeof value);
+    }
+    else 
+        value_heap->type = VAL_NULL;
+
+    scope_declare_identifier(scope, decl.identifier, value_heap);
+}
+
 runtime_val_t eval_identifier(ast_stmt identifier, scope_t *scope)
 {
     return *scope_resolve_identifier(scope, identifier.symbol);
@@ -121,6 +142,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             else
                 val.intval = astnode.value;
         break;
+
+        case NODE_DECL_VAR:
+            return eval_var_decl(astnode, scope);
 
         case NODE_IDENTIFIER:
             return eval_identifier(astnode, scope);

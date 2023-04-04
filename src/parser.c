@@ -106,6 +106,8 @@ void __debug_parser_print_ast_stmt(ast_stmt *prog)
             printf(" Identifier: '%s'", prog->body[i].symbol);
         else if (prog->body[i].type == NODE_NUMERIC_LITERAL) 
             printf(" Number: %Lf", prog->body[i].value);
+        else if (prog->body[i].type == NODE_DECL_VAR)
+            printf(" Variable declared: %s", prog->body[i].identifier);
         else if (prog->body[i].type == NODE_EXPR_BINARY) 
         {
             printf(" Binary expression: ");
@@ -147,7 +149,7 @@ static lex_token_t parser_expect(lex_tokentype_t tokentype, const char *error_fm
 ast_stmt parser_parse_primary_expr()
 {
     ast_stmt stmt;
-    lex_token_t token = conf.lexer_data.tokens[0];
+    lex_token_t token = parser_at();
 
     switch (token.type)
     {
@@ -160,16 +162,6 @@ ast_stmt parser_parse_primary_expr()
             stmt.type = NODE_NUMERIC_LITERAL;
             stmt.value = (long double) atof(parser_shift().value);
         }
-        break;
-
-        case T_VAR:
-            stmt.type = T_VAR;
-            parser_shift();
-        break;
-
-        case T_ASSIGNMENT:
-            stmt.type = T_ASSIGNMENT;
-            parser_shift();
         break;
 
         case T_PAREN_OPEN:
@@ -271,9 +263,58 @@ ast_stmt parser_parse_expr()
     return parser_parse_additive_expr();
 }
 
+ast_stmt parser_parse_var_decl()
+{
+    bool is_const = parser_shift().type == T_CONST;
+    char *identifier = parser_expect(T_IDENTIFIER, "Expected identifier after %s (%s)\n", is_const ? "const" : "var", is_const ? "T_CONST" : "T_VAR").value;
+
+    if (parser_at().type == T_SEMICOLON)
+    {
+        parser_shift();
+
+        if (is_const)
+            parser_error(true, "Unexpected semicolon, expected an assignment to constant declaration\n");
+
+        return (ast_stmt) {
+            .type = NODE_DECL_VAR,
+            .is_const = is_const,
+            .identifier = identifier,
+            .has_val = false
+        };
+    }
+
+    parser_expect(T_ASSIGNMENT, "Expected assignment operator '=' (T_ASSIGNMENT)%s after %s (%s) name\n", 
+        !is_const ? " or ';' (T_SEMICOLON)" : "", is_const ? "constant" : "variable", is_const ? "T_CONST" : "T_VAR");
+    
+    ast_stmt vardecl = {
+        .type = NODE_DECL_VAR,
+        .is_const = is_const,
+        .identifier = identifier,
+        .has_val = true,
+    };
+
+    ast_stmt val = parser_parse_expr();
+    
+    parser_expect(T_SEMICOLON, "Expected semicolon (T_SEMICOLON) after %s (%s) declaration\n", is_const ? "constant" : "variable", is_const ? "T_CONST" : "T_VAR");
+    
+    vardecl.varval = xmalloc(sizeof (ast_stmt));
+    memcpy(vardecl.varval, &val, sizeof val);
+
+    return vardecl;
+}
+
 ast_stmt parser_parse_stmt()
 {
-    return parser_parse_expr();
+    switch (parser_at().type)
+    {
+        case T_VAR:
+        case T_CONST:
+            return parser_parse_var_decl();
+        break;
+
+        default:
+            return parser_parse_expr();
+    }
 }
 
 ast_stmt parser_create_ast(char *code)

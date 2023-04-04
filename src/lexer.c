@@ -47,6 +47,8 @@ static lex_tokentype_t lex_keyword(char *s)
 {
     if (strcmp(s, "var") == 0)
         return T_VAR;
+    if (strcmp(s, "const") == 0)
+        return T_CONST;
 
     return T_DEFAULT;
 }
@@ -105,6 +107,10 @@ void lex_tokenize(lex_t *array, char *code)
                 token.type = T_PAREN_CLOSE;
             break;
 
+            case ';':
+                token.type = T_SEMICOLON;
+            break;
+
             default:
             {
                 multi_char = true;
@@ -136,7 +142,7 @@ void lex_tokenize(lex_t *array, char *code)
                 {
                     string_t identifier = _str(""); 
 
-                    while (i < len && isalpha(code[i]))
+                    while (i < len && (isalpha(code[i]) || isdigit(code[i]) || code[i] == '_'))
                     {
                         concat_c(identifier, code[i]);
                         i++;
