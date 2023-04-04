@@ -31,7 +31,7 @@ jobs:
       run: |
         git config --global user.name 'GitHub Actions'
         git config --global user.email 'virtual-designer@users.noreply.github.com'
-        git rm --cached .gitignore src
+        git rm -rfv --cached .gitignore src
         git add blaze-*
         git commit -m "Automated Build Workflow Commit"
         git push origin workflow --force
