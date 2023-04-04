@@ -19,13 +19,23 @@ jobs:
       run: make
       
     - name: Copy release
-      run: "sudo cp blaze /tmp/blaze"
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          move blaze ..
+        else
+          sudo cp blaze /tmp/blaze
+        fi
       
     - name: Change branch
       run: git pull --all && git switch workflow
       
     - name: Move release
-      run: "sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}"
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          move ../blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}
+        else
+          sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}
+        fi
   
     - name: Commit
       run: |
