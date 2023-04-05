@@ -9,7 +9,7 @@
 #include "lexer.h"
 #include "string.h"
 
-static size_t line = 1;
+static size_t line = 0;
 
 static void lex_token_array_resize(lex_t *array, size_t elements) 
 {
@@ -34,7 +34,7 @@ static void lex_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "Lexer error: %s at line %lu\n", fmt, line);
+    sprintf(fmt_processed, "\033[1;31mLexer error\033[0m: %s at line %lu\n", fmt, line);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -50,7 +50,7 @@ static lex_tokentype_t lex_keyword(char *s)
     if (strcmp(s, "const") == 0)
         return T_CONST;
 
-    return T_DEFAULT;
+    return T_SKIPPABLE;
 }
 
 bool lex_token_array_shift(lex_t *array, lex_token_t *token)
@@ -82,7 +82,7 @@ void lex_tokenize(lex_t *array, char *code)
     {
         char char_buf[2];
         sprintf(char_buf, "%c", code[i]);
-        lex_token_t token = { .value = strdup(char_buf), .type = T_DEFAULT };
+        lex_token_t token = { .value = strdup(char_buf), .type = T_SKIPPABLE };
         bool multi_char = false;
 
         switch (code[i]) 
@@ -96,6 +96,7 @@ void lex_tokenize(lex_t *array, char *code)
             break;
 
             case '=':
+                printf("\n\n%lu\n\n", line);
                 token.type = T_ASSIGNMENT;
             break;
 
@@ -115,7 +116,15 @@ void lex_tokenize(lex_t *array, char *code)
             {
                 multi_char = true;
 
-                if (isdigit(code[i])) 
+                if (lex_is_skippable(code[i])) 
+                {
+                    if (code[i] == '\n' || code[i] == '\r')
+                        line++;
+                    
+                    i++;
+                    token.type = T_SKIPPABLE;
+                }
+                else if (isdigit(code[i])) 
                 {
                     string_t number = _str(""); 
 
@@ -129,14 +138,6 @@ void lex_tokenize(lex_t *array, char *code)
 
                     token.type = T_NUMBER;
                     token.value = number;
-                }
-                else if (lex_is_skippable(code[i])) 
-                {
-                    if (code[i] == '\n' || code[i] == '\r')
-                        line++;
-                    
-                    i++;
-                    token.type = T_DEFAULT;
                 }
                 else if (isalpha(code[i]) != 0)
                 {
@@ -153,7 +154,7 @@ void lex_tokenize(lex_t *array, char *code)
 
                     lex_tokentype_t keyword_token_type = lex_keyword(identifier);
 
-                    if (keyword_token_type != T_DEFAULT) 
+                    if (keyword_token_type != T_SKIPPABLE) 
                     {
                         token.type = keyword_token_type;
                     }
@@ -164,15 +165,32 @@ void lex_tokenize(lex_t *array, char *code)
                 }
                 else 
                 {
-                    lex_error(true, "Unexpected character found");
+                    string_t identifier = _str(""); 
+
+                    while (i < len)
+                    {
+                        if (isspace(code[i]))
+                        {
+                            if (code[i] == '\n' || code[i] == '\r')
+                                line++;
+                            
+                            break;
+                        }
+
+                        concat_c(identifier, code[i]);
+                        i++;
+                    }
+
+                    lex_error(true, "Unexpected token '%s' found", identifier);
                 }
             }
             
             break;
         }
 
-        if (token.type != T_DEFAULT)
+        if (token.type != T_SKIPPABLE)
         {
+            token.line = line;
             // printf("Pushed: [%lu] %d\n", i, token.type);
             lex_token_array_push(array, token);
         }
@@ -183,7 +201,8 @@ void lex_tokenize(lex_t *array, char *code)
     
     lex_token_array_push(array, (lex_token_t) {
         .type = T_EOF,
-        .value = NULL
+        .value = NULL,
+        .line = line
     });
 }
 

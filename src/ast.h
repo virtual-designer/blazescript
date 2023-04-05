@@ -26,6 +26,7 @@ typedef enum {
 
 typedef struct ast_stmt {
     ast_nodetype_t type;                            /* Type of this statement. */
+    size_t line;
 
     union {
         /* if (type == NODE_PROGRAM) */  

@@ -17,7 +17,7 @@ typedef enum
     T_ASSIGNMENT,
     T_PAREN_OPEN,
     T_PAREN_CLOSE,
-    T_DEFAULT,
+    T_SKIPPABLE,
     T_EOF,
     T_SEMICOLON
 } lex_tokentype_t;
@@ -26,6 +26,7 @@ typedef struct
 {
     char *value;
     lex_tokentype_t type;
+    size_t line;
 } lex_token_t;
 
 typedef struct 

@@ -154,7 +154,12 @@ int main(int argc, char **argv)
         return 0;
 
     ast_stmt prog = parser_create_ast(content);
+
+#ifndef _NODEBUG
+#ifdef _DEBUG
     __debug_parser_print_ast_stmt(&prog);
+#endif 
+#endif 
 
     scope_t global = create_global_scope();
     runtime_val_t result = eval(prog, &global);

@@ -14,6 +14,13 @@
 
 #define NUM(node) (node.is_float ? node.floatval : (node.type == VAL_BOOLEAN ? node.boolval : node.intval))
 
+static size_t line = 0;
+
+static inline void update_line(ast_stmt astnode)
+{
+    line = astnode.line;
+}
+
 static bool is_float(long double val) 
 {
     return ceill(val) != floorl(val);
@@ -25,7 +32,7 @@ void eval_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "\033[1;31mRuntime error\033[0m: %s\n", fmt);
+    sprintf(fmt_processed, "\033[1;31mRuntime error\033[0m: %s at line %lu\n", fmt, line);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -38,11 +45,12 @@ runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
 {
     if (expr.assignee->type != NODE_IDENTIFIER)
         eval_error(true, "Cannot assign a value to a non-modifiable expression");
-
     
     char *varname = expr.assignee->symbol;
     
     identifier_t *identifier = scope_resolve_identifier(scope, varname);
+
+    update_line(expr);
 
     if (identifier == NULL)
         eval_error(true, "Undefined identifier '%s'", varname);
@@ -72,7 +80,7 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
         if (NUM(right) == 0)
             eval_error(true, "Result of divison by zero is undefined");
 
-        result = NUM(left) / NUM(right); // TODO: Division by 0 checking
+        result = NUM(left) / NUM(right); 
     }
     else if (operator == OP_MOD)
     {
@@ -82,7 +90,7 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
         if (NUM(right) == 0)
             eval_error(true, "Result of divison by zero is undefined");
         
-        result = (long long int) NUM(left) % (long long int) NUM(right); // TODO: Division by 0 checking
+        result = (long long int) NUM(left) % (long long int) NUM(right); 
     }
     else
         blaze_error(true, "invalid binary operator: %d", operator);
@@ -107,13 +115,18 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
         blaze_error(true, "invalid binop found");
     }
 
+    update_line(binop);
+
     runtime_val_t right = eval(*binop.right, scope);
     runtime_val_t left = eval(*binop.left, scope);
 
     if ((right.type == VAL_NUMBER && left.type == VAL_NUMBER) ||
         ((right.type == VAL_BOOLEAN || left.type == VAL_BOOLEAN) && 
         (right.type == VAL_NUMBER || left.type == VAL_NUMBER)))
+    {
+        update_line(binop);
         return eval_numeric_binop(left, right, binop.operator);
+    }
 
     printf("%d %d\n", left.type, right.type);
 
@@ -136,7 +149,11 @@ runtime_val_t eval_program(ast_stmt prog, scope_t *scope)
 
 runtime_val_t eval_var_decl(ast_stmt decl, scope_t *scope)
 {
+#ifndef _NODEBUG
+#ifdef _DEBUG
     printf("decl.has_val: %d\n", decl.has_val);
+#endif
+#endif
 
     runtime_val_t *value_heap = xmalloc(sizeof (runtime_val_t));
 
@@ -162,6 +179,7 @@ runtime_val_t eval_identifier(ast_stmt identifier, scope_t *scope)
 runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 {
     runtime_val_t val;
+    update_line(astnode);
 
     switch (astnode.type)
     {

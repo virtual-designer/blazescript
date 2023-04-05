@@ -15,13 +15,23 @@ typedef struct {
 
 static parser_conf_t conf;
 
+static inline lex_token_t parser_at() 
+{
+    return conf.lexer_data.tokens[0];
+}
+
+static inline size_t parser_line()
+{
+    return parser_at().line + 1;
+}
+
 static void parser_error(bool should_exit, const char *fmt, ...)
 {
     va_list args;
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s\n", fmt);
+    sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s at line %lu\n", fmt, parser_line());
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -123,11 +133,6 @@ void __debug_parser_print_ast_stmt(ast_stmt *prog)
     }
 }
 
-static inline lex_token_t parser_at() 
-{
-    return conf.lexer_data.tokens[0];
-}
-
 static lex_token_t parser_expect(lex_tokentype_t tokentype, const char *error_fmt, ...)
 {
     lex_token_t token = parser_shift();
@@ -138,7 +143,7 @@ static lex_token_t parser_expect(lex_tokentype_t tokentype, const char *error_fm
 
         va_start(args, error_fmt);
 
-        sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s\n", error_fmt);
+        sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s at line %lu\n", error_fmt, token.line);
         vfprintf(stderr, fmt_processed, args);
 
         va_end(args);
@@ -157,11 +162,13 @@ ast_stmt parser_parse_primary_expr()
     {
         case T_IDENTIFIER:
             stmt.type = NODE_IDENTIFIER;
+            stmt.line = parser_line();
             stmt.symbol = parser_shift().value;
         break;
 
         case T_NUMBER: {
             stmt.type = NODE_NUMERIC_LITERAL;
+            stmt.line = parser_line();
             stmt.value = (long double) atof(parser_shift().value);
         }
         break;
@@ -170,6 +177,7 @@ ast_stmt parser_parse_primary_expr()
         {
             parser_shift();
             ast_stmt stmt = parser_parse_expr();
+            stmt.line = parser_line();
             parser_expect(T_PAREN_CLOSE, "Unexpcted token found. Expecting ')' (T_PAREN_CLOSE)\n");
             return stmt;
         }
@@ -207,18 +215,22 @@ static ast_operator_t parser_char_to_operator(char c)
 static ast_stmt parser_parse_multiplicative_expr()
 {
     ast_stmt left = parser_parse_primary_expr();
+    size_t line;
 
     while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
         (conf.lexer_data.tokens[0].value[0] == '/' || 
             conf.lexer_data.tokens[0].value[0] == '*' || 
                 conf.lexer_data.tokens[0].value[0] == '%')) 
     {
+        line = parser_line();
+
         char operator = parser_shift().value[0];
         ast_stmt right = parser_parse_primary_expr();
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
             .operator = parser_char_to_operator(operator),
+            .line = line
         };
 
         binop.left = xmalloc(sizeof (ast_stmt));
@@ -236,17 +248,21 @@ static ast_stmt parser_parse_multiplicative_expr()
 static ast_stmt parser_parse_additive_expr()
 {
     ast_stmt left = parser_parse_multiplicative_expr();
+    size_t line;
 
     while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
         (conf.lexer_data.tokens[0].value[0] == '+' || 
             conf.lexer_data.tokens[0].value[0] == '-')) 
     {
+        line = parser_line();
+
         char operator = parser_shift().value[0];
         ast_stmt right = parser_parse_multiplicative_expr();
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
             .operator = parser_char_to_operator(operator),
+            .line = line
         };
 
         binop.left = xmalloc(sizeof (ast_stmt));
@@ -264,6 +280,7 @@ static ast_stmt parser_parse_additive_expr()
 ast_stmt parser_parse_assignment_expr()
 {
     ast_stmt left = parser_parse_additive_expr(); // FIXME: use objexpr instead of this
+    size_t line = parser_line();
 
     if (parser_at().type == T_ASSIGNMENT) 
     {
@@ -283,6 +300,7 @@ ast_stmt parser_parse_assignment_expr()
             .type = NODE_EXPR_ASSIGNMENT,
             .assignee = left_heap,
             .assignment_value = val_heap,
+            .line = line
         };
     }
 
@@ -298,6 +316,7 @@ ast_stmt parser_parse_var_decl()
 {
     bool is_const = parser_shift().type == T_CONST;
     char *identifier = parser_expect(T_IDENTIFIER, "Expected identifier after %s (%s)\n", is_const ? "const" : "var", is_const ? "T_CONST" : "T_VAR").value;
+    size_t line = parser_line();
 
     if (parser_at().type == T_SEMICOLON)
     {
@@ -310,7 +329,8 @@ ast_stmt parser_parse_var_decl()
             .type = NODE_DECL_VAR,
             .is_const = is_const,
             .identifier = identifier,
-            .has_val = false
+            .has_val = false,
+            .line = line
         };
     }
 
@@ -322,6 +342,7 @@ ast_stmt parser_parse_var_decl()
         .is_const = is_const,
         .identifier = identifier,
         .has_val = true,
+        .line = line
     };
 
     ast_stmt val = parser_parse_expr();
@@ -359,7 +380,11 @@ ast_stmt parser_create_ast(char *code)
     conf.lexer_data = (lex_t) LEX_INIT;
     lex_tokenize(&conf.lexer_data, code);
 
+#ifndef _NODEBUG
+#ifdef _DEBUG
     __debug_lex_print_token_array(&conf.lexer_data);
+#endif
+#endif
 
     while (!parser_eof())
     {

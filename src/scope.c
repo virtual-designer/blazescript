@@ -20,7 +20,7 @@ scope_t scope_init(scope_t *parent_scope)
 identifier_t *scope_declare_identifier(scope_t *scope, char *name, runtime_val_t *value, bool is_const)
 {
     if (map_has(&scope->identifiers, name)) 
-        eval_error(true, "Cannot redeclare identifier '%s' in this scope as it is already defined", name);
+        eval_error(true, "Cannot redeclare identifier '%s' in this scope", name);
 
     identifier_t identifier = {
         .is_const = is_const,
