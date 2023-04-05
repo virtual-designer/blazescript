@@ -21,7 +21,7 @@ static void parser_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "Parse error: %s\n", fmt);
+    sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s\n", fmt);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -108,6 +108,8 @@ void __debug_parser_print_ast_stmt(ast_stmt *prog)
             printf(" Number: %Lf", prog->body[i].value);
         else if (prog->body[i].type == NODE_DECL_VAR)
             printf(" Variable declared: %s", prog->body[i].identifier);
+        else if (prog->body[i].type == NODE_EXPR_ASSIGNMENT)
+            printf(" Assignment: %s = %p", prog->body[i].assignee->symbol, prog->body[i].assignment_value);
         else if (prog->body[i].type == NODE_EXPR_BINARY) 
         {
             printf(" Binary expression: ");
@@ -136,7 +138,7 @@ static lex_token_t parser_expect(lex_tokentype_t tokentype, const char *error_fm
 
         va_start(args, error_fmt);
 
-        sprintf(fmt_processed, "Parse error: %s", error_fmt);
+        sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s\n", error_fmt);
         vfprintf(stderr, fmt_processed, args);
 
         va_end(args);
@@ -259,9 +261,37 @@ static ast_stmt parser_parse_additive_expr()
     return left;
 }
 
+ast_stmt parser_parse_assignment_expr()
+{
+    ast_stmt left = parser_parse_additive_expr(); // FIXME: use objexpr instead of this
+
+    if (parser_at().type == T_ASSIGNMENT) 
+    {
+        parser_shift();
+        ast_stmt val = parser_parse_assignment_expr();
+
+        if (val.type != NODE_EXPR_ASSIGNMENT)
+            parser_expect(T_SEMICOLON, "Expected semicolon (T_SEMICOLON) after assignment");
+
+        ast_stmt *val_heap = xmalloc(sizeof (ast_stmt)),
+                 *left_heap = xmalloc(sizeof (ast_stmt));
+
+        memcpy(val_heap, &val, sizeof val);
+        memcpy(left_heap, &left, sizeof left);
+
+        return (ast_stmt) {
+            .type = NODE_EXPR_ASSIGNMENT,
+            .assignee = left_heap,
+            .assignment_value = val_heap,
+        };
+    }
+
+    return left;
+}
+
 ast_stmt parser_parse_expr()
 {
-    return parser_parse_additive_expr();
+    return parser_parse_assignment_expr();
 }
 
 ast_stmt parser_parse_var_decl()
@@ -274,7 +304,7 @@ ast_stmt parser_parse_var_decl()
         parser_shift();
 
         if (is_const)
-            parser_error(true, "Unexpected semicolon, expected an assignment to constant declaration\n");
+            parser_error(true, "Unexpected semicolon, expected an assignment to constant declaration");
 
         return (ast_stmt) {
             .type = NODE_DECL_VAR,
@@ -284,7 +314,7 @@ ast_stmt parser_parse_var_decl()
         };
     }
 
-    parser_expect(T_ASSIGNMENT, "Expected assignment operator '=' (T_ASSIGNMENT)%s after %s (%s) name\n", 
+    parser_expect(T_ASSIGNMENT, "Expected assignment operator '=' (T_ASSIGNMENT)%s after %s (%s) name", 
         !is_const ? " or ';' (T_SEMICOLON)" : "", is_const ? "constant" : "variable", is_const ? "T_CONST" : "T_VAR");
     
     ast_stmt vardecl = {
@@ -296,7 +326,7 @@ ast_stmt parser_parse_var_decl()
 
     ast_stmt val = parser_parse_expr();
     
-    parser_expect(T_SEMICOLON, "Expected semicolon (T_SEMICOLON) after %s (%s) declaration\n", is_const ? "constant" : "variable", is_const ? "T_CONST" : "T_VAR");
+    parser_expect(T_SEMICOLON, "Expected semicolon (T_SEMICOLON) after %s (%s) declaration", is_const ? "constant" : "variable", is_const ? "T_CONST" : "T_VAR");
     
     vardecl.varval = xmalloc(sizeof (ast_stmt));
     memcpy(vardecl.varval, &val, sizeof val);

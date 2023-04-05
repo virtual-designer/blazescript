@@ -7,6 +7,7 @@
 #include "map.h"
 #include "blaze.h"
 #include "xmalloc.h"
+#include "scope.h"
 
 static int callnumber = 1;
 
@@ -32,7 +33,7 @@ static uint32_t hash_function(map_t *map, char *key)
     return sum % map->size;
 }
 
-void map_set(map_t *map, char *key, void *ptr)
+void map_set(map_t *map, char *key, identifier_t *ptr)
 {
     if (map->count >= map->size)
         blaze_error(true, "map_set(): overflow detected");
@@ -47,6 +48,8 @@ void map_set(map_t *map, char *key, void *ptr)
 
     if (map->array[hash] == NULL)
         map->count++;
+    else 
+        printf("Overwriting: %s\n", key);
 
     map->array[hash] = xmalloc(sizeof (map_entry_t));
     map->array[hash]->key = strdup(key);
@@ -80,7 +83,7 @@ void map_delete(map_t *map, char *key, bool _free)
     }
 }
 
-void map_set_free(map_t *map, char *key, void *_ptr)
+void map_set_free(map_t *map, char *key, identifier_t *_ptr)
 {
     void *ptr = map_get(map, key);
 
@@ -90,7 +93,7 @@ void map_set_free(map_t *map, char *key, void *_ptr)
     map_set(map, key, _ptr);
 }
 
-void *map_get(map_t *map, char *key)
+identifier_t *map_get(map_t *map, char *key)
 {
     uint32_t hash = hash_function(map, key);
 

@@ -25,13 +25,36 @@ void eval_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "Runtime error: %s\n", fmt);
+    sprintf(fmt_processed, "\033[1;31mRuntime error\033[0m: %s\n", fmt);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
 
     if (should_exit)
         exit(EXIT_FAILURE);
+}
+
+runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
+{
+    if (expr.assignee->type != NODE_IDENTIFIER)
+        eval_error(true, "Cannot assign a value to a non-modifiable expression");
+
+    
+    char *varname = expr.assignee->symbol;
+    
+    identifier_t *identifier = scope_resolve_identifier(scope, varname);
+
+    if (identifier == NULL)
+        eval_error(true, "Undefined identifier '%s'", varname);
+    else if (identifier->is_const)    
+        eval_error(true, "Cannot re-assign a value to constant '%s'", varname);
+    
+    runtime_val_t val = eval(*expr.assignment_value, scope);    
+
+    // return (runtime_val_t) { .type = VAL_NULL };
+    runtime_val_t result = *scope_assign_identifier(scope, varname, &val);
+
+    return result;
 }
 
 runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_operator_t operator)
@@ -127,12 +150,13 @@ runtime_val_t eval_var_decl(ast_stmt decl, scope_t *scope)
     else 
         value_heap->type = VAL_NULL;
 
-    return *scope_declare_identifier(scope, decl.identifier, value_heap);
+    return *(scope_declare_identifier(scope, decl.identifier, value_heap, decl.is_const)->value);
 }
 
 runtime_val_t eval_identifier(ast_stmt identifier, scope_t *scope)
 {
-    return *scope_resolve_identifier(scope, identifier.symbol);
+    identifier_t *identifier_ = scope_resolve_identifier(scope, identifier.symbol);
+    return *identifier_->value;
 }
 
 runtime_val_t eval(ast_stmt astnode, scope_t *scope)
@@ -155,10 +179,16 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             return eval_var_decl(astnode, scope);
 
         case NODE_IDENTIFIER:
-            return eval_identifier(astnode, scope);
+        {
+            runtime_val_t val = eval_identifier(astnode, scope);
+            return val;
+        }
 
         case NODE_PROGRAM:
             return eval_program(astnode, scope);
+
+        case NODE_EXPR_ASSIGNMENT:
+            return eval_assignment(astnode, scope);
 
         case NODE_EXPR_BINARY:
             return eval_binop(astnode, scope);

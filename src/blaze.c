@@ -92,9 +92,9 @@ scope_t create_global_scope()
     memcpy(true_val, &_true_val, sizeof _true_val);
     memcpy(false_val, &_false_val, sizeof _false_val);
 
-    scope_declare_identifier(&global, "null", null_val);
-    scope_declare_identifier(&global, "true", true_val);
-    scope_declare_identifier(&global, "false", false_val);
+    scope_declare_identifier(&global, "null", null_val, true);
+    scope_declare_identifier(&global, "true", true_val, true);
+    scope_declare_identifier(&global, "false", false_val, true);
 
     return global;
 }

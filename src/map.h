@@ -3,12 +3,19 @@
 
 #include <stdbool.h>
 #include <sys/types.h>
+#include "runtimevalues.h"
 
 #define MAP_INIT(type, max_elements) map_init(sizeof (type), (max_elements))
 
 typedef struct {
+    bool is_const;
+    char *name;
+    runtime_val_t *value;
+} identifier_t;
+
+typedef struct {
     char *key;
-    void *value;
+    identifier_t *value;
 } map_entry_t;
 
 typedef struct {
@@ -19,9 +26,9 @@ typedef struct {
 } map_t;
 
 map_t map_init(size_t type_size, size_t max_elements);
-void map_set(map_t *map, char *key, void *ptr);
-void map_set(map_t *map, char *key, void *ptr);
-void *map_get(map_t *map, char *key);
+void map_set(map_t *map, char *key, identifier_t *ptr);
+void map_set(map_t *map, char *key, identifier_t *ptr);
+identifier_t *map_get(map_t *map, char *key);
 void map_free(map_t *map, bool __recursive_free);
 void map_delete(map_t *map, char *key, bool _free);
 bool map_has(map_t *map, char *key);

@@ -12,7 +12,8 @@ typedef enum {
     NODE_EXPR_CALL,
     NODE_EXPR_UNARY,
     NODE_DECL_FUNCTION,
-    NODE_DECL_VAR
+    NODE_DECL_VAR,
+    NODE_EXPR_ASSIGNMENT
 } ast_nodetype_t;
 
 typedef enum {
@@ -56,6 +57,13 @@ typedef struct ast_stmt {
             bool is_const;
             struct ast_stmt *varval;
             bool has_val;
+        };                          
+        /* endif */                
+        
+        /* if (type == NODE_EXPR_ASSIGNMENT) */
+        struct {
+            struct ast_stmt *assignee;
+            struct ast_stmt *assignment_value;
         };                          
         /* endif */                
     };
