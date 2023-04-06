@@ -41,6 +41,56 @@ void eval_error(bool should_exit, const char *fmt, ...)
         exit(EXIT_FAILURE);
 }
 
+runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
+{
+    map_t properties = MAP_INIT(identifier_t *, 4096);
+
+    for (size_t i = 0; i < object.properties.length; i++)
+    {
+        ast_stmt prop = VEC_GET(object.properties, i, ast_stmt);
+        assert(prop.type == NODE_PROPERTY_LITERAL);
+
+        identifier_t *val;
+
+        if (prop.propval == NULL)
+        {
+            identifier_t *identifier = scope_resolve_identifier(scope, prop.key);
+
+            if (identifier == NULL)
+                eval_error(true, "Undefined identifier '%s' in the current scope", prop.key);
+
+            val = identifier;
+        }
+        else 
+        {
+            val = xmalloc(sizeof (identifier_t));
+
+            runtime_val_t eval_result = eval(*prop.propval, scope);
+            
+            identifier_t i = {
+                .is_const = false,
+                .name = prop.key
+            };
+
+            memcpy(val, &i, sizeof i);
+
+            val->value = xmalloc(sizeof (runtime_val_t));
+
+            memcpy(val->value, &eval_result, sizeof eval_result);
+            1;
+        }
+
+        map_set(&properties, prop.key, val);
+    }
+    
+    runtime_val_t obj = {
+        .type = VAL_OBJECT,
+        .properties = properties,
+    };
+
+    return obj;
+}
+
 runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
 {
     if (expr.assignee->type != NODE_IDENTIFIER)
@@ -201,6 +251,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             runtime_val_t val = eval_identifier(astnode, scope);
             return val;
         }
+
+        case NODE_OBJECT_LITERAL:
+            return eval_object_expr(astnode, scope);
 
         case NODE_PROGRAM:
             return eval_program(astnode, scope);

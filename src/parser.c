@@ -8,6 +8,7 @@
 #include "ast.h"
 #include "lexer.h"
 #include "xmalloc.h"
+#include "vector.h"
 
 typedef struct {
     lex_t lexer_data;
@@ -277,9 +278,61 @@ static ast_stmt parser_parse_additive_expr()
     return left;
 }
 
+ast_stmt parser_parse_object_expr()
+{
+    if (parser_at().type != T_BLOCK_BRACE_OPEN)
+        return parser_parse_additive_expr();
+
+    parser_shift();
+    
+    vector_t properties = VEC_INIT; /* Vector of ast_stmt */
+
+    while (!parser_eof() && parser_at().type != T_BLOCK_BRACE_CLOSE)
+    {
+        char *key = parser_expect(T_IDENTIFIER, "Expected object key identifier").value;
+
+        if (parser_at().type == T_COMMA || parser_at().type == T_BLOCK_BRACE_CLOSE)
+        {
+            if (parser_at().type == T_COMMA)
+                parser_shift();
+
+            VEC_PUSH(properties, ((ast_stmt) {
+                .type = NODE_PROPERTY_LITERAL,
+                .key = key,
+                .propval = NULL
+            }), ast_stmt);
+
+            continue;
+        }
+
+        parser_expect(T_COLON, "Expected colon after object property name");
+
+        ast_stmt value = parser_parse_expr();
+        ast_stmt *value_heap = xmalloc(sizeof value);
+
+        memcpy(value_heap, &value, sizeof value);
+
+        VEC_PUSH(properties, ((ast_stmt) {
+            .type = NODE_PROPERTY_LITERAL,
+            .key = key,
+            .propval = value_heap
+        }), ast_stmt);
+    
+        if (parser_at().type != T_BLOCK_BRACE_CLOSE)
+            parser_expect(T_COMMA, "Expected ending comma ',' or closing braces '}' after object literal");
+    }
+
+    parser_expect(T_BLOCK_BRACE_CLOSE, "Expected closing brace '}' after object literal");
+
+    return (ast_stmt) {
+        .type = NODE_OBJECT_LITERAL,
+        .properties = properties
+    };
+}
+
 ast_stmt parser_parse_assignment_expr()
 {
-    ast_stmt left = parser_parse_additive_expr(); // FIXME: use objexpr instead of this
+    ast_stmt left = parser_parse_object_expr(); // FIXME: use objexpr instead of this
     size_t line = parser_line();
 
     if (parser_at().type == T_ASSIGNMENT) 

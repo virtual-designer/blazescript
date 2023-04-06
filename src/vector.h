@@ -7,7 +7,7 @@
 #define VEC_INIT { .elements = NULL, .length = 0 }
 #define VEC_PUSH(vector, element, type) { \
     vector.elements = xrealloc(vector.elements, (sizeof (type)) * (vector.length + 1)); \
-    ((type *) vector.elements)[vector.length++] = element; \
+    ((type *) vector.elements)[vector.length++] = (element); \
 }
 #define VEC_GET(vector, index, type) (((type *) vector.elements)[index])
 #define VEC_FREE(vector) { \

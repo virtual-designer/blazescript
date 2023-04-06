@@ -17,6 +17,7 @@
 #include "runtimevalues.h"
 #include "scope.h"
 #include "xmalloc.h"
+#include "map.h"
 
 #define _GNU_SOURCE
 
@@ -40,30 +41,53 @@ void blaze_error(bool shouldexit, char *format, ...)
         exit(EXIT_FAILURE);
 }
 
-// lex_t lex = LEX_INIT;
 char *content = NULL;
 
 void cleanup()
 {
-    // lex_free(&lex);
     free(content);
 }
 
-void handle_result(runtime_val_t *result)
+void handle_result(runtime_val_t *result, bool newline, int tabs)
 {
     if (result->type == VAL_NULL)
         puts("\033[35mnull\033[0m");
     else if (result->type == VAL_BOOLEAN)
-        printf("\033[34m%s\033[0m\n", result->boolval ? "true" : "false");
+        printf("\033[34m%s\033[0m", result->boolval ? "true" : "false");
     else if (result->type == VAL_NUMBER)
     {
         if (result->is_float)
-            printf("\033[33m%Lf\033[0m\n", result->floatval);
+            printf("\033[33m%Lf\033[0m", result->floatval);
         else
-            printf("\033[33m%lld\033[0m\n", result->intval);    
+            printf("\033[33m%lld\033[0m", result->intval);    
+    }
+    else if (result->type == VAL_OBJECT)
+    {
+        printf("Object {\n");
+
+        for (size_t i = 0; i < result->properties.size; i++)
+        {
+            if (result->properties.array[i] == NULL)
+                continue;
+            
+            for (int i = 0; i < tabs; i++)
+                putchar('\t');
+
+            printf("%s: ", result->properties.array[i]->key);
+            handle_result(result->properties.array[i]->value->value, false, tabs + 1);
+            printf(",\n");
+        }
+
+        for (int i = 0; i < (tabs - 1); i++)
+            putchar('\t');
+        
+        printf("}");
     }
     else 
-        printf("Error: %d\n", result->type);
+        printf("Error: %d", result->type);
+
+    if (newline)
+        printf("\n");
 }
 
 scope_t create_global_scope()
@@ -84,17 +108,36 @@ scope_t create_global_scope()
         .boolval = false
     };
 
+    runtime_val_t _system_val = {
+        .type = VAL_OBJECT,
+    };
+
     runtime_val_t *null_val = xmalloc(sizeof (runtime_val_t)),
                   *true_val = xmalloc(sizeof (runtime_val_t)),
-                  *false_val = xmalloc(sizeof (runtime_val_t));
+                  *false_val = xmalloc(sizeof (runtime_val_t)),
+                  *system_val = xmalloc(sizeof (runtime_val_t));
 
     memcpy(null_val, &_null_val, sizeof _null_val);
     memcpy(true_val, &_true_val, sizeof _true_val);
     memcpy(false_val, &_false_val, sizeof _false_val);
+    memcpy(system_val, &_system_val, sizeof _system_val);
+
+    system_val->properties = (map_t) MAP_INIT(identifier_t *, 1);
+
+    runtime_val_t _version_val = { .type = VAL_NUMBER, .intval = 1, .is_float = false };
+    runtime_val_t *version_val = xmalloc(sizeof _version_val);
+    memcpy(version_val, &_version_val, sizeof _version_val);
+
+    identifier_t _version = { .is_const = true, .name = "version", .value = version_val };
+    identifier_t *version = xmalloc(sizeof _version);
+    memcpy(version, &_version, sizeof _version);
+
+    map_set(&system_val->properties, "version", version);
 
     scope_declare_identifier(&global, "null", null_val, true);
     scope_declare_identifier(&global, "true", true_val, true);
     scope_declare_identifier(&global, "false", false_val, true);
+    scope_declare_identifier(&global, "system", system_val, true);
 
     return global;
 }
@@ -163,7 +206,7 @@ int main(int argc, char **argv)
 
     scope_t global = create_global_scope();
     runtime_val_t result = eval(prog, &global);
-    handle_result(&result);
+    handle_result(&result, true, 1);
 
     // __debug_lex_print_token_array(&lex);
     

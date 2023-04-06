@@ -19,7 +19,11 @@ typedef enum
     T_PAREN_CLOSE,
     T_SKIPPABLE,
     T_EOF,
-    T_SEMICOLON
+    T_SEMICOLON,
+    T_COMMA,
+    T_BLOCK_BRACE_OPEN,
+    T_BLOCK_BRACE_CLOSE,
+    T_COLON
 } lex_tokentype_t;
 
 typedef struct 

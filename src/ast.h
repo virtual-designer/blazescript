@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <stdbool.h>
+#include "vector.h"
 
 typedef enum {
     NODE_PROGRAM,
@@ -13,7 +14,9 @@ typedef enum {
     NODE_EXPR_UNARY,
     NODE_DECL_FUNCTION,
     NODE_DECL_VAR,
-    NODE_EXPR_ASSIGNMENT
+    NODE_EXPR_ASSIGNMENT,
+    NODE_OBJECT_LITERAL,
+    NODE_PROPERTY_LITERAL
 } ast_nodetype_t;
 
 typedef enum {
@@ -65,6 +68,26 @@ typedef struct ast_stmt {
         struct {
             struct ast_stmt *assignee;
             struct ast_stmt *assignment_value;
+        };                          
+        /* endif */                
+        
+        /* if (type == NODE_EXPR_CALL) */
+        struct {
+            struct ast_stmt *callee;
+            struct ast_stmt *args;
+        };                          
+        /* endif */                
+        
+        /* if (type == NODE_PROPERTY_LITERAL) */
+        struct {
+            char *key;
+            struct ast_stmt *propval;       
+        };                          
+        /* endif */                
+        
+        /* if (type == NODE_OBJECT_LITERAL) */
+        struct {
+            vector_t properties; /* Vector of struct ast_stmt */
         };                          
         /* endif */                
     };

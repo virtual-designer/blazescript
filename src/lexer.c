@@ -96,7 +96,7 @@ void lex_tokenize(lex_t *array, char *code)
             break;
 
             case '=':
-                printf("\n\n%lu\n\n", line);
+                // printf("\n\n%lu\n\n", line);
                 token.type = T_ASSIGNMENT;
             break;
 
@@ -108,8 +108,24 @@ void lex_tokenize(lex_t *array, char *code)
                 token.type = T_PAREN_CLOSE;
             break;
 
+            case '{':
+                token.type = T_BLOCK_BRACE_OPEN;
+            break;
+
+            case '}':
+                token.type = T_BLOCK_BRACE_CLOSE;
+            break;
+
             case ';':
                 token.type = T_SEMICOLON;
+            break;
+
+            case ':':
+                token.type = T_COLON;
+            break;
+
+            case ',':
+                token.type = T_COMMA;
             break;
 
             default:
