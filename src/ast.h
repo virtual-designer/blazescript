@@ -17,7 +17,8 @@ typedef enum {
     NODE_EXPR_ASSIGNMENT,
     NODE_OBJECT_LITERAL,
     NODE_PROPERTY_LITERAL,
-    NODE_EXPR_MEMBER_ACCESS
+    NODE_EXPR_MEMBER_ACCESS,
+    NODE_STRING
 } ast_nodetype_t;
 
 typedef enum {
@@ -50,6 +51,10 @@ typedef struct ast_stmt {
         
         /* if (type == NODE_IDENTIFIER) */
         char *symbol;                               /* The identifier symbol. */
+        /* endif */                
+        
+        /* if (type == NODE_STRING) */
+        char *strval;                               /* The string value. */
         /* endif */                
         
         /* if (type == NODE_NUMERIC_LITERAL) */

@@ -20,6 +20,7 @@
 #include "map.h"
 
 #define _GNU_SOURCE
+#define COLOR(codes, text) "\033[" codes "m" text "\033[0m"
 
 config_t config = { 0 };
 
@@ -48,12 +49,14 @@ void cleanup()
     free(content);
 }
 
-void handle_result(runtime_val_t *result, bool newline, int tabs)
+void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
 {
     if (result->type == VAL_NULL)
         puts("\033[35mnull\033[0m");
     else if (result->type == VAL_BOOLEAN)
         printf("\033[34m%s\033[0m", result->boolval ? "true" : "false");
+    else if (result->type == VAL_STRING)
+        printf("%s" COLOR("%s", "%s") "%s", quote_strings ? COLOR("2", "\"") : "", quote_strings ? "35" : "0", result->strval, quote_strings ? COLOR("2", "\"") : "");
     else if (result->type == VAL_NUMBER)
     {
         if (result->is_float)
@@ -74,7 +77,7 @@ void handle_result(runtime_val_t *result, bool newline, int tabs)
                 putchar('\t');
 
             printf("%s: ", result->properties.array[i]->key);
-            handle_result(result->properties.array[i]->value->value, false, tabs + 1);
+            handle_result(result->properties.array[i]->value->value, false, tabs + 1, true);
             printf(",\n");
         }
 
@@ -100,7 +103,7 @@ runtime_val_t __native_println_fn(vector_t args, scope_t *scope)
     for (size_t i = 0; i < args.length; i++)
     {
         runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
-        handle_result(&arg, true, 1);
+        handle_result(&arg, true, 1, false);
     }
     
     VEC_FREE(args);

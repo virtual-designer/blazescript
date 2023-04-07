@@ -23,7 +23,7 @@ static inline lex_token_t parser_at()
 
 static inline size_t parser_line()
 {
-    return parser_at().line + 1;
+    return parser_at().line;
 }
 
 static void parser_error(bool should_exit, const char *fmt, ...)
@@ -117,6 +117,8 @@ void __debug_parser_print_ast_stmt(ast_stmt *prog)
             printf(" Identifier: '%s'", prog->body[i].symbol);
         else if (prog->body[i].type == NODE_NUMERIC_LITERAL) 
             printf(" Number: %Lf", prog->body[i].value);
+        else if (prog->body[i].type == NODE_STRING) 
+            printf(" String: \033[33m%s\033[0m", prog->body[i].strval);
         else if (prog->body[i].type == NODE_DECL_VAR)
             printf(" Variable declared: %s", prog->body[i].identifier);
         else if (prog->body[i].type == NODE_EXPR_ASSIGNMENT)
@@ -165,6 +167,12 @@ ast_stmt parser_parse_primary_expr()
             stmt.type = NODE_IDENTIFIER;
             stmt.line = parser_line();
             stmt.symbol = parser_shift().value;
+        break;
+    
+        case T_STRING:
+            stmt.type = NODE_STRING;
+            stmt.line = parser_line();
+            stmt.strval = parser_shift().value;
         break;
 
         case T_NUMBER: {

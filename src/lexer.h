@@ -26,7 +26,8 @@ typedef enum
     T_COLON,
     T_DOT,
     T_ARRAY_BRACKET_OPEN,
-    T_ARRAY_BRACKET_CLOSE
+    T_ARRAY_BRACKET_CLOSE,
+    T_STRING,
 } lex_tokentype_t;
 
 typedef struct 

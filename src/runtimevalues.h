@@ -11,7 +11,8 @@ typedef enum
     VAL_NULL,
     VAL_BOOLEAN,
     VAL_OBJECT,
-    VAL_NATIVE_FN
+    VAL_NATIVE_FN,
+    VAL_STRING
 } runtime_valtype_t;
 
 typedef struct runtime_val_t
@@ -33,6 +34,10 @@ typedef struct runtime_val_t
         
         /* if (type == VAL_OBJECT) */
         map_t properties;
+        /* endif */
+        
+        /* if (type == VAL_STRING) */
+        char *strval;
         /* endif */
         
         /* if (type == VAL_NATIVE_FN) */

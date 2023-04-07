@@ -34,7 +34,7 @@ static void lex_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "\033[1;31mLexer error\033[0m: %s at line %lu\n", fmt, line);
+    sprintf(fmt_processed, "\033[1;31mSyntax error\033[0m: %s at line %lu\n", fmt, line);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -83,7 +83,7 @@ void lex_tokenize(lex_t *array, char *code)
         char char_buf[2];
         sprintf(char_buf, "%c", code[i]);
         lex_token_t token = { .value = strdup(char_buf), .type = T_SKIPPABLE };
-        bool multi_char = false;
+        bool multi_char = false, string_parsing = false;
 
         switch (code[i]) 
         {
@@ -144,7 +144,42 @@ void lex_tokenize(lex_t *array, char *code)
             {
                 multi_char = true;
 
-                if (lex_is_skippable(code[i])) 
+                if (string_parsing)
+                    lex_error(true, "Error string");
+
+                if (code[i] == '\'' || code[i] == '"')
+                {
+                    string_parsing = true;
+
+                    char quote = code[i] == '\'' ? '\'' : '"';
+                    string_t str = _str("");
+
+                    i++;
+
+                    while (i < len && code[i] != quote)
+                    {
+                        if (code[i] == '\n' || code[i] == '\r')
+                            line++;
+                        
+                        concat_c(str, code[i]);
+                        i++;
+                    }
+
+                    if (code[i] != quote)
+                    {
+                        line++;
+                        lex_error(true, "Unterminated string, expected ending %s quote '%c'", quote == '"' ? "double" : "single", quote);
+                    }
+
+                    i++;
+
+                    free(token.value);
+
+                    token.type = T_STRING;
+                    token.value = str;
+                    string_parsing = false;
+                }
+                else if (lex_is_skippable(code[i])) 
                 {
                     if (code[i] == '\n' || code[i] == '\r')
                         line++;

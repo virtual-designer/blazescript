@@ -277,6 +277,11 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
                 val.intval = astnode.value;
         break;
 
+        case NODE_STRING:
+            val.type = VAL_STRING;
+            val.strval = astnode.strval;
+        break;
+
         case NODE_DECL_VAR:
             return eval_var_decl(astnode, scope);
 
