@@ -77,7 +77,6 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
             val->value = xmalloc(sizeof (runtime_val_t));
 
             memcpy(val->value, &eval_result, sizeof eval_result);
-            1;
         }
 
         map_set(&properties, prop.key, val);
@@ -89,6 +88,28 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
     };
 
     return obj;
+}
+
+runtime_val_t eval_call_expr(ast_stmt expr, scope_t *scope)
+{
+    vector_t vector = VEC_INIT;
+
+    for (size_t i = 0; i < expr.args.length; i++)
+    {
+        ast_stmt arg = VEC_GET(expr.args, i, ast_stmt);
+        runtime_val_t evaled = eval(arg, scope);
+        VEC_PUSH(vector, evaled, runtime_val_t);
+    }
+
+    runtime_val_t callee = eval(*expr.callee, scope);
+
+    if (callee.type != VAL_NATIVE_FN)
+    {
+        eval_error(true, "'%s' is not a function", expr.callee->symbol);
+    }
+
+    VEC_FREE(expr.args);
+    return callee.fn(vector, scope);
 }
 
 runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
@@ -113,6 +134,19 @@ runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
     runtime_val_t result = *scope_assign_identifier(scope, varname, &val);
 
     return result;
+}
+
+runtime_val_t eval_member_expr(ast_stmt expr, scope_t *scope)
+{
+    runtime_val_t object = eval(*expr.object, scope);
+    char *prop = expr.prop->symbol;
+
+    identifier_t *i = map_get(&object.properties, prop);
+
+    if (i == NULL)
+        eval_error(true, "Trying to access unknown property '%s'", prop);
+
+    return *i->value;
 }
 
 runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_operator_t operator)
@@ -251,6 +285,12 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             runtime_val_t val = eval_identifier(astnode, scope);
             return val;
         }
+
+        case NODE_EXPR_CALL:
+            return eval_call_expr(astnode, scope);
+
+        case NODE_EXPR_MEMBER_ACCESS:
+            return eval_member_expr(astnode, scope);
 
         case NODE_OBJECT_LITERAL:
             return eval_object_expr(astnode, scope);

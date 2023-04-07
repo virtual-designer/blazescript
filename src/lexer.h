@@ -23,7 +23,10 @@ typedef enum
     T_COMMA,
     T_BLOCK_BRACE_OPEN,
     T_BLOCK_BRACE_CLOSE,
-    T_COLON
+    T_COLON,
+    T_DOT,
+    T_ARRAY_BRACKET_OPEN,
+    T_ARRAY_BRACKET_CLOSE
 } lex_tokentype_t;
 
 typedef struct 

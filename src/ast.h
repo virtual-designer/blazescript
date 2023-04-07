@@ -16,7 +16,8 @@ typedef enum {
     NODE_DECL_VAR,
     NODE_EXPR_ASSIGNMENT,
     NODE_OBJECT_LITERAL,
-    NODE_PROPERTY_LITERAL
+    NODE_PROPERTY_LITERAL,
+    NODE_EXPR_MEMBER_ACCESS
 } ast_nodetype_t;
 
 typedef enum {
@@ -74,7 +75,7 @@ typedef struct ast_stmt {
         /* if (type == NODE_EXPR_CALL) */
         struct {
             struct ast_stmt *callee;
-            struct ast_stmt *args;
+            vector_t args; /* Vector of struct ast_stmt */
         };                          
         /* endif */                
         
@@ -88,6 +89,14 @@ typedef struct ast_stmt {
         /* if (type == NODE_OBJECT_LITERAL) */
         struct {
             vector_t properties; /* Vector of struct ast_stmt */
+        };                          
+        /* endif */         
+
+        /* if (type == NODE_EXPR_MEMBER_ACCESS) */
+        struct {
+            struct ast_stmt *object;
+            struct ast_stmt *prop;
+            bool computed;
         };                          
         /* endif */                
     };

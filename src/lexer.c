@@ -115,6 +115,14 @@ void lex_tokenize(lex_t *array, char *code)
             case '}':
                 token.type = T_BLOCK_BRACE_CLOSE;
             break;
+            
+            case '[':
+                token.type = T_ARRAY_BRACKET_OPEN;
+            break;
+
+            case ']':
+                token.type = T_ARRAY_BRACKET_CLOSE;
+            break;
 
             case ';':
                 token.type = T_SEMICOLON;
@@ -126,6 +134,10 @@ void lex_tokenize(lex_t *array, char *code)
 
             case ',':
                 token.type = T_COMMA;
+            break;
+
+            case '.':
+                token.type = T_DOT;
             break;
 
             default:

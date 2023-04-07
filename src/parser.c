@@ -213,9 +213,104 @@ static ast_operator_t parser_char_to_operator(char c)
     }
 }
 
+static ast_stmt parser_parse_member_expr()
+{
+    ast_stmt object = parser_parse_primary_expr();
+
+    while (parser_at().type == T_DOT || parser_at().type == T_ARRAY_BRACKET_OPEN)
+    {
+        lex_tokentype_t operator = parser_shift().type;
+        ast_stmt prop;
+        bool computed;
+
+        if (operator == T_DOT)
+        {
+            computed = false;
+            prop = parser_parse_primary_expr();
+
+            if (prop.type != NODE_IDENTIFIER)
+            {
+                parser_error(true, "Cannot use dot operator without an identifier on the right side");
+            }
+        }
+        else 
+        {
+            computed = true;
+            prop = parser_parse_expr();
+            parser_expect(T_ARRAY_BRACKET_CLOSE, "Expected closing brackets ']' after computed property access");
+        }
+
+        ast_stmt *object_heap = xmalloc(sizeof object);
+        ast_stmt *prop_heap = xmalloc(sizeof prop);
+
+        memcpy(object_heap, &object, sizeof object);
+        memcpy(prop_heap, &prop, sizeof prop);
+
+        object = (ast_stmt) {
+            .type = NODE_EXPR_MEMBER_ACCESS,
+            .object = object_heap,
+            .prop = prop_heap,
+            .computed = computed
+        };
+    }
+
+    return object;
+}
+
+static void parser_parse_argument_list(vector_t *vector)
+{
+    VEC_PUSH((*vector), parser_parse_assignment_expr(), ast_stmt);
+
+    while (!parser_eof() && parser_at().type == T_COMMA) 
+    {
+        parser_shift();
+        VEC_PUSH((*vector), parser_parse_assignment_expr(), ast_stmt);
+    }
+}
+
+/* Returns a vector of ast_stmt. */
+static vector_t parser_parse_args()
+{
+    parser_expect(T_PAREN_OPEN, "Expected open parenthesis");
+    vector_t vector = VEC_INIT;
+    
+    if (parser_at().type != T_PAREN_CLOSE)
+        parser_parse_argument_list(&vector);
+
+    parser_expect(T_PAREN_CLOSE, "Expected closing parenthesis after function call argument list");
+    return vector;
+}
+
+static ast_stmt parser_parse_call_expr(ast_stmt callee)
+{
+    ast_stmt call_expr = {
+        .type = NODE_EXPR_CALL,
+        .args = parser_parse_args()
+    };
+
+    call_expr.callee = xmalloc(sizeof callee);
+
+    memcpy(call_expr.callee, &callee, sizeof callee);
+
+    if (parser_at().type == T_PAREN_OPEN)
+        call_expr = parser_parse_call_expr(call_expr);
+
+    return call_expr;
+}
+
+static ast_stmt parser_parse_call_member_expr()
+{
+    ast_stmt member = parser_parse_member_expr();
+
+    if (parser_at().type == T_PAREN_OPEN)
+        return parser_parse_call_expr(member);
+
+    return member;
+}
+
 static ast_stmt parser_parse_multiplicative_expr()
 {
-    ast_stmt left = parser_parse_primary_expr();
+    ast_stmt left = parser_parse_call_member_expr();
     size_t line;
 
     while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
@@ -226,7 +321,7 @@ static ast_stmt parser_parse_multiplicative_expr()
         line = parser_line();
 
         char operator = parser_shift().value[0];
-        ast_stmt right = parser_parse_primary_expr();
+        ast_stmt right = parser_parse_call_member_expr();
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
@@ -332,7 +427,7 @@ ast_stmt parser_parse_object_expr()
 
 ast_stmt parser_parse_assignment_expr()
 {
-    ast_stmt left = parser_parse_object_expr(); // FIXME: use objexpr instead of this
+    ast_stmt left = parser_parse_object_expr();
     size_t line = parser_line();
 
     if (parser_at().type == T_ASSIGNMENT) 

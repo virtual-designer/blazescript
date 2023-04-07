@@ -84,10 +84,27 @@ void handle_result(runtime_val_t *result, bool newline, int tabs)
         printf("}");
     }
     else 
-        printf("Error: %d", result->type);
+        printf("[Unknown Type: %d]", result->type);
 
     if (newline)
         printf("\n");
+}
+
+runtime_val_t __native_null()
+{
+    return (runtime_val_t) { .type = VAL_NULL };
+}
+
+runtime_val_t __native_println_fn(vector_t args, scope_t *scope)
+{
+    for (size_t i = 0; i < args.length; i++)
+    {
+        runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
+        handle_result(&arg, true, 1);
+    }
+    
+    VEC_FREE(args);
+    return __native_null();
 }
 
 scope_t create_global_scope()
@@ -112,15 +129,22 @@ scope_t create_global_scope()
         .type = VAL_OBJECT,
     };
 
+    runtime_val_t _println_val = {
+        .type = VAL_NATIVE_FN,
+        .fn = __native_println_fn
+    };
+
     runtime_val_t *null_val = xmalloc(sizeof (runtime_val_t)),
                   *true_val = xmalloc(sizeof (runtime_val_t)),
                   *false_val = xmalloc(sizeof (runtime_val_t)),
-                  *system_val = xmalloc(sizeof (runtime_val_t));
+                  *system_val = xmalloc(sizeof (runtime_val_t)),
+                  *println_val = xmalloc(sizeof (runtime_val_t));
 
     memcpy(null_val, &_null_val, sizeof _null_val);
     memcpy(true_val, &_true_val, sizeof _true_val);
     memcpy(false_val, &_false_val, sizeof _false_val);
     memcpy(system_val, &_system_val, sizeof _system_val);
+    memcpy(println_val, &_println_val, sizeof _println_val);
 
     system_val->properties = (map_t) MAP_INIT(identifier_t *, 1);
 
@@ -138,6 +162,7 @@ scope_t create_global_scope()
     scope_declare_identifier(&global, "true", true_val, true);
     scope_declare_identifier(&global, "false", false_val, true);
     scope_declare_identifier(&global, "system", system_val, true);
+    scope_declare_identifier(&global, "println", println_val, true);
 
     return global;
 }
@@ -205,8 +230,8 @@ int main(int argc, char **argv)
 #endif 
 
     scope_t global = create_global_scope();
-    runtime_val_t result = eval(prog, &global);
-    handle_result(&result, true, 1);
+    /* runtime_val_t result = */ eval(prog, &global);
+    // handle_result(&result, true, 1);
 
     // __debug_lex_print_token_array(&lex);
     
