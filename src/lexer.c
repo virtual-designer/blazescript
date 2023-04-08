@@ -160,6 +160,13 @@ void lex_tokenize(lex_t *array, char *code)
 
                     while (i < len && code[i] != quote)
                     {
+                        if ((i + 1) < len && code[i] == '\\' && (code[i + 1] == '\'' || code[i + 1] == '"'))
+                        {
+                            concat_c(str, code[i + 1]);
+                            i += 2;
+                            continue;
+                        }
+
                         if (code[i] == '\n' || code[i] == '\r')
                             line++;
                         

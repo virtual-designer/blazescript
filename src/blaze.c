@@ -92,17 +92,29 @@ void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_str
         printf("\n");
 }
 
-runtime_val_t __native_null()
+static runtime_val_t __native_null()
 {
     return (runtime_val_t) { .type = VAL_NULL };
 }
 
-runtime_val_t __native_println_fn(vector_t args, scope_t *scope)
+static runtime_val_t __native_println_fn(vector_t args, scope_t *scope)
 {
     for (size_t i = 0; i < args.length; i++)
     {
         runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
         handle_result(&arg, true, 1, false);
+    }
+    
+    VEC_FREE(args);
+    return __native_null();
+}
+
+static runtime_val_t __native_print_fn(vector_t args, scope_t *scope)
+{
+    for (size_t i = 0; i < args.length; i++)
+    {
+        runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
+        handle_result(&arg, false, 1, false);
     }
     
     VEC_FREE(args);
@@ -133,13 +145,19 @@ scope_t create_global_scope()
 
     runtime_val_t _println_val = {
         .type = VAL_NATIVE_FN,
-        .fn = __native_println_fn
+        .fn = &__native_println_fn
+    };
+
+    runtime_val_t _print_val = {
+        .type = VAL_NATIVE_FN,
+        .fn = &__native_print_fn
     };
 
     runtime_val_t *null_val = xmalloc(sizeof (runtime_val_t)),
                   *true_val = xmalloc(sizeof (runtime_val_t)),
                   *false_val = xmalloc(sizeof (runtime_val_t)),
                   *system_val = xmalloc(sizeof (runtime_val_t)),
+                  *print_val = xmalloc(sizeof (runtime_val_t)),
                   *println_val = xmalloc(sizeof (runtime_val_t));
 
     memcpy(null_val, &_null_val, sizeof _null_val);
@@ -147,6 +165,7 @@ scope_t create_global_scope()
     memcpy(false_val, &_false_val, sizeof _false_val);
     memcpy(system_val, &_system_val, sizeof _system_val);
     memcpy(println_val, &_println_val, sizeof _println_val);
+    memcpy(print_val, &_print_val, sizeof _print_val);
 
     system_val->properties = (map_t) MAP_INIT(identifier_t *, 1);
 
@@ -165,6 +184,7 @@ scope_t create_global_scope()
     scope_declare_identifier(&global, "false", false_val, true);
     scope_declare_identifier(&global, "system", system_val, true);
     scope_declare_identifier(&global, "println", println_val, true);
+    scope_declare_identifier(&global, "print", print_val, true);
 
     return global;
 }
