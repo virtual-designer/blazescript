@@ -286,6 +286,7 @@ static vector_t parser_parse_args()
         parser_parse_argument_list(&vector);
 
     parser_expect(T_PAREN_CLOSE, "Expected closing parenthesis after function call argument list");
+    parser_expect(T_SEMICOLON, "Expected semicolon after function call");
     return vector;
 }
 
@@ -544,6 +545,12 @@ ast_stmt parser_create_ast(char *code)
 
     while (!parser_eof())
     {
+        if (parser_at().type == T_SEMICOLON)
+        {
+            parser_shift();
+            continue;
+        }
+        
         ast_stmt stmt = parser_parse_stmt();
         prog.body = xrealloc(prog.body, sizeof (ast_stmt) * (prog.size + 1));
         prog.body[prog.size++] = stmt;

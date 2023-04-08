@@ -139,7 +139,19 @@ runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
 runtime_val_t eval_member_expr(ast_stmt expr, scope_t *scope)
 {
     runtime_val_t object = eval(*expr.object, scope);
-    char *prop = expr.prop->symbol;
+    char *prop;
+
+    if (expr.computed)
+    {
+        runtime_val_t propval = eval(*expr.prop, scope);
+
+        if (propval.type != VAL_STRING)
+            eval_error(true, "Object properties must be string, but non string value found");
+
+        prop = propval.strval;
+    }
+    else 
+        prop = expr.prop->symbol;
 
     identifier_t *i = map_get(&object.properties, prop);
 

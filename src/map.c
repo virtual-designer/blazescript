@@ -27,7 +27,7 @@ static uint32_t hash_function(map_t *map, char *key)
     size_t len = strlen(key);
 
     for (size_t i = 0; i < len; i++) {
-        sum += key[i];
+        sum += key[i] * i;
     }
 
     return sum % map->size;
