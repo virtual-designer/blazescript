@@ -32,7 +32,7 @@ void eval_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "\033[1;31mRuntime error\033[0m: %s at line %lu\n", fmt, line);
+    sprintf(fmt_processed, COLOR("1", "%s:%lu: ") COLOR("1;31", "fatal error") ": %s\n", config.currentfile, line, fmt);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -139,6 +139,10 @@ runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
 runtime_val_t eval_member_expr(ast_stmt expr, scope_t *scope)
 {
     runtime_val_t object = eval(*expr.object, scope);
+
+    if (object.type != VAL_OBJECT)
+        eval_error(true, "Cannot access members on a non-object value");
+
     char *prop;
 
     if (expr.computed)

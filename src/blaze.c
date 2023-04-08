@@ -20,7 +20,6 @@
 #include "map.h"
 
 #define _GNU_SOURCE
-#define COLOR(codes, text) "\033[" codes "m" text "\033[0m"
 
 config_t config = { 0 };
 
@@ -151,7 +150,7 @@ scope_t create_global_scope()
 
     system_val->properties = (map_t) MAP_INIT(identifier_t *, 1);
 
-    runtime_val_t _version_val = { .type = VAL_NUMBER, .intval = 1, .is_float = false };
+    runtime_val_t _version_val = { .type = VAL_STRING, .strval = VERSION };
     runtime_val_t *version_val = xmalloc(sizeof _version_val);
     memcpy(version_val, &_version_val, sizeof _version_val);
 
@@ -182,6 +181,9 @@ int main(int argc, char **argv)
         if (fp == NULL) {
             blaze_error(true, "%s", argv[1]);
         }
+
+        config.entryfile = argv[1];
+        config.currentfile = argv[1];
     }
 
     assert(fp != NULL);

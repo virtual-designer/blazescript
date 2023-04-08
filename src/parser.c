@@ -7,6 +7,7 @@
 #include "parser.h"
 #include "ast.h"
 #include "lexer.h"
+#include "blaze.h"
 #include "xmalloc.h"
 #include "vector.h"
 
@@ -32,7 +33,7 @@ static void parser_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s at line %lu\n", fmt, parser_line());
+    sprintf(fmt_processed, COLOR("1", "%s:%lu: ") COLOR("1;31", "parse error") ": %s\n", config.currentfile, parser_line(), fmt);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -146,7 +147,7 @@ static lex_token_t parser_expect(lex_tokentype_t tokentype, const char *error_fm
 
         va_start(args, error_fmt);
 
-        sprintf(fmt_processed, "\033[1;31mParse error\033[0m: %s at line %lu\n", error_fmt, token.line);
+        sprintf(fmt_processed, COLOR("1", "%s:%lu: ") COLOR("1;31", "parse error") ": %s\n", config.currentfile, token.line, error_fmt);
         vfprintf(stderr, fmt_processed, args);
 
         va_end(args);
@@ -504,7 +505,7 @@ ast_stmt parser_parse_var_decl()
 
     ast_stmt val = parser_parse_expr();
     
-    parser_expect(T_SEMICOLON, "Expected semicolon (T_SEMICOLON) after %s (%s) declaration", is_const ? "constant" : "variable", is_const ? "T_CONST" : "T_VAR");
+    parser_expect(T_SEMICOLON, "Unexpected %s after %s (%s) declaration", lex_token_stringify(parser_at(), true), is_const ? "constant" : "variable", is_const ? "T_CONST" : "T_VAR");
     
     vardecl.varval = xmalloc(sizeof (ast_stmt));
     memcpy(vardecl.varval, &val, sizeof val);

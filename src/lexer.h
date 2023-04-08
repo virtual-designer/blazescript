@@ -46,6 +46,7 @@ typedef struct
 void lex_tokenize(lex_t *array, char *restrict code);
 void lex_free(lex_t *array);
 bool lex_token_array_shift(lex_t *array, lex_token_t *token);
+char *lex_token_stringify(lex_token_t token, bool quotes);
 
 #ifdef _DEBUG
 void __debug_lex_print_token_array(lex_t *array);

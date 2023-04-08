@@ -3,8 +3,13 @@
 
 #include <stdbool.h>
 
+#define COLOR(codes, text) "\033[" codes "m" text "\033[0m"
+#define VERSION "1.0.0-beta1"
+
 typedef struct {
-    char *progname;
+    char *progname; /* Name of the interpreter itself */
+    char *entryfile;
+    char *currentfile;
 } config_t;
 
 void blaze_error(bool shouldexit, char *format, ...);

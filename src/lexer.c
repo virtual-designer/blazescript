@@ -4,12 +4,14 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include "xmalloc.h"
 #include "lexer.h"
 #include "string.h"
+#include "blaze.h"
 
-static size_t line = 0;
+static size_t line = 1;
 
 static void lex_token_array_resize(lex_t *array, size_t elements) 
 {
@@ -34,7 +36,7 @@ static void lex_error(bool should_exit, const char *fmt, ...)
     char fmt_processed[strlen(fmt) + 50];
     va_start(args, fmt);
 
-    sprintf(fmt_processed, "\033[1;31mSyntax error\033[0m: %s at line %lu\n", fmt, line);
+    sprintf(fmt_processed, COLOR("1", "%s:%lu: ") COLOR("1;31", "syntax error") ": %s\n", config.currentfile, line, fmt);
     vfprintf(stderr, fmt_processed, args);
 
     va_end(args);
@@ -82,7 +84,7 @@ void lex_tokenize(lex_t *array, char *code)
     {
         char char_buf[2];
         sprintf(char_buf, "%c", code[i]);
-        lex_token_t token = { .value = strdup(char_buf), .type = T_SKIPPABLE };
+        lex_token_t token = { .value = strdup(char_buf), .type = T_SKIPPABLE, .line = line };
         bool multi_char = false, string_parsing = false;
 
         switch (code[i]) 
@@ -168,7 +170,7 @@ void lex_tokenize(lex_t *array, char *code)
                     if (code[i] != quote)
                     {
                         line++;
-                        lex_error(true, "Unterminated string, expected ending %s quote '%c'", quote == '"' ? "double" : "single", quote);
+                        lex_error(true, "Unterminated string, expected ending %s quote `%c`", quote == '"' ? "double" : "single", quote);
                     }
 
                     i++;
@@ -253,7 +255,7 @@ void lex_tokenize(lex_t *array, char *code)
 
         if (token.type != T_SKIPPABLE)
         {
-            token.line = line;
+            // token.line = line;
             // printf("Pushed: [%lu] %d\n", i, token.type);
             lex_token_array_push(array, token);
         }
@@ -275,7 +277,7 @@ void __debug_lex_print_token_array(lex_t *array)
 
     for (size_t i = 0; i < array->size; i++)
     {
-        printf("[%lu] - %d - '%s'\n", i, array->tokens[i].type, array->tokens[i].value);
+        printf("[%lu] [Line: %lu] - %d - '%s'\n", i, array->tokens[i].line, array->tokens[i].type, array->tokens[i].value);
     }
 }
 
@@ -288,4 +290,59 @@ void lex_free(lex_t *array)
     }
 
     array->size = 0;
+}
+
+char *lex_token_stringify(lex_token_t token, bool quotes)
+{
+    switch (token.type) 
+    {
+        case T_ASSIGNMENT:
+            return "Assignment operator";
+
+        case T_BINARY_OPERATOR:
+            switch (token.value[0])
+            {
+                case '+':
+                    return "Binary addition operator";
+                case '-':
+                    return "Binary subtraction operator";
+                case '*':
+                    return "Binary multiplication operator";
+                case '/':
+                    return "Binary division operator";
+                case '%':
+                    return "Binary modulus operator";
+
+                default:
+                    goto token_return_as_is;
+            }
+
+        case T_CONST:
+            return "const";
+
+        case T_EOF:
+            return "End of file";
+
+        case T_IDENTIFIER:
+            return "Identifier";
+
+        case T_NUMBER:
+            return "Number";
+
+        case T_SKIPPABLE:
+            return "Skippable";
+
+        case T_STRING:
+            return "String";
+
+        case T_VAR:
+            return "var";
+
+        default:
+token_return_as_is:
+            string_t str = _str("\"");
+            concat(str, token.value);
+            concat_c(str, '"');
+            return str;
+    }
 }
