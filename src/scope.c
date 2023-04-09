@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #include "map.h"
 #include "runtimevalues.h"
@@ -68,7 +69,30 @@ identifier_t *scope_resolve_identifier(scope_t *scope, char *name)
     return map_get(&found_scope->identifiers, name);
 }
 
+void scope_runtime_val_free(runtime_val_t *val)
+{
+    if (val->type == VAL_STRING)
+        znfree(val->strval, "String");
+    else if (val->type == VAL_OBJECT)
+    {
+        for (size_t i = 0; i < val->properties.size; i++)
+        {
+            if (val->properties.array[i] != NULL)
+            {
+                scope_runtime_val_free(val->properties.array[i]->value->value);
+                znfree(val->properties.array[i]->key, "Freeing key: %s", val->properties.array[i]->key);
+                xnfree(val->properties.array[i]);
+
+                val->properties.array[i] = NULL;
+            }
+        }
+
+        znfree(val->properties.array, "Properties Array");
+        val->properties.array = NULL;
+    }
+}
+
 void scope_free(scope_t *scope)
 {
-    map_free(&scope->identifiers, false);
+    map_free(&scope->identifiers, true);
 }

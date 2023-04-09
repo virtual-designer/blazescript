@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "blaze.h"
@@ -33,4 +35,35 @@ void *xrealloc(void *oldptr, size_t size)
         blaze_error(true, "xrealloc: failed to reallocate memory");
 
     return newptr;
+}
+
+void xfree(void *ptr)
+{
+#ifdef _DEBUG
+#ifndef _NODEBUG
+    printf("[xfree] freeing: %p\n", ptr);
+#endif
+#endif
+
+    if (ptr)
+        free(ptr);
+}
+
+void zfree(void *ptr, const char *fmt, ...)
+{
+#ifdef _DEBUG
+#ifndef _NODEBUG
+    va_list args;
+    va_start(args, fmt);
+
+    printf("[zfree] freeing: %p\n\t", ptr);
+    vprintf(fmt, args);
+    printf("\n");
+
+    va_end(args);
+#endif
+#endif
+
+    if (ptr)
+        free(ptr);
 }

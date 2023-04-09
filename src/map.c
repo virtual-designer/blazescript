@@ -131,17 +131,19 @@ void map_free(map_t *map, bool __recursive_free)
     {
         if (map->array[i] != NULL)  
         {
-            free(map->array[i]->key);
+            xnfree(map->array[i]->key);
 
             if (__recursive_free)
-                free(map->array[i]->value);
+            {
+                scope_runtime_val_free(map->array[i]->value->value);
+                znfree(map->array[i]->value, "Identifier");
+            }
 
-            free(map->array[i]);
+            xnfree(map->array[i]);
         }
     }
 
-    free(map->array);
-    map->array = NULL;
+    xnfree(map->array);
 }
 
 void __debug_map_print(map_t *map, bool printnull)

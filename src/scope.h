@@ -14,5 +14,6 @@ identifier_t *scope_declare_identifier(scope_t *scope, char *name, runtime_val_t
 void scope_free(scope_t *scope);
 runtime_val_t *scope_assign_identifier(scope_t *scope, char *name, runtime_val_t *value);
 identifier_t *scope_resolve_identifier(scope_t *scope, char *name);
+void scope_runtime_val_free(runtime_val_t *val);
 
 #endif

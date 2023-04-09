@@ -45,7 +45,8 @@ char *content = NULL;
 
 void cleanup()
 {
-    free(content);
+    if (content != NULL) 
+        free(content);
 }
 
 void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
@@ -169,7 +170,7 @@ scope_t create_global_scope()
 
     system_val->properties = (map_t) MAP_INIT(identifier_t *, 1);
 
-    runtime_val_t _version_val = { .type = VAL_STRING, .strval = VERSION };
+    runtime_val_t _version_val = { .type = VAL_STRING, .strval = strdup(VERSION) };
     runtime_val_t *version_val = xmalloc(sizeof _version_val);
     memcpy(version_val, &_version_val, sizeof _version_val);
 
@@ -247,6 +248,7 @@ int main(int argc, char **argv)
         return 0;
 
     ast_stmt prog = parser_create_ast(content);
+    znfree(content, "Program content");
 
 #ifndef _NODEBUG
 #ifdef _DEBUG
@@ -255,10 +257,8 @@ int main(int argc, char **argv)
 #endif 
 
     scope_t global = create_global_scope();
-    /* runtime_val_t result = */ eval(prog, &global);
-    // handle_result(&result, true, 1);
-
-    // __debug_lex_print_token_array(&lex);
-    
+    runtime_val_t result = eval(prog, &global);
+    scope_runtime_val_free(&result);
+    scope_free(&global);    
     return 0;
 }
