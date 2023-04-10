@@ -6,9 +6,7 @@
 
 string_t _str(const char *s)
 {
-    char *dup = xmalloc(strlen(s) + 1);
-    strcpy(dup, s);
-    return (string_t) dup;
+    return strdup(s);
 }
 
 void concat(string_t str, const char *s) 
@@ -17,11 +15,18 @@ void concat(string_t str, const char *s)
     strcat(str, s);
 }
 
+/* DEPRECATED: this function will be removed. */
 void concat_c(string_t str, char c) 
 {
     size_t len = strlen(str);
     str = xrealloc(str, len + 1);
     str[len] = c;
+}
+
+void concat_c_safe(string_t str, size_t *len, char c) 
+{
+    str = xrealloc(str, ++(*len));
+    str[(*len) - 1] = c;
 }
 
 void strfree(string_t s) 

@@ -6,3 +6,5 @@
 /*.bs
 /.vscode
 /backup
+/test.c
+/test

@@ -9,5 +9,6 @@ string_t _str(const char *s);
 void concat(string_t str, const char *s);
 void concat_c(string_t str, char c);
 void strfree(string_t s);
+void concat_c_safe(string_t str, size_t *len, char c);
 
 #endif

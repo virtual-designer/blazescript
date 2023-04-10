@@ -111,18 +111,7 @@ identifier_t *map_get(map_t *map, char *key)
 
 bool map_has(map_t *map, char *key)
 {
-    uint32_t hash = hash_function(map, key);
-
-    while (map->size > hash && map->array[hash] != NULL)
-    {
-        if (strcmp(map->array[hash]->key, key) == 0)
-            return true;
-
-        hash++;
-        hash %= map->size;
-    }
-
-    return map->array[hash] != NULL;
+    return map_get(map, key) != NULL;
 }
 
 void map_free(map_t *map, bool __recursive_free)
@@ -152,8 +141,15 @@ void __debug_map_print(map_t *map, bool printnull)
 
     for (size_t i = 0; i < map->size; i++)
     {
-        if (printnull && map->array[i] == NULL)
-            printf("[%lu]: NULL\n", i);
+        if (map->array[i] == NULL)
+        {
+            if (printnull)
+                printf("[%lu]: NULL\n", i);
+        }
+        else if (map->array[i]->value->value->type == VAL_NUMBER)
+        {
+            printf("[%lu]: %s => %lld\n", i, map->array[i]->key, map->array[i]->value->value->intval);
+        }
         else
             printf("[%lu]: %s => %p\n", i, map->array[i]->key, map->array[i]->value);
     }

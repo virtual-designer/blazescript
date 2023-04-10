@@ -33,7 +33,7 @@ void eval_error(bool should_exit, const char *fmt, ...)
     va_start(args, fmt);
 
     sprintf(fmt_processed, COLOR("1", "%s:%lu: ") COLOR("1;31", "fatal error") ": %s\n", config.currentfile, line, fmt);
-    vfprintf(stderr, fmt_processed, args);
+    vfprintf(stderr, fmt_processed, args); 
 
     va_end(args);
 
@@ -57,7 +57,9 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
             identifier_t *identifier = scope_resolve_identifier(scope, prop.key);
 
             if (identifier == NULL)
+            {
                 eval_error(true, "Undefined identifier '%s' in the current scope", prop.key);
+            }
 
             val = identifier;
         }
@@ -251,7 +253,7 @@ runtime_val_t eval_var_decl(ast_stmt decl, scope_t *scope)
 {
 #ifndef _NODEBUG
 #ifdef _DEBUG
-    printf("decl.has_val: %d\n", decl.has_val);
+    printf("decl.has_val: %s\n", decl.identifier);
 #endif
 #endif
 
@@ -302,10 +304,7 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             return eval_var_decl(astnode, scope);
 
         case NODE_IDENTIFIER:
-        {
-            runtime_val_t val = eval_identifier(astnode, scope);
-            return val;
-        }
+            return eval_identifier(astnode, scope);
 
         case NODE_EXPR_CALL:
             return eval_call_expr(astnode, scope);

@@ -15,6 +15,13 @@
     vector.elements = NULL; \
     vector.length = 0; \
 }
+#define VEC_PRINT(vector, format, type) \
+    do { \
+        for (size_t i = 0; i < vector.length; i++) {\
+            printf("[VEC %lu]: %" format "\n", i, VEC_GET(vector, i, type).symbol); \
+        } \
+    } \
+    while (0)
 
 typedef struct {
     void *elements;

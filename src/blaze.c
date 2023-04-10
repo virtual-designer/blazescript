@@ -210,7 +210,7 @@ int main(int argc, char **argv)
     assert(fp != NULL);
 
     char tmpbuf[1024];
-    size_t len = 0;
+    size_t len = 1;
     bool is_initial_iteration = true;
 
     while (fgets(tmpbuf, sizeof tmpbuf, fp) != NULL)
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
             is_initial_iteration = false;
         }
 
-        strcat(content, tmpbuf);
+        strncat(content, tmpbuf, sizeof tmpbuf);
     }
 
     bool empty = true;

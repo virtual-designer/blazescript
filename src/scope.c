@@ -53,11 +53,13 @@ runtime_val_t *scope_assign_identifier(scope_t *scope, char *name, runtime_val_t
 
 scope_t *scope_resolve_identifier_scope(scope_t *scope, char *name)
 {
-    bool has = map_has(&scope->identifiers, name);
+    identifier_t *i = map_get(&scope->identifiers, name);
 
-    if (scope->parent == NULL && !has) 
+    if (scope->parent == NULL && i == NULL) 
+    {
         eval_error(true, "Undefined identifier '%s' in the current scope", name);
-    else if (scope->parent != NULL && !has)
+    }
+    else if (scope->parent != NULL && i == NULL)
         return scope_resolve_identifier_scope(scope->parent, name);
 
     return scope;

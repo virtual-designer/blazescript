@@ -65,7 +65,7 @@ bool lex_token_array_shift(lex_t *array, lex_token_t *token)
         *token = array->tokens[0];
     }
 
-    for (size_t i = 0; i < array->size; i++) 
+    for (size_t i = 0; (i + 1) < array->size; i++) 
     {
         array->tokens[i] = array->tokens[i + 1];
     }
@@ -98,7 +98,6 @@ void lex_tokenize(lex_t *array, char *code)
             break;
 
             case '=':
-                // printf("\n\n%lu\n\n", line);
                 token.type = T_ASSIGNMENT;
             break;
 
@@ -155,6 +154,7 @@ void lex_tokenize(lex_t *array, char *code)
 
                     char quote = code[i] == '\'' ? '\'' : '"';
                     string_t str = _str("");
+                    size_t length = 0;
 
                     i++;
 
@@ -162,7 +162,7 @@ void lex_tokenize(lex_t *array, char *code)
                     {
                         if ((i + 1) < len && code[i] == '\\' && (code[i + 1] == '\'' || code[i + 1] == '"'))
                         {
-                            concat_c(str, code[i + 1]);
+                            concat_c_safe(str, &length, code[i + 1]);
                             i += 2;
                             continue;
                         }
@@ -170,7 +170,7 @@ void lex_tokenize(lex_t *array, char *code)
                         if (code[i] == '\n' || code[i] == '\r')
                             line++;
                         
-                        concat_c(str, code[i]);
+                        concat_c_safe(str, &length, code[i]);
                         i++;
                     }
 
@@ -179,6 +179,8 @@ void lex_tokenize(lex_t *array, char *code)
                         line++;
                         lex_error(true, "Unterminated string, expected ending %s quote `%c`", quote == '"' ? "double" : "single", quote);
                     }
+
+                    concat_c_safe(str, &length, '\0');
 
                     i++;
 
@@ -198,28 +200,38 @@ void lex_tokenize(lex_t *array, char *code)
                 }
                 else if (isdigit(code[i])) 
                 {
-                    string_t number = _str(""); 
+                    char *number = strdup(""); 
+                    size_t length = 0;
 
                     while (i < len && (isdigit(code[i]) || code[i] == '.'))
                     {
-                        concat_c(number, code[i]);
+                        number = xrealloc(number, ++length);
+                        number[length - 1] = code[i];
                         i++;
                     }
+
+                    number = xrealloc(number, ++length);
+                    number[length - 1] = '\0';
 
                     free(token.value);
 
                     token.type = T_NUMBER;
                     token.value = number;
                 }
-                else if (isalpha(code[i]) != 0)
+                else if (isalpha(code[i]) != 0 || code[i] == '_')
                 {
-                    string_t identifier = _str(""); 
+                    char *identifier = strdup(""); 
+                    size_t length = 0;
 
                     while (i < len && (isalpha(code[i]) || isdigit(code[i]) || code[i] == '_'))
                     {
-                        concat_c(identifier, code[i]);
+                        identifier = xrealloc(identifier, ++length);
+                        identifier[length - 1] = code[i];
                         i++;
                     }
+
+                    identifier = xrealloc(identifier, ++length);
+                    identifier[length - 1] = '\0';
                     
                     free(token.value);
                     token.value = identifier;
@@ -238,6 +250,7 @@ void lex_tokenize(lex_t *array, char *code)
                 else 
                 {
                     string_t identifier = _str(""); 
+                    size_t length = 0;
 
                     while (i < len)
                     {
@@ -249,9 +262,11 @@ void lex_tokenize(lex_t *array, char *code)
                             break;
                         }
 
-                        concat_c(identifier, code[i]);
+                        concat_c_safe(identifier, &length, code[i]);
                         i++;
                     }
+
+                    concat_c_safe(identifier, &length, '\0');
 
                     lex_error(true, "Unexpected token '%s' found", identifier);
                 }
