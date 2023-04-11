@@ -7,6 +7,7 @@
 typedef struct scope {
     struct scope *parent;
     map_t identifiers;
+    char *name;
 } scope_t;
 
 scope_t scope_init(scope_t *parent_scope);

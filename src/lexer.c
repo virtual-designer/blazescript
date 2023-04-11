@@ -51,6 +51,8 @@ static lex_tokentype_t lex_keyword(char *s)
         return T_VAR;
     if (strcmp(s, "const") == 0)
         return T_CONST;
+    if (strcmp(s, "function") == 0)
+        return T_FUNCTION;
 
     return T_SKIPPABLE;
 }
@@ -359,6 +361,9 @@ char *lex_token_stringify(lex_token_t token, bool quotes)
 
         case T_VAR:
             return "var";
+
+        case T_FUNCTION:
+            return "function";
 
         default:
 token_return_as_is:

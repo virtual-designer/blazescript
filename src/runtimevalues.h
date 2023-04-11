@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "map.h"
 #include "vector.h"
+#include "ast.h"
 
 typedef enum 
 {
@@ -12,7 +13,8 @@ typedef enum
     VAL_BOOLEAN,
     VAL_OBJECT,
     VAL_NATIVE_FN,
-    VAL_STRING
+    VAL_STRING,
+    VAL_USER_FN
 } runtime_valtype_t;
 
 typedef struct runtime_val_t
@@ -42,6 +44,16 @@ typedef struct runtime_val_t
         
         /* if (type == VAL_NATIVE_FN) */
         struct runtime_val_t (*fn)(vector_t args, struct scope *scope);
+        /* endif */
+        
+        /* if (type == VAL_USER_FN) */
+        struct {
+            char *fn_name;
+            vector_t argnames; 
+            ast_stmt *body;
+            size_t size;
+            struct scope *scope;
+        };
         /* endif */
     };
 } runtime_val_t;

@@ -34,10 +34,12 @@ typedef struct ast_stmt {
     size_t line;
 
     union {
-        /* if (type == NODE_PROGRAM) */  
+        /* if (type == NODE_PROGRAM || NODE_DECL_FUNCTION) */  
         struct {
             struct ast_stmt *body;                  /* Array of statements. */
             size_t size;                            /* Size of the array. */
+            char *fn_name;                          /* Function name. */
+            vector_t argnames;
         };
         /* endif */                
 

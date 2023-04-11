@@ -18,10 +18,24 @@
 #include "scope.h"
 #include "xmalloc.h"
 #include "map.h"
+#include "functions.h"
 
 #define _GNU_SOURCE
 
 config_t config = { 0 };
+
+typedef struct {
+    char *name;
+    runtime_val_t (*callback)(vector_t, scope_t *);
+} function_t;
+
+static function_t __native_functions[] = {
+    { "println", NATIVE_FN_REF(println) },
+    { "print", NATIVE_FN_REF(print) },
+    { "pause", NATIVE_FN_REF(pause) },
+    { "typeof", NATIVE_FN_REF(typeof) },
+    { "read", NATIVE_FN_REF(read) }
+};
 
 void blaze_error(bool shouldexit, char *format, ...)
 {
@@ -93,35 +107,6 @@ void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_str
         printf("\n");
 }
 
-static runtime_val_t __native_null()
-{
-    return (runtime_val_t) { .type = VAL_NULL };
-}
-
-static runtime_val_t __native_println_fn(vector_t args, scope_t *scope)
-{
-    for (size_t i = 0; i < args.length; i++)
-    {
-        runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
-        handle_result(&arg, true, 1, false);
-    }
-    
-    VEC_FREE(args);
-    return __native_null();
-}
-
-static runtime_val_t __native_print_fn(vector_t args, scope_t *scope)
-{
-    for (size_t i = 0; i < args.length; i++)
-    {
-        runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
-        handle_result(&arg, false, 1, false);
-    }
-    
-    VEC_FREE(args);
-    return __native_null();
-}
-
 scope_t create_global_scope()
 {
     scope_t global = scope_init(NULL);  
@@ -144,31 +129,17 @@ scope_t create_global_scope()
         .type = VAL_OBJECT,
     };
 
-    runtime_val_t _println_val = {
-        .type = VAL_NATIVE_FN,
-        .fn = &__native_println_fn
-    };
-
-    runtime_val_t _print_val = {
-        .type = VAL_NATIVE_FN,
-        .fn = &__native_print_fn
-    };
-
     runtime_val_t *null_val = xmalloc(sizeof (runtime_val_t)),
                   *true_val = xmalloc(sizeof (runtime_val_t)),
                   *false_val = xmalloc(sizeof (runtime_val_t)),
-                  *system_val = xmalloc(sizeof (runtime_val_t)),
-                  *print_val = xmalloc(sizeof (runtime_val_t)),
-                  *println_val = xmalloc(sizeof (runtime_val_t));
+                  *system_val = xmalloc(sizeof (runtime_val_t));
 
     memcpy(null_val, &_null_val, sizeof _null_val);
     memcpy(true_val, &_true_val, sizeof _true_val);
     memcpy(false_val, &_false_val, sizeof _false_val);
     memcpy(system_val, &_system_val, sizeof _system_val);
-    memcpy(println_val, &_println_val, sizeof _println_val);
-    memcpy(print_val, &_print_val, sizeof _print_val);
 
-    system_val->properties = (map_t) MAP_INIT(identifier_t *, 1);
+    system_val->properties = (map_t) MAP_INIT(identifier_t *, 2);
 
     runtime_val_t _version_val = { .type = VAL_STRING, .strval = strdup(VERSION) };
     runtime_val_t *version_val = xmalloc(sizeof _version_val);
@@ -184,8 +155,19 @@ scope_t create_global_scope()
     scope_declare_identifier(&global, "true", true_val, true);
     scope_declare_identifier(&global, "false", false_val, true);
     scope_declare_identifier(&global, "system", system_val, true);
-    scope_declare_identifier(&global, "println", println_val, true);
-    scope_declare_identifier(&global, "print", print_val, true);
+
+    for (size_t i = 0; i < (sizeof (__native_functions) / sizeof (__native_functions[0])); i++)
+    {
+        runtime_val_t _fnval = {
+            .type = VAL_NATIVE_FN,
+            .fn = __native_functions[i].callback
+        };
+
+        runtime_val_t *fnval = xmalloc(sizeof _fnval);
+        memcpy(fnval, &_fnval, sizeof _fnval);
+
+        scope_declare_identifier(&global, __native_functions[i].name, fnval, true);
+    }
 
     return global;
 }

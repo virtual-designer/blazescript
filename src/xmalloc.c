@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
 
@@ -66,4 +67,11 @@ void zfree(void *ptr, const char *fmt, ...)
 
     if (ptr)
         free(ptr);
+}
+
+void *copy_heap(void *ptr, size_t size)
+{
+    void *alloc = xmalloc(size);
+    memcpy(alloc, ptr, size);
+    return alloc;
 }

@@ -11,6 +11,11 @@
 
 static int callnumber = 1;
 
+static inline size_t map_size(size_t size)
+{
+    return size == 0 ? 1 : size;
+}
+
 map_t map_init(size_t type_size, size_t max_elements) 
 {
     return (map_t) {
@@ -30,7 +35,7 @@ static uint32_t hash_function(map_t *map, char *key)
         sum += key[i] * i;
     }
 
-    return sum % map->size;
+    return sum % map_size(map->size);
 }
 
 void map_set(map_t *map, char *key, identifier_t *ptr)
@@ -43,7 +48,7 @@ void map_set(map_t *map, char *key, identifier_t *ptr)
     while (map->size > hash && map->array[hash] != NULL && strcmp(map->array[hash]->key, key) != 0)
     {
         hash++;
-        hash %= map->size;
+        hash %= map_size(map->size);
     }
 
     if (map->array[hash] == NULL)
@@ -79,7 +84,7 @@ void map_delete(map_t *map, char *key, bool _free)
         }
 
         hash++;
-        hash %= map->size;
+        hash %= map_size(map->size);
     }
 }
 
@@ -103,7 +108,7 @@ identifier_t *map_get(map_t *map, char *key)
             return map->array[hash]->value;
 
         hash++;
-        hash %= map->size;
+        hash %= map_size(map->size);
     }
 
     return map->array[hash] == NULL ? NULL : map->array[hash]->value;
@@ -133,6 +138,39 @@ void map_free(map_t *map, bool __recursive_free)
     }
 
     xnfree(map->array);
+}
+
+map_t map_copy(map_t *map, bool __recursive)
+{  
+    map_t m = MAP_INIT(identifier_t *, map->size);
+
+    for (size_t i = 0; i < map->size; i++)
+    {
+        if (map->array[i] != NULL)  
+        {
+            map_entry_t e = {
+                .key = strdup(map->array[i]->key),
+                .value = xmalloc(sizeof (identifier_t))
+            };
+
+            memcpy(e.value, map->array[i]->value, sizeof (identifier_t));
+            e.value->name = e.key;
+            e.value->is_const = map->array[i]->value->is_const;
+
+            if (__recursive)
+            {
+                e.value->value = xmalloc(sizeof (runtime_val_t));
+                memcpy(e.value->value, map->array[i]->value->value, sizeof (runtime_val_t));
+            }
+            else 
+            {
+                e.value->value = map->array[i]->value->value;
+            }
+
+            m.array[i] = xmalloc(sizeof (map_entry_t));
+            memcpy(m.array[i], &e, sizeof (map_entry_t));
+        }
+    }
 }
 
 void __debug_map_print(map_t *map, bool printnull)

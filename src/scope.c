@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -15,6 +16,8 @@ scope_t scope_init(scope_t *parent_scope)
 {
     scope_t scope = { .parent = parent_scope };
     scope.identifiers = MAP_INIT(identifier_t *, SCOPE_STACK_SIZE);
+    scope.name = strdup("Something: %d  ");
+    sprintf(scope.name, "Something: %d\0", rand() % 9);
     return scope;
 }
 
@@ -56,9 +59,7 @@ scope_t *scope_resolve_identifier_scope(scope_t *scope, char *name)
     identifier_t *i = map_get(&scope->identifiers, name);
 
     if (scope->parent == NULL && i == NULL) 
-    {
         eval_error(true, "Undefined identifier '%s' in the current scope", name);
-    }
     else if (scope->parent != NULL && i == NULL)
         return scope_resolve_identifier_scope(scope->parent, name);
 

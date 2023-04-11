@@ -31,6 +31,7 @@ identifier_t *map_get(map_t *map, char *key);
 void map_free(map_t *map, bool __recursive_free);
 void map_delete(map_t *map, char *key, bool _free);
 bool map_has(map_t *map, char *key);
+map_t map_copy(map_t *map, bool __recursive);
 
 void __debug_map_print(map_t *map, bool printnull);
 

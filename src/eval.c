@@ -41,6 +41,25 @@ void eval_error(bool should_exit, const char *fmt, ...)
         exit(EXIT_FAILURE);
 }
 
+runtime_val_t eval_function_decl(ast_stmt decl, scope_t *scope)
+{
+    runtime_val_t fnval = {
+        .type = VAL_USER_FN,
+        .argnames = decl.argnames,
+        .body = decl.body,
+        .size = decl.size,
+        .fn_name = decl.fn_name,
+        .scope = NULL
+    };
+
+    fnval.scope = xmalloc(sizeof (scope_t));
+    memcpy(fnval.scope, scope, sizeof (scope_t));
+    runtime_val_t *fnval_heap = xmemcpy(&fnval, runtime_val_t);
+
+    scope_declare_identifier(scope, decl.fn_name, fnval_heap, true);
+    return fnval;
+}
+
 runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
 {
     map_t properties = MAP_INIT(identifier_t *, 4096);
@@ -92,6 +111,51 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
     return obj;
 }
 
+runtime_val_t eval_user_function_call(runtime_val_t callee, vector_t args, scope_t *scope)
+{
+    scope_t newscope = scope_init(callee.scope);
+
+    if (callee.argnames.length != args.length)
+        eval_error(true, "Argument count does match while calling function '%s()'", callee.fn_name);
+
+    for (size_t i = 0; i < callee.argnames.length; i++)
+    {
+        scope_declare_identifier(&newscope, VEC_GET(callee.argnames, i, char *), xmemcpy(&VEC_GET(args, i, runtime_val_t), runtime_val_t), true); 
+    }
+
+#ifdef _DEBUG
+#ifndef _NODEBUG
+    // __debug_map_print(&newscope.identifiers, false);
+
+    // if (newscope.parent)
+    // {
+    //     puts("PARENT:");    
+    //     __debug_map_print(&newscope.parent->identifiers, false);
+    // }
+#endif
+#endif
+
+    runtime_val_t ret;
+
+    for (size_t i = 0; i < callee.size; i++)
+    {
+#ifdef _DEBUG
+#ifndef _NODEBUG
+        printf("Type: %d\n", callee.body[i].type);
+#endif
+#endif
+        ret = eval(callee.body[i], &newscope);
+
+        if (i != (callee.size - 1))
+            scope_runtime_val_free(&ret);
+    }
+
+    if (ret.type != VAL_USER_FN)
+        scope_free(&newscope); 
+    
+    return ret;
+}
+
 runtime_val_t eval_call_expr(ast_stmt expr, scope_t *scope)
 {
     vector_t vector = VEC_INIT;
@@ -105,13 +169,19 @@ runtime_val_t eval_call_expr(ast_stmt expr, scope_t *scope)
 
     runtime_val_t callee = eval(*expr.callee, scope);
 
-    if (callee.type != VAL_NATIVE_FN)
+    if (callee.type != VAL_NATIVE_FN && callee.type != VAL_USER_FN)
     {
         eval_error(true, "'%s' is not a function", expr.callee->symbol);
     }
 
-    VEC_FREE(expr.args);
-    return callee.fn(vector, scope);
+    runtime_val_t val;
+
+    if (callee.type == VAL_NATIVE_FN)
+        val = callee.fn(vector, scope);
+    else
+        val = eval_user_function_call(callee, vector, scope);
+        
+    return val;
 }
 
 runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
@@ -299,6 +369,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             val.type = VAL_STRING;
             val.strval = astnode.strval;
         break;
+
+        case NODE_DECL_FUNCTION:
+            return eval_function_decl(astnode, scope);
 
         case NODE_DECL_VAR:
             return eval_var_decl(astnode, scope);

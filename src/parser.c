@@ -286,8 +286,7 @@ static vector_t parser_parse_args()
     if (parser_at().type != T_PAREN_CLOSE)
         parser_parse_argument_list(&vector);
 
-    parser_expect(T_PAREN_CLOSE, "Expected closing parenthesis after function call argument list");
-    parser_expect(T_SEMICOLON, "Expected semicolon after function call");
+    parser_expect(T_PAREN_CLOSE, "Expected closing parenthesis after function argument list");
     return vector;
 }
 
@@ -513,6 +512,50 @@ ast_stmt parser_parse_var_decl()
     return vardecl;
 }
 
+ast_stmt parser_parse_function_decl()
+{
+    parser_shift();
+
+    char *name = parser_expect(T_IDENTIFIER, "Expected identifier after function keyword").value;
+    vector_t args = parser_parse_args(); /* Vector of ast_stmt. */
+    vector_t argnames = VEC_INIT; /* Vector of (char *). */
+    ast_stmt *body = NULL; 
+    size_t size = 0;
+
+    for (size_t i = 0; i < args.length; i++)
+    {
+        if (VEC_GET(args, i, ast_stmt).type != NODE_IDENTIFIER)
+            parser_error(true, "Expected identifiers inside parenthesis");
+
+        VEC_PUSH(argnames, VEC_GET(args, i, ast_stmt).symbol, char *);
+    }
+
+    VEC_FREE(args);
+
+    parser_expect(T_BLOCK_BRACE_OPEN, "Expected open braces after function name and parameters");
+
+    while (!parser_eof() && parser_at().type != T_BLOCK_BRACE_CLOSE)
+    {
+        ast_stmt stmt = parser_parse_stmt();
+        
+        if (stmt.type == NODE_EXPR_CALL && parser_at().type == T_SEMICOLON)
+            parser_shift();
+
+        body = xrealloc(body, sizeof (ast_stmt) * (++size));
+        body[size - 1] = stmt;
+    }
+
+    parser_expect(T_BLOCK_BRACE_CLOSE, "Missing close braces after function body");
+    
+    return (ast_stmt) {
+        .type = NODE_DECL_FUNCTION,
+        .fn_name = name,
+        .argnames = argnames,
+        .size = size,
+        .body = body
+    };
+}
+
 ast_stmt parser_parse_stmt()
 {
     switch (parser_at().type)
@@ -520,6 +563,10 @@ ast_stmt parser_parse_stmt()
         case T_VAR:
         case T_CONST:
             return parser_parse_var_decl();
+        break;
+
+        case T_FUNCTION:
+            return parser_parse_function_decl();
         break;
 
         default:
