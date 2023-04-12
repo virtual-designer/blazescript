@@ -94,8 +94,62 @@ void lex_tokenize(lex_t *array, char *code)
             case '+':
             case '-':
             case '*':
-            case '/':
             case '%':
+                token.type = T_BINARY_OPERATOR;
+            break;
+
+            case '/':
+                if ((i + 1) < len && code[i] == '/' && code[i + 1] == '/') 
+                {
+                    i += 2;
+
+                    while (i < len)
+                    {
+                        i++;
+
+                        if (code[i] == '\r' || code[i] == '\n')
+                        {
+                            i++;
+                            break;
+                        }
+                    }
+
+                    line++;
+                    continue;
+                }
+                else if ((i + 1) < len && code[i] == '/' && code[i + 1] == '*')
+                {
+                    bool is_terminated = false;
+
+                    i += 2;
+
+                    while ((i + 1) < len)
+                    {
+                        if (code[i] == '*' && code[i + 1] == '/')
+                        {
+                            i += 2;
+                            is_terminated = true;
+                            break;
+                        }
+                        
+                        if (code[i + 1] == '\n' || code[i + 1] == '\r')
+                            line++;
+                        
+                        i++;
+                    }
+
+                    if (code[i] == '\r' || code[i] == '\n')
+                        line++;
+
+                    if (code[i + 1] == '\r' || code[i + 1] == '\n')
+                        line++;
+
+                    if (!is_terminated)
+                        lex_error(true, "Unterminated comment, missing `*/` to close the comment block");
+
+                    continue;
+                } 
+
                 token.type = T_BINARY_OPERATOR;
             break;
 
@@ -148,7 +202,7 @@ void lex_tokenize(lex_t *array, char *code)
                 multi_char = true;
 
                 if (string_parsing)
-                    lex_error(true, "Error string");
+                    lex_error(true, "Error parsing string");
 
                 if (code[i] == '\'' || code[i] == '"')
                 {
@@ -198,7 +252,7 @@ void lex_tokenize(lex_t *array, char *code)
                         line++;
                     
                     i++;
-                    token.type = T_SKIPPABLE;
+                    continue;
                 }
                 else if (isdigit(code[i])) 
                 {
@@ -258,9 +312,6 @@ void lex_tokenize(lex_t *array, char *code)
                     {
                         if (isspace(code[i]))
                         {
-                            if (code[i] == '\n' || code[i] == '\r')
-                                line++;
-                            
                             break;
                         }
 
@@ -279,8 +330,6 @@ void lex_tokenize(lex_t *array, char *code)
 
         if (token.type != T_SKIPPABLE)
         {
-            // token.line = line;
-            // printf("Pushed: [%lu] %d\n", i, token.type);
             lex_token_array_push(array, token);
         }
         
