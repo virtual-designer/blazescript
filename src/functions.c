@@ -97,14 +97,16 @@ NATIVE_FN(typeof)
         .type = VAL_STRING
     };
 
-    switch (VEC_GET(args, 0, runtime_val_t).type)
+    runtime_val_t arg = VEC_GET(args, 0, runtime_val_t);
+
+    switch (arg.type)
     {
         case VAL_STRING:
             val.strval = strdup("String");
             break;
 
         case VAL_NUMBER:
-            val.strval = strdup(val.is_float ? "Number (Float)" : "Number (Integer)");
+            val.strval = strdup(arg.is_float ? "Number (Float)" : "Number (Integer)");
             break;
 
         case VAL_BOOLEAN:
