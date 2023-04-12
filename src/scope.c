@@ -17,7 +17,7 @@ scope_t scope_init(scope_t *parent_scope)
     scope_t scope = { .parent = parent_scope };
     scope.identifiers = MAP_INIT(identifier_t *, SCOPE_STACK_SIZE);
     scope.name = strdup("Something: %d  ");
-    sprintf(scope.name, "Something: %d\0", rand() % 9);
+    sprintf(scope.name, "Something: %d", rand() % 9);
     return scope;
 }
 
@@ -74,23 +74,40 @@ identifier_t *scope_resolve_identifier(scope_t *scope, char *name)
 
 void scope_runtime_val_free(runtime_val_t *val)
 {
+    if (!val || val->literal != true)
+        return;
+
     if (val->type == VAL_STRING)
-        znfree(val->strval, "String");
+    {
+        zfree(val->strval, "String");
+        val->strval = NULL;
+    }
     else if (val->type == VAL_OBJECT)
     {
         for (size_t i = 0; i < val->properties.size; i++)
         {
             if (val->properties.array[i] != NULL)
             {
-                scope_runtime_val_free(val->properties.array[i]->value->value);
-                znfree(val->properties.array[i]->key, "Freeing key: %s", val->properties.array[i]->key);
-                xnfree(val->properties.array[i]);
+                if (val->properties.array[i]->value != NULL && val->properties.array[i]->value->value != NULL)
+                {
+                    scope_runtime_val_free(val->properties.array[i]->value->value);
+                    val->properties.array[i]->value->value = NULL;
+                }
 
+                if (val->properties.array[i]->key != NULL && strlen(val->properties.array[i]->key) != 0)
+                {
+                    zfree(val->properties.array[i]->key, "Freeing key: %s", val->properties.array[i]->key);
+                    val->properties.array[i]->key = NULL;
+                }
+
+                xfree(val->properties.array[i]);
                 val->properties.array[i] = NULL;
             }
         }
 
-        znfree(val->properties.array, "Properties Array");
+        if (val->properties.array != NULL)
+            zfree(val->properties.array, "Properties Array");
+        
         val->properties.array = NULL;
     }
 }

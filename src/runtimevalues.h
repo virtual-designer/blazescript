@@ -20,6 +20,7 @@ typedef enum
 typedef struct runtime_val_t
 {
     runtime_valtype_t type;
+    bool literal;
 
     union {
         /* if (type == VAL_NUMBER) */

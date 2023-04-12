@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include "xmalloc.h"
 #include "blaze.h"
@@ -50,6 +51,21 @@ void xfree(void *ptr)
         free(ptr);
 }
 
+void xnullfree(void **ptr) 
+{
+#ifdef _DEBUG
+#ifndef _NODEBUG
+    printf("[xnullfree] freeing: %p\n", ptr);
+#endif
+#endif
+
+    if (ptr == NULL || *((char **) ptr) == NULL)
+        return;
+
+    xfree(*((char **) ptr));
+    *((char **) ptr) = NULL;
+}
+
 void zfree(void *ptr, const char *fmt, ...)
 {
 #ifdef _DEBUG
@@ -67,6 +83,28 @@ void zfree(void *ptr, const char *fmt, ...)
 
     if (ptr)
         free(ptr);
+}
+
+void znullfree(void **ptr, const char *fmt, ...)
+{
+#ifdef _DEBUG
+#ifndef _NODEBUG
+    va_list args;
+    va_start(args, fmt);
+
+    printf("[znullfree] freeing: %p\n\t", ptr);
+    vprintf(fmt, args);
+    printf("\n");
+
+    va_end(args);
+#endif
+#endif
+
+    if (ptr == NULL || *((char **) ptr) == NULL)
+        return;
+
+    free(*((char **) ptr));
+    *((char **) ptr) = NULL;
 }
 
 void *copy_heap(void *ptr, size_t size)

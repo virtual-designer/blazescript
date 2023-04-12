@@ -240,7 +240,6 @@ int main(int argc, char **argv)
 
     scope_t global = create_global_scope();
     runtime_val_t result = eval(prog, &global);
-    scope_runtime_val_free(&result);
     scope_free(&global);    
     return 0;
 }

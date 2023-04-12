@@ -11,9 +11,11 @@
 }
 #define VEC_GET(vector, index, type) (((type *) vector.elements)[index])
 #define VEC_FREE(vector) { \
-    free(vector.elements); \
-    vector.elements = NULL; \
-    vector.length = 0; \
+    if (vector.elements != NULL) { \
+        free(vector.elements); \
+        vector.elements = NULL; \
+        vector.length = 0; \
+    } \
 }
 #define VEC_PRINT(vector, format, type) \
     do { \

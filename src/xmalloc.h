@@ -13,6 +13,8 @@ void *xmalloc(size_t size);
 void *xrealloc(void *oldptr, size_t size);
 void xfree(void *ptr);
 void zfree(void *ptr, const char *fmt, ...);
+void xnullfree(void **ptr);
+void znullfree(void **ptr, const char *fmt, ...);
 void *copy_heap(void *ptr, size_t size);
 
 #endif

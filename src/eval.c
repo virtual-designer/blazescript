@@ -49,7 +49,8 @@ runtime_val_t eval_function_decl(ast_stmt decl, scope_t *scope)
         .body = decl.body,
         .size = decl.size,
         .fn_name = decl.fn_name,
-        .scope = NULL
+        .scope = NULL,
+        .literal = false
     };
 
     fnval.scope = xmalloc(sizeof (scope_t));
@@ -69,7 +70,7 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
         ast_stmt prop = VEC_GET(object.properties, i, ast_stmt);
         assert(prop.type == NODE_PROPERTY_LITERAL);
 
-        identifier_t *val;
+        identifier_t *val = xmalloc(sizeof (identifier_t));
 
         if (prop.propval == NULL)
         {
@@ -80,12 +81,13 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
                 eval_error(true, "Undefined identifier '%s' in the current scope", prop.key);
             }
 
-            val = identifier;
+            memcpy(val, identifier, sizeof (identifier_t));
+
+            val->value = xmalloc(sizeof (runtime_val_t));
+            memcpy(val->value, identifier->value, sizeof (runtime_val_t));
         }
         else 
         {
-            val = xmalloc(sizeof (identifier_t));
-
             runtime_val_t eval_result = eval(*prop.propval, scope);
             
             identifier_t i = {
@@ -96,7 +98,6 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
             memcpy(val, &i, sizeof i);
 
             val->value = xmalloc(sizeof (runtime_val_t));
-
             memcpy(val->value, &eval_result, sizeof eval_result);
         }
 
@@ -106,6 +107,7 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
     runtime_val_t obj = {
         .type = VAL_OBJECT,
         .properties = properties,
+        .literal = true
     };
 
     return obj;
@@ -177,7 +179,7 @@ runtime_val_t eval_call_expr(ast_stmt expr, scope_t *scope)
     runtime_val_t val;
 
     if (callee.type == VAL_NATIVE_FN)
-        val = callee.fn(vector, scope);
+        val = callee.fn(vector, (struct scope *) scope);
     else
         val = eval_user_function_call(callee, vector, scope);
         
@@ -201,8 +203,6 @@ runtime_val_t eval_assignment(ast_stmt expr, scope_t *scope)
         eval_error(true, "Cannot re-assign a value to constant '%s'", varname);
     
     runtime_val_t val = eval(*expr.assignment_value, scope);    
-
-    // return (runtime_val_t) { .type = VAL_NULL };
     runtime_val_t result = *scope_assign_identifier(scope, varname, &val);
 
     return result;
@@ -269,7 +269,8 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
     
     runtime_val_t val = {
         .type = VAL_NUMBER,
-        .is_float = is_float(result)
+        .is_float = is_float(result),
+        .literal = false
     };
 
     if (val.is_float)
@@ -304,6 +305,7 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
 
     return (runtime_val_t) {
         .type = VAL_NULL,
+        .literal = false
     };
 }
 
@@ -328,8 +330,6 @@ runtime_val_t eval_var_decl(ast_stmt decl, scope_t *scope)
 #endif
 
     runtime_val_t *value_heap = xmalloc(sizeof (runtime_val_t));
-
-    assert(value_heap != NULL);
 
     if (decl.has_val)
     {
@@ -363,11 +363,14 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
                 val.floatval = astnode.value;
             else
                 val.intval = astnode.value;
+
+            val.literal = true;
         break;
 
         case NODE_STRING:
             val.type = VAL_STRING;
             val.strval = astnode.strval;
+            val.literal = true;
         break;
 
         case NODE_DECL_FUNCTION:
