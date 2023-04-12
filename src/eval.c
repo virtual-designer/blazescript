@@ -113,7 +113,7 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
     return obj;
 }
 
-runtime_val_t eval_user_function_call(runtime_val_t callee, vector_t args, scope_t *scope)
+runtime_val_t eval_user_function_call(runtime_val_t callee, vector_t args)
 {
     scope_t newscope = scope_init(callee.scope);
 
@@ -181,7 +181,7 @@ runtime_val_t eval_call_expr(ast_stmt expr, scope_t *scope)
     if (callee.type == VAL_NATIVE_FN)
         val = callee.fn(vector, (struct scope *) scope);
     else
-        val = eval_user_function_call(callee, vector, scope);
+        val = eval_user_function_call(callee, vector);
         
     return val;
 }

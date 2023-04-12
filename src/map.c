@@ -171,6 +171,8 @@ map_t map_copy(map_t *map, bool __recursive)
             memcpy(m.array[i], &e, sizeof (map_entry_t));
         }
     }
+
+    return m;
 }
 
 void __debug_map_print(map_t *map, bool printnull)

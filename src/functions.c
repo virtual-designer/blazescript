@@ -9,13 +9,23 @@
 #include "vector.h"
 #include "map.h"
 #include "functions.h"
+#include "eval.h"
 
 static runtime_val_t __native_null()
 {
     return (runtime_val_t) { .type = VAL_NULL };
 }
 
-runtime_val_t __native_println_fn(vector_t args, scope_t *scope)
+/* The `NATIVE_FN()` macro takes the base name of the native function,
+   and declares a function prefixed with __native_ and suffixed with _fn.
+   The function will take the following arguments:
+
+     - vector_t args
+     - scope_t *scope 
+    
+   These arguments can be used anywhere in the function body. */
+
+NATIVE_FN(println)
 {
     for (size_t i = 0; i < args.length; i++)
     {
@@ -27,7 +37,7 @@ runtime_val_t __native_println_fn(vector_t args, scope_t *scope)
     return __native_null();
 }
 
-runtime_val_t __native_print_fn(vector_t args, scope_t *scope)
+NATIVE_FN(print)
 {
     for (size_t i = 0; i < args.length; i++)
     {
@@ -39,7 +49,7 @@ runtime_val_t __native_print_fn(vector_t args, scope_t *scope)
     return __native_null();
 }
 
-runtime_val_t __native_pause_fn(vector_t args, scope_t *scope)
+NATIVE_FN(pause)
 {
     if (args.length != 0) 
         eval_error(true, "pause() does not accept any parameters");
@@ -50,7 +60,7 @@ runtime_val_t __native_pause_fn(vector_t args, scope_t *scope)
     return __native_null();
 }
 
-runtime_val_t __native_read_fn(vector_t args, scope_t *scope)
+NATIVE_FN(read)
 {
     if (args.length > 1) 
         eval_error(true, "read() accepts only 1 optional parameter");
@@ -78,7 +88,7 @@ runtime_val_t __native_read_fn(vector_t args, scope_t *scope)
     };
 }
 
-runtime_val_t __native_typeof_fn(vector_t args, scope_t *scope)
+NATIVE_FN(typeof)
 {
     if (args.length != 1)
         eval_error(true, "typeof() expects exactly 1 parameter");
