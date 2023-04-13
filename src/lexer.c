@@ -76,6 +76,16 @@ bool lex_token_array_shift(lex_t *array, lex_token_t *token)
     return true;
 }
 
+static void line_update_set(size_t *lineptr, size_t newvalue)
+{
+    *lineptr = newvalue;
+}
+
+static void line_update(size_t *lineptr, size_t incr)
+{
+    *lineptr += incr;
+}
+
 void lex_tokenize(lex_t *array, char *code)
 {
     array->tokens = NULL;
@@ -114,7 +124,7 @@ void lex_tokenize(lex_t *array, char *code)
                         }
                     }
 
-                    line++;
+                    line_update(&line, 1);
                     continue;
                 }
                 else if ((i + 1) < len && code[i] == '/' && code[i + 1] == '*')
@@ -133,16 +143,10 @@ void lex_tokenize(lex_t *array, char *code)
                         }
                         
                         if (code[i + 1] == '\n' || code[i + 1] == '\r')
-                            line++;
+                            line_update(&line, 1);
                         
                         i++;
                     }
-
-                    if (code[i] == '\r' || code[i] == '\n')
-                        line++;
-
-                    if (code[i + 1] == '\r' || code[i + 1] == '\n')
-                        line++;
 
                     if (!is_terminated)
                         lex_error(true, "Unterminated comment, missing `*/` to close the comment block");
@@ -224,7 +228,7 @@ void lex_tokenize(lex_t *array, char *code)
                         }
 
                         if (code[i] == '\n' || code[i] == '\r')
-                            line++;
+                            line_update(&line, 1);
                         
                         concat_c_safe(str, &length, code[i]);
                         i++;
@@ -232,7 +236,7 @@ void lex_tokenize(lex_t *array, char *code)
 
                     if (code[i] != quote)
                     {
-                        line++;
+                        line_update(&line, 1);
                         lex_error(true, "Unterminated string, expected ending %s quote `%c`", quote == '"' ? "double" : "single", quote);
                     }
 
@@ -249,7 +253,7 @@ void lex_tokenize(lex_t *array, char *code)
                 else if (lex_is_skippable(code[i])) 
                 {
                     if (code[i] == '\n' || code[i] == '\r')
-                        line++;
+                        line_update(&line, 1);
                     
                     i++;
                     continue;
