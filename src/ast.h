@@ -43,7 +43,7 @@ typedef struct ast_stmt {
         };
         /* endif */                
 
-        /* if (type == NODE_EXPR_BINARY) */
+        /* if (type == NODE_EXPR_BINARY) || (type == NODE_EXPR_UNARY) */
         struct {
             struct ast_stmt *left;                  /* Pointer to the statement at left. */
             struct ast_stmt *right;                 /* Pointer to the statement at right. */
@@ -60,7 +60,10 @@ typedef struct ast_stmt {
         /* endif */                
         
         /* if (type == NODE_NUMERIC_LITERAL) */
-        long double value;                          /* The actual value of the numeric literal. */
+        struct {
+            long double value;                          /* The actual value of the numeric literal. */
+            bool is_float;
+        };
         /* endif */                
         
         /* if (type == NODE_DECL_VAR) */

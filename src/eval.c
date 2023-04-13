@@ -269,9 +269,13 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
     
     runtime_val_t val = {
         .type = VAL_NUMBER,
-        .is_float = is_float(result),
         .literal = false
     };
+
+    if (!left.is_float && !right.is_float)
+        val.is_float = is_float(result);
+    else 
+        val.is_float = true;
 
     if (val.is_float)
         val.floatval = result;
@@ -307,6 +311,36 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
         .type = VAL_NULL,
         .literal = false
     };
+}
+
+runtime_val_t eval_unary_expr(ast_stmt expr, scope_t *scope)
+{
+    if (expr.type != NODE_EXPR_UNARY)
+    {
+        blaze_error(true, "invalid unary operation found");
+    }
+
+    update_line(expr);
+
+    runtime_val_t right = eval(*expr.right, scope);
+
+    if (right.type != VAL_NUMBER)
+        eval_error(true, "Cannot apply unary operators on a non-number value");
+
+    assert(expr.operator == OP_PLUS || expr.operator == OP_MINUS);
+
+    runtime_val_t ret = {
+        .type = VAL_NUMBER,
+        .literal = false,
+        .is_float = right.is_float,
+    };
+
+    if (right.is_float)
+        ret.floatval = expr.operator == OP_PLUS ? +right.floatval : -right.floatval;
+    else 
+        ret.intval = expr.operator == OP_PLUS ? +right.intval : -right.intval;
+
+    return ret;
 }
 
 runtime_val_t eval_program(ast_stmt prog, scope_t *scope)
@@ -357,7 +391,8 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
     {
         case NODE_NUMERIC_LITERAL:
             val.type = VAL_NUMBER;
-            val.is_float = is_float(astnode.value);
+            // val.is_float = is_float(astnode.value);
+            val.is_float = astnode.is_float;
 
             if (val.is_float)
                 val.floatval = astnode.value;
@@ -399,6 +434,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 
         case NODE_EXPR_BINARY:
             return eval_binop(astnode, scope);
+
+        case NODE_EXPR_UNARY:
+            return eval_unary_expr(astnode, scope);
 
         default:
             fprintf(stderr, "Eval error: this AST node is not supported\n");

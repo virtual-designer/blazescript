@@ -179,7 +179,8 @@ ast_stmt parser_parse_primary_expr()
         case T_NUMBER: {
             stmt.type = NODE_NUMERIC_LITERAL;
             stmt.line = parser_line();
-            stmt.value = (long double) atof(parser_shift().value);
+            stmt.value = (long double) atof(parser_at().value);
+            stmt.is_float = strchr(parser_shift().value, '.') != NULL;
         }
         break;
 
@@ -317,9 +318,34 @@ static ast_stmt parser_parse_call_member_expr()
     return member;
 }
 
+static ast_stmt parser_parse_unary_expr()
+{
+    size_t line;
+
+    if (parser_at().value[0] != '+' && parser_at().value[0] != '-') 
+    {
+        return parser_parse_call_member_expr();
+    }
+
+    char operator = parser_shift().value[0];
+    line = parser_line();
+    ast_stmt right = parser_parse_call_member_expr();
+
+    ast_stmt ret = {
+        .type = NODE_EXPR_UNARY,
+        .right = xmalloc(sizeof right),
+        .operator = operator == '+' ? OP_PLUS : OP_MINUS,
+        .line = line
+    };
+
+    memcpy(ret.right, &right, sizeof right);
+
+    return ret;
+}
+
 static ast_stmt parser_parse_multiplicative_expr()
 {
-    ast_stmt left = parser_parse_call_member_expr();
+    ast_stmt left = parser_parse_unary_expr();
     size_t line;
 
     while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
@@ -330,7 +356,7 @@ static ast_stmt parser_parse_multiplicative_expr()
         line = parser_line();
 
         char operator = parser_shift().value[0];
-        ast_stmt right = parser_parse_call_member_expr();
+        ast_stmt right = parser_parse_unary_expr();
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
