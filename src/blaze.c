@@ -179,8 +179,11 @@ int main(int argc, char **argv)
     FILE *fp = NULL;
 
     if (argc >= 2) {
+#if defined(__WIN32__)
+        fp = fopen(argv[1], "rb");
+#else
         fp = fopen(argv[1], "r");
-
+#endif
         if (fp == NULL) {
             blaze_error(true, "%s", argv[1]);
         }
