@@ -14,12 +14,12 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Change branch
-      run: git pull --all && git switch workflow
       
     - name: make
       run: make
+    
+    - name: Change branch
+      run: git pull --all && git switch workflow
       
     - name: Copy release
       run: "sudo cp blaze /tmp/blaze"
@@ -40,7 +40,7 @@ jobs:
       
     - name: Commit
       run: |
-        (ls && rm blaze-windows && mv blaze.exe blaze-windows && git config --global user.name 'GitHub Actions' &&
+        (ls && rm $GITHUB_WORKSPACE/blaze-windows && mv $GITHUB_WORKSPACE/blaze.exe $GITHUB_WORKSPACE/blaze-windows && git config --global user.name 'GitHub Actions' &&
         git config --global user.email 'virtual-designer@users.noreply.github.com' &&
         git add $GITHUB_WORKSPACE/blaze-windows &&
         git commit -a -m "Automated Build Workflow Commit" &&
