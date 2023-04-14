@@ -10,6 +10,7 @@
 #include "map.h"
 #include "functions.h"
 #include "eval.h"
+#include "blaze.h"
 
 static runtime_val_t __native_null()
 {
