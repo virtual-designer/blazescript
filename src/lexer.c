@@ -381,6 +381,8 @@ void lex_free(lex_t *array)
 
 char *lex_token_stringify(lex_token_t token, bool quotes)
 {
+    string_t str;
+    
     switch (token.type) 
     {
         case T_ASSIGNMENT:
@@ -430,7 +432,7 @@ char *lex_token_stringify(lex_token_t token, bool quotes)
 
         default:
 token_return_as_is:
-            string_t str = _str("\"");
+            str = _str("\"");
             concat(str, token.value);
             concat_c(str, '"');
             return str;
