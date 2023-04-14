@@ -40,7 +40,7 @@ jobs:
       
     - name: Commit
       run: |
-        (ls && git config --global user.name 'GitHub Actions' &&
+        (rm -f .gitignore && ls && git config --global user.name 'GitHub Actions' &&
         git config --global user.email 'virtual-designer@users.noreply.github.com' &&
         git add *.exe &&
         git commit -m "Automated Build Workflow Commit" &&
