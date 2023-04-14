@@ -68,63 +68,27 @@ NATIVE_FN(pause)
 }
 
 #if defined(__WIN32__) && !defined(getline)
-ssize_t getline(char **lineptr, size_t *n, FILE *stream) 
+ssize_t getline(char **lineptr, FILE *stream) 
 {
-    size_t pos;
-    int c;
-
-    if (lineptr == NULL || stream == NULL || n == NULL) 
-    {
-        errno = EINVAL;
-        return -1;
-    }
-
-    c = getc(stream);
+    *lineptr = NULL;
+    ssize_t len = 0, i = 0;
+    char last = 'a';
     
-    if (c == EOF)
-        return -1;
-
-    if (*lineptr == NULL) 
-    {
-        *lineptr = xmalloc(128);
-        
-        if (*lineptr == NULL) 
-            return -1;
-        
-        *n = 128;
-    }
-
-    pos = 0;
-    
-    while(c != EOF) 
-    {
-        if (pos + 1 >= *n) 
+    while (!feof(stream) && last != '\n' && last != '\r') 
+    {   
+        if (len >= i)
         {
-            size_t new_size = *n + (*n >> 2);
-            
-            if (new_size < 128) 
-                new_size = 128;
-            
-            char *new_ptr = realloc(*lineptr, new_size);
-            
-            if (new_ptr == NULL) 
-                return -1;
-            
-            *n = new_size;
-            *lineptr = new_ptr;
+            *lineptr = xrealloc(*lineptr, (len == 0 ? 1 : len) * 2);
+            len = (len == 0 ? 1 : len) * 2;
         }
-
-        ((unsigned char *)(*lineptr))[pos ++] = c;
         
-        if (c == '\n')
-            break;
+        last = getchar();
+        (*lineptr)[i] = last;
         
-        c = getc(stream);
+        i++;
     }
-
-    (*lineptr)[pos] = '\0';
     
-    return pos;
+    return len;
 }
 #endif
 
@@ -144,7 +108,11 @@ NATIVE_FN(read)
     char *line = NULL;
     size_t n = 0;
 
+#if defined(__WIN32__)
+    getline(&line, stdin);
+#else
     getline(&line, &n, stdin);
+#endif
 
     line[strlen(line) - 1] = '\0';
     
