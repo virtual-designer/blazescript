@@ -26,7 +26,10 @@ typedef enum {
     OP_MINUS,
     OP_TIMES,
     OP_DIVIDE,
-    OP_MOD
+    OP_MOD,
+    OP_LOGICAL_AND,
+    OP_LOGICAL_OR,
+    OP_LOGICAL_NOT
 } ast_operator_t;
 
 typedef struct ast_stmt {

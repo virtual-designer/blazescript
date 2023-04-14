@@ -285,6 +285,15 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
     return val;
 }
 
+bool runtime_val_to_bool(runtime_val_t *val)
+{
+    return val->type != VAL_NUMBER && val->type != VAL_BOOLEAN && val->type != VAL_NULL ? true : (
+        val->type == VAL_NUMBER || val->type == VAL_BOOLEAN ? (NUM((*val))) == 1 : (
+            false
+        )
+    );
+}
+
 runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
 {
     if (binop.type != NODE_EXPR_BINARY)
@@ -297,7 +306,17 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
     runtime_val_t right = eval(*binop.right, scope);
     runtime_val_t left = eval(*binop.left, scope);
 
-    if ((right.type == VAL_NUMBER && left.type == VAL_NUMBER) ||
+    if (binop.operator == OP_LOGICAL_AND || binop.operator == OP_LOGICAL_OR)
+    {
+        bool leftbool = runtime_val_to_bool(&left);
+        bool rightbool = runtime_val_to_bool(&right);
+
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN, 
+            .boolval = binop.operator == OP_LOGICAL_OR ? (leftbool || rightbool) : (leftbool && rightbool)
+        };
+    } 
+    else if ((right.type == VAL_NUMBER && left.type == VAL_NUMBER) ||
         ((right.type == VAL_BOOLEAN || left.type == VAL_BOOLEAN) && 
         (right.type == VAL_NUMBER || left.type == VAL_NUMBER)))
     {
@@ -324,8 +343,33 @@ runtime_val_t eval_unary_expr(ast_stmt expr, scope_t *scope)
 
     runtime_val_t right = eval(*expr.right, scope);
 
+    
+    if (expr.operator == OP_LOGICAL_NOT) 
+    {
+        if (right.type == VAL_NUMBER || right.type == VAL_NULL || right.type == VAL_BOOLEAN)
+        {
+            if (right.type == VAL_NULL)
+                return (runtime_val_t) {
+                        .type = VAL_BOOLEAN, 
+                        .boolval = true
+                };
+
+            return (runtime_val_t) { 
+                .type = VAL_BOOLEAN,
+                .boolval = !(NUM(right))
+            };
+        }
+        else
+        {
+            return (runtime_val_t) {
+                .type = VAL_BOOLEAN,
+                .boolval = false
+            };
+        }
+    }
+
     if (right.type != VAL_NUMBER)
-        eval_error(true, "Cannot apply unary operators on a non-number value");
+        eval_error(true, "Cannot apply unary plus or minus operators on a non-number value");
 
     assert(expr.operator == OP_PLUS || expr.operator == OP_MINUS);
 

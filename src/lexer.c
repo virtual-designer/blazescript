@@ -157,6 +157,10 @@ void lex_tokenize(lex_t *array, char *code)
                 token.type = T_BINARY_OPERATOR;
             break;
 
+            case '!':
+                token.type = T_UNARY_OPERATOR;
+            break;
+
             case '=':
                 token.type = T_ASSIGNMENT;
             break;
@@ -257,6 +261,12 @@ void lex_tokenize(lex_t *array, char *code)
                     
                     i++;
                     continue;
+                }
+                else if ((i + 1) < len && ((code[i] == '&' && code[i + 1] == '&') || (code[i] == '|' && code[i + 1] == '|')))
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup(code[i] == '&' ? "&&" : "||");
+                    i += 2;
                 }
                 else if (isdigit(code[i])) 
                 {

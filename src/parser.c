@@ -217,6 +217,8 @@ static ast_operator_t parser_char_to_operator(char c)
             return OP_DIVIDE;
         case '%':
             return OP_MOD;
+        case '!':
+            return OP_LOGICAL_NOT;
         default:
             fprintf(stderr, "Parse error: Invalid binary operator: %c\n", c);
             exit(-1);
@@ -322,7 +324,7 @@ static ast_stmt parser_parse_unary_expr()
 {
     size_t line;
 
-    if (parser_at().value[0] != '+' && parser_at().value[0] != '-') 
+    if (parser_at().value[0] != '+' && parser_at().value[0] != '-' && parser_at().value[0] != '!') 
     {
         return parser_parse_call_member_expr();
     }
@@ -334,7 +336,7 @@ static ast_stmt parser_parse_unary_expr()
     ast_stmt ret = {
         .type = NODE_EXPR_UNARY,
         .right = xmalloc(sizeof right),
-        .operator = operator == '+' ? OP_PLUS : OP_MINUS,
+        .operator = operator == '+' ? OP_PLUS : operator == '-' ? OP_MINUS : OP_LOGICAL_NOT,
         .line = line
     };
 
@@ -408,10 +410,42 @@ static ast_stmt parser_parse_additive_expr()
     return left;
 }
 
+static ast_stmt parser_parse_bin_logical_expr()
+{
+    ast_stmt left = parser_parse_additive_expr();
+    size_t line;
+
+    while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
+        (conf.lexer_data.tokens[0].value[0] == '&' || 
+            conf.lexer_data.tokens[0].value[0] == '|')) 
+    {
+        line = parser_line();
+
+        char operator = parser_shift().value[0];
+        ast_stmt right = parser_parse_additive_expr();
+
+        ast_stmt binop = {
+            .type = NODE_EXPR_BINARY,
+            .operator = operator == '|' ? OP_LOGICAL_OR : OP_LOGICAL_AND,
+            .line = line
+        };
+
+        binop.left = xmalloc(sizeof (ast_stmt));
+        memcpy(binop.left, &left, sizeof left);
+
+        binop.right = xmalloc(sizeof (ast_stmt));
+        memcpy(binop.right, &right, sizeof right);
+
+        left = binop;
+    } 
+
+    return left;
+}
+
 ast_stmt parser_parse_object_expr()
 {
     if (parser_at().type != T_BLOCK_BRACE_OPEN)
-        return parser_parse_additive_expr();
+        return parser_parse_bin_logical_expr();
 
     parser_shift();
     
