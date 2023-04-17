@@ -53,6 +53,10 @@ static lex_tokentype_t lex_keyword(char *s)
         return T_CONST;
     if (strcmp(s, "function") == 0)
         return T_FUNCTION;
+    if (strcmp(s, "if") == 0)
+        return T_IF;
+    if (strcmp(s, "else") == 0)
+        return T_ELSE;
 
     return T_SKIPPABLE;
 }
@@ -161,10 +165,6 @@ void lex_tokenize(lex_t *array, char *code)
                 token.type = T_UNARY_OPERATOR;
             break;
 
-            case '=':
-                token.type = T_ASSIGNMENT;
-            break;
-
             case '(':
                 token.type = T_PAREN_OPEN;
             break;
@@ -245,7 +245,6 @@ void lex_tokenize(lex_t *array, char *code)
                     }
 
                     concat_c_safe(str, &length, '\0');
-
                     i++;
 
                     free(token.value);
@@ -267,6 +266,18 @@ void lex_tokenize(lex_t *array, char *code)
                     token.type = T_BINARY_OPERATOR;
                     token.value = strdup(code[i] == '&' ? "&&" : "||");
                     i += 2;
+                }
+                else if ((i + 1) < len && (code[i] == '=' && code[i + 1] == '='))
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup("==");
+                    i += 2;
+                }
+                else if (i < len && code[i] == '=')
+                {
+                    token.type = T_ASSIGNMENT;
+                    token.value = strdup("=");
+                    i++;
                 }
                 else if (isdigit(code[i])) 
                 {

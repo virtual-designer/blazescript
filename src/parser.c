@@ -10,6 +10,7 @@
 #include "blaze.h"
 #include "xmalloc.h"
 #include "vector.h"
+#include "string.h"
 
 typedef struct {
     lex_t lexer_data;
@@ -324,7 +325,8 @@ static ast_stmt parser_parse_unary_expr()
 {
     size_t line;
 
-    if (parser_at().value[0] != '+' && parser_at().value[0] != '-' && parser_at().value[0] != '!') 
+    if (parser_at().type != T_UNARY_OPERATOR || 
+        (parser_at().value[0] != '+' && parser_at().value[0] != '-' && parser_at().value[0] != '!')) 
     {
         return parser_parse_call_member_expr();
     }
@@ -410,9 +412,40 @@ static ast_stmt parser_parse_additive_expr()
     return left;
 }
 
-static ast_stmt parser_parse_bin_logical_expr()
+static ast_stmt parser_parse_comparison_expr()
 {
     ast_stmt left = parser_parse_additive_expr();
+    size_t line;
+
+    while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
+        (STREQ(parser_at().value, "=="))) 
+    {
+        line = parser_line();
+
+        char *operator = parser_shift().value;
+        ast_stmt right = parser_parse_additive_expr();
+
+        ast_stmt binop = {
+            .type = NODE_EXPR_BINARY,
+            .operator = STREQ(operator, "==") ? OP_CMP_EQUALS : OP_CMP_EQUALS,
+            .line = line
+        };
+
+        binop.left = xmalloc(sizeof (ast_stmt));
+        memcpy(binop.left, &left, sizeof left);
+
+        binop.right = xmalloc(sizeof (ast_stmt));
+        memcpy(binop.right, &right, sizeof right);
+
+        left = binop;
+    } 
+
+    return left;
+}
+
+static ast_stmt parser_parse_bin_logical_expr()
+{
+    ast_stmt left = parser_parse_comparison_expr();
     size_t line;
 
     while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
@@ -422,7 +455,7 @@ static ast_stmt parser_parse_bin_logical_expr()
         line = parser_line();
 
         char operator = parser_shift().value[0];
-        ast_stmt right = parser_parse_additive_expr();
+        ast_stmt right = parser_parse_comparison_expr();
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
@@ -616,6 +649,64 @@ ast_stmt parser_parse_function_decl()
     };
 }
 
+ast_stmt parser_parse_control_if()
+{
+    parser_shift();
+    parser_expect(T_PAREN_OPEN, "Expected open parenthesis after if keyword");
+    ast_stmt cond = parser_parse_expr();
+    parser_expect(T_PAREN_CLOSE, "Expected close parenthesis before if body");
+    
+    parser_expect(T_BLOCK_BRACE_OPEN, "Expected open brace after if condition");
+
+    ast_stmt *body = NULL; 
+    size_t size = 0;
+    
+    while (!parser_eof() && parser_at().type != T_BLOCK_BRACE_CLOSE)
+    {
+        ast_stmt stmt = parser_parse_stmt();
+        
+        if (stmt.type == NODE_EXPR_CALL && parser_at().type == T_SEMICOLON)
+            parser_shift();
+
+        body = xrealloc(body, sizeof (ast_stmt) * (++size));
+        body[size - 1] = stmt;
+    }
+    
+    parser_expect(T_BLOCK_BRACE_CLOSE, "Expected close brace after if body");
+
+    ast_stmt if_cond = {
+        .type = NODE_CTRL_IF,
+        .if_body = body,
+        .if_size = size,
+        .if_cond = xmalloc(sizeof (ast_stmt)),
+        .else_size = 0,
+        .else_body = NULL
+    };
+
+    memcpy(if_cond.if_cond, &cond, sizeof (ast_stmt));
+
+    if (parser_at().type == T_ELSE)
+    {        
+        parser_shift();
+        parser_expect(T_BLOCK_BRACE_OPEN, "Expected open brace after else");
+
+        while (!parser_eof() && parser_at().type != T_BLOCK_BRACE_CLOSE)
+        {
+            ast_stmt stmt = parser_parse_stmt();
+            
+            if (stmt.type == NODE_EXPR_CALL && parser_at().type == T_SEMICOLON)
+                parser_shift();
+
+            if_cond.else_body = xrealloc(if_cond.else_body, sizeof (ast_stmt) * (++if_cond.else_size));
+            if_cond.else_body[if_cond.else_size - 1] = stmt;
+        }
+
+        parser_expect(T_BLOCK_BRACE_CLOSE, "Expected close brace after else body");
+    }
+
+    return if_cond;
+}
+
 ast_stmt parser_parse_stmt()
 {
     switch (parser_at().type)
@@ -623,11 +714,12 @@ ast_stmt parser_parse_stmt()
         case T_VAR:
         case T_CONST:
             return parser_parse_var_decl();
-        break;
 
         case T_FUNCTION:
             return parser_parse_function_decl();
-        break;
+
+        case T_IF:
+            return parser_parse_control_if();
 
         default:
             return parser_parse_expr();

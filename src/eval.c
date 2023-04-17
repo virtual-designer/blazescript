@@ -158,6 +158,30 @@ runtime_val_t eval_user_function_call(runtime_val_t callee, vector_t args)
     return ret;
 }
 
+#define IS_TRUTHY(val) (NUM(val) != 0)
+
+runtime_val_t eval_ctrl_if(ast_stmt node, scope_t *scope)
+{
+    runtime_val_t cond = eval(*node.if_cond, scope);
+
+    if (IS_TRUTHY(cond))
+    {
+        for (size_t i = 0; i < node.if_size; i++)
+        {
+            eval(node.if_body[i], scope);
+        }
+    }
+    else if (node.else_size > 0 && node.else_body != NULL)
+    {
+        for (size_t i = 0; i < node.else_size; i++)
+        {
+            eval(node.else_body[i], scope);
+        }
+    }
+
+    return BLAZE_NULL;
+}
+
 runtime_val_t eval_call_expr(ast_stmt expr, scope_t *scope)
 {
     vector_t vector = VEC_INIT;
@@ -264,6 +288,15 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
         
         result = (long long int) NUM(left) % (long long int) NUM(right); 
     }
+    else if (operator == OP_CMP_EQUALS)
+    {
+        runtime_val_t val = {
+            .type = VAL_BOOLEAN,
+            .boolval = (NUM(left)) == (NUM(right))
+        };
+
+        return val;
+    }
     else
         blaze_error(true, "invalid binary operator: %d", operator);
     
@@ -294,6 +327,35 @@ bool runtime_val_to_bool(runtime_val_t *val)
     );
 }
 
+runtime_val_t eval_string_binop(runtime_val_t left, runtime_val_t right, ast_operator_t operator)
+{
+    assert(left.type == VAL_STRING && right.type == VAL_STRING);
+
+    if (operator == OP_PLUS)
+    {
+        size_t leftlen = strlen(left.strval);
+        size_t rightlen = strlen(right.strval);
+        size_t len = leftlen + rightlen;
+
+        runtime_val_t str = {
+            .type = VAL_STRING,
+            .strval = xmalloc(len + 1)
+        };
+
+        strncpy(str.strval, left.strval, leftlen);
+        strncat(str.strval, right.strval, rightlen);
+
+        return str;
+    }
+    else if (operator == OP_CMP_EQUALS)
+    {
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN,
+            .boolval = strcmp(left.strval, right.strval) == 0
+        };
+    }
+}
+
 runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
 {
     if (binop.type != NODE_EXPR_BINARY)
@@ -317,11 +379,16 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
         };
     } 
     else if ((right.type == VAL_NUMBER && left.type == VAL_NUMBER) ||
+        (right.type == VAL_BOOLEAN || left.type == VAL_BOOLEAN) ||
         ((right.type == VAL_BOOLEAN || left.type == VAL_BOOLEAN) && 
         (right.type == VAL_NUMBER || left.type == VAL_NUMBER)))
     {
         update_line(binop);
         return eval_numeric_binop(left, right, binop.operator);
+    }
+    else if (right.type == VAL_STRING || left.type == VAL_BOOLEAN)
+    {
+        return eval_string_binop(left, right, binop.operator);
     }
 
     printf("%d %d\n", left.type, right.type);
@@ -463,6 +530,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 
         case NODE_EXPR_CALL:
             return eval_call_expr(astnode, scope);
+
+        case NODE_CTRL_IF:
+            return eval_ctrl_if(astnode, scope);
 
         case NODE_EXPR_MEMBER_ACCESS:
             return eval_member_expr(astnode, scope);

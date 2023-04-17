@@ -6,6 +6,8 @@
 #include "vector.h"
 #include "ast.h"
 
+#define BLAZE_NULL ((runtime_val_t) { .type = VAL_NULL })
+
 typedef enum 
 {
     VAL_NUMBER,

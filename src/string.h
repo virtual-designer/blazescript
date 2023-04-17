@@ -1,7 +1,7 @@
 #ifndef __BLAZE_STRING_H__
 #define __BLAZE_STRING_H__
 
-#include "lexer.h"
+#define STREQ(str1, str2) (strcmp(str1, str2) == 0)
 
 typedef char * string_t;
 

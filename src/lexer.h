@@ -29,7 +29,9 @@ typedef enum
     T_ARRAY_BRACKET_CLOSE,
     T_STRING,
     T_FUNCTION,
-    T_UNARY_OPERATOR
+    T_UNARY_OPERATOR,
+    T_IF,
+    T_ELSE
 } lex_tokentype_t;
 
 typedef struct 

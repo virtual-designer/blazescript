@@ -18,7 +18,8 @@ typedef enum {
     NODE_OBJECT_LITERAL,
     NODE_PROPERTY_LITERAL,
     NODE_EXPR_MEMBER_ACCESS,
-    NODE_STRING
+    NODE_STRING,
+    NODE_CTRL_IF
 } ast_nodetype_t;
 
 typedef enum {
@@ -29,7 +30,13 @@ typedef enum {
     OP_MOD,
     OP_LOGICAL_AND,
     OP_LOGICAL_OR,
-    OP_LOGICAL_NOT
+    OP_LOGICAL_NOT,
+    OP_CMP_EQUALS,
+    OP_CMP_EQUALS_STRICT,
+    OP_CMP_GREATER_THAN,
+    OP_CMP_LESS_THAN,
+    OP_CMP_GREATER_THAN_EQUALS,
+    OP_CMP_LESS_THAN_EQUALS,
 } ast_operator_t;
 
 typedef struct ast_stmt {
@@ -37,12 +44,22 @@ typedef struct ast_stmt {
     size_t line;
 
     union {
-        /* if (type == NODE_PROGRAM || NODE_DECL_FUNCTION) */  
+        /* if (type == NODE_PROGRAM || NODE_DECL_FUNCTION || NODE_CTRL_IF) */  
         struct {
             struct ast_stmt *body;                  /* Array of statements. */
             size_t size;                            /* Size of the array. */
             char *fn_name;                          /* Function name. */
             vector_t argnames;
+        };
+        /* endif */     
+
+        /* if (NODE_CTRL_IF) */  
+        struct {
+            struct ast_stmt *else_body;             /* Array of statements. */
+            struct ast_stmt *if_body;               /* Array of statements. */
+            size_t if_size;                         /* Size of the array. */
+            size_t else_size;                         /* Size of the array. */
+            struct ast_stmt *if_cond;
         };
         /* endif */                
 
