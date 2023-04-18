@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "map.h"
-#include "blaze.h"
+#include "utils.h"
 #include "xmalloc.h"
 #include "scope.h"
 
@@ -41,7 +41,7 @@ static uint32_t hash_function(map_t *map, char *key)
 void map_set(map_t *map, char *key, identifier_t *ptr)
 {
     if (map->count >= map->size)
-        blaze_error(true, "map_set(): overflow detected");
+        utils_error(true, "map_set(): overflow detected");
 
     uint32_t hash = hash_function(map, key);
 

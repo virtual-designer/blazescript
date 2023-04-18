@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 #include "runtimevalues.h"
+#include "utils.h"
 
-#define COLOR(codes, text) "\033[" codes "m" text "\033[0m"
 #define VERSION "1.0.0-beta1"
 
 typedef struct {

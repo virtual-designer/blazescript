@@ -14,7 +14,10 @@ void *xmalloc(size_t size)
     void *ptr = malloc(size);
 
     if (!ptr) 
-        blaze_error(true, "xmalloc: failed to allocate memory");
+    {
+        fprintf(stderr, "xmalloc: failed to allocate memory\n");
+        exit(-1);
+    }
 
     return ptr;
 }
@@ -24,7 +27,10 @@ void *xcalloc(size_t size, size_t blocks)
     void *ptr = calloc(size, blocks);
 
     if (!ptr) 
-        blaze_error(true, "xcalloc: failed to allocate memory");
+    {
+        fprintf(stderr, "xcalloc: failed to allocate memory\n");
+        exit(-1);
+    }
 
     return ptr;
 }
@@ -34,7 +40,10 @@ void *xrealloc(void *oldptr, size_t size)
     void *newptr = realloc(oldptr, size);
 
     if (!newptr) 
-        blaze_error(true, "xrealloc: failed to reallocate memory");
+    {
+        fprintf(stderr, "xrealloc: failed to reallocate memory\n");
+        exit(-1);
+    }
 
     return newptr;
 }

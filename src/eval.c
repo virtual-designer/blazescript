@@ -345,7 +345,7 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
         };
     }
     else
-        blaze_error(true, "invalid binary operator: %d", operator);
+        utils_error(true, "invalid binary operator: %d", operator);
     
     runtime_val_t val = {
         .type = VAL_NUMBER,
@@ -409,7 +409,7 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
 {
     if (binop.type != NODE_EXPR_BINARY)
     {
-        blaze_error(true, "invalid binop found");
+        utils_error(true, "invalid binop found");
     }
 
     update_line(binop);
@@ -452,7 +452,7 @@ runtime_val_t eval_unary_expr(ast_stmt expr, scope_t *scope)
 {
     if (expr.type != NODE_EXPR_UNARY)
     {
-        blaze_error(true, "invalid unary operation found");
+        utils_error(true, "invalid unary operation found");
     }
 
     update_line(expr);

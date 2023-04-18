@@ -63,50 +63,6 @@ void cleanup()
         free(content);
 }
 
-void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
-{
-    if (result->type == VAL_NULL)
-        puts("\033[35mnull\033[0m");
-    else if (result->type == VAL_BOOLEAN)
-        printf("\033[34m%s\033[0m", result->boolval ? "true" : "false");
-    else if (result->type == VAL_STRING)
-        printf("%s" COLOR("%s", "%s") "%s", quote_strings ? COLOR("2", "\"") : "", quote_strings ? "35" : "0", result->strval, quote_strings ? COLOR("2", "\"") : "");
-    else if (result->type == VAL_NUMBER)
-    {
-        if (result->is_float)
-            printf("\033[33m%Lf\033[0m", result->floatval);
-        else
-            printf("\033[33m%lld\033[0m", result->intval);    
-    }
-    else if (result->type == VAL_OBJECT)
-    {
-        printf("Object {\n");
-
-        for (size_t i = 0; i < result->properties.size; i++)
-        {
-            if (result->properties.array[i] == NULL)
-                continue;
-            
-            for (int i = 0; i < tabs; i++)
-                putchar('\t');
-
-            printf("%s: ", result->properties.array[i]->key);
-            handle_result(result->properties.array[i]->value->value, false, tabs + 1, true);
-            printf(",\n");
-        }
-
-        for (int i = 0; i < (tabs - 1); i++)
-            putchar('\t');
-        
-        printf("}");
-    }
-    else 
-        printf("[Unknown Type: %d]", result->type);
-
-    if (newline)
-        printf("\n");
-}
-
 scope_t create_global_scope()
 {
     scope_t global = scope_init(NULL);  

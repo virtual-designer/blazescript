@@ -1,9 +1,8 @@
-OBJECTS := $(patsubst %.c,%.o,$(wildcard src/*.c)) 
-CC = gcc
-CFLAGS = -g -D_DEBUG -D_NODEBUG1 -std=gnu11 -Wall -Wextra
-
-blaze: $(OBJECTS)
-	gcc $(CFLAGS) $(OBJECTS) -o blaze -lm 
+all:
+	$(MAKE) -C src
+	mv src/blaze .
+	mv src/blazec .
 
 clean:
-	rm -frv $(OBJECTS) blaze
+	$(MAKE) -C src clean
+	rm -frv *.o blaze blazec
