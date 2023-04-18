@@ -31,7 +31,8 @@ typedef enum
     T_FUNCTION,
     T_UNARY_OPERATOR,
     T_IF,
-    T_ELSE
+    T_ELSE,
+    T_WHILE,
 } lex_tokentype_t;
 
 typedef struct 

@@ -57,6 +57,8 @@ static lex_tokentype_t lex_keyword(char *s)
         return T_IF;
     if (strcmp(s, "else") == 0)
         return T_ELSE;
+    if (strcmp(s, "while") == 0)
+        return T_WHILE;
 
     return T_SKIPPABLE;
 }
@@ -105,8 +107,6 @@ void lex_tokenize(lex_t *array, char *code)
 
         switch (code[i]) 
         {
-            case '+':
-            case '-':
             case '*':
             case '%':
                 token.type = T_BINARY_OPERATOR;
@@ -209,6 +209,8 @@ void lex_tokenize(lex_t *array, char *code)
             {
                 multi_char = true;
 
+                char c1 = code[i], c2 = i < (len - 1) ? code[i + 1] : '|';
+
                 if (string_parsing)
                     lex_error(true, "Error parsing string");
 
@@ -272,6 +274,54 @@ void lex_tokenize(lex_t *array, char *code)
                     token.type = T_BINARY_OPERATOR;
                     token.value = strdup("==");
                     i += 2;
+                }
+                else if ((i + 1) < len && (code[i] == '>' && code[i + 1] == '='))
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup(">=");
+                    i += 2;
+                }
+                else if ((i + 1) < len && (code[i] == '<' && code[i + 1] == '='))
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup("<=");
+                    i += 2;
+                }
+                else if ((i + 1) < len && (code[i] == '+' && code[i + 1] == '+'))
+                {
+                    token.type = T_UNARY_OPERATOR;
+                    token.value = strdup("++");
+                    i += 2;
+                }
+                else if ((i + 1) < len && (code[i] == '-' && code[i + 1] == '-'))
+                {
+                    token.type = T_UNARY_OPERATOR;
+                    token.value = strdup("--");
+                    i += 2;
+                }
+                else if (i < len && code[i] == '<')
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup("<");
+                    i++;
+                }
+                else if (i < len && code[i] == '>')
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup(">");
+                    i++;
+                }
+                else if (i < len && code[i] == '+')
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup("+");
+                    i++;
+                }
+                else if (i < len && code[i] == '-')
+                {
+                    token.type = T_BINARY_OPERATOR;
+                    token.value = strdup("-");
+                    i++;
                 }
                 else if (i < len && code[i] == '=')
                 {

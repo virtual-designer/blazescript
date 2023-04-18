@@ -39,21 +39,6 @@ identifier_t *scope_declare_identifier(scope_t *scope, char *name, runtime_val_t
     return identifier_heap;
 }
 
-runtime_val_t *scope_assign_identifier(scope_t *scope, char *name, runtime_val_t *value)
-{
-    identifier_t *identifier = map_get(&scope->identifiers, name);
-
-    if (scope->parent == NULL && identifier == NULL) 
-        eval_error(true, "Undefined identifier '%s' in the current scope", name);
-
-    identifier_t copy = *identifier;
-    runtime_val_t *val_heap = xmalloc(sizeof (runtime_val_t));
-    memcpy(val_heap, value, sizeof (runtime_val_t));
-    map_delete(&scope->identifiers, name, true);
-    
-    return scope_declare_identifier(scope, name, val_heap, copy.is_const)->value;
-}
-
 scope_t *scope_resolve_identifier_scope(scope_t *scope, char *name)
 {
     identifier_t *i = map_get(&scope->identifiers, name);
@@ -64,6 +49,23 @@ scope_t *scope_resolve_identifier_scope(scope_t *scope, char *name)
         return scope_resolve_identifier_scope(scope->parent, name);
 
     return scope;
+}
+
+runtime_val_t *scope_assign_identifier(scope_t *scope, char *name, runtime_val_t *value)
+{
+    scope_t *foundscope = scope_resolve_identifier_scope(scope, name);
+    identifier_t *identifier = scope_resolve_identifier(scope, name);
+
+    if (scope->parent == NULL && identifier == NULL) 
+        eval_error(true, "Undefined identifier '%s' in the current scope", name);
+
+    identifier_t copy = *identifier;
+    runtime_val_t *val_heap = xmalloc(sizeof (runtime_val_t));
+    memcpy(val_heap, value, sizeof (runtime_val_t));
+
+    map_delete(&foundscope->identifiers, name, true);
+    
+    return scope_declare_identifier(foundscope, name, val_heap, copy.is_const)->value;
 }
 
 identifier_t *scope_resolve_identifier(scope_t *scope, char *name)

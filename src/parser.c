@@ -325,22 +325,63 @@ static ast_stmt parser_parse_unary_expr()
 {
     size_t line;
 
+    if (conf.lexer_data.size > 1 && conf.lexer_data.tokens[1].type == T_UNARY_OPERATOR)
+    {
+        if (STREQ(conf.lexer_data.tokens[1].value, "++") || STREQ(conf.lexer_data.tokens[1].value, "--"))
+        {
+            if (parser_at().type != T_IDENTIFIER)
+                parser_error(true, "Expression must be a modifiable lvalue");
+
+            ast_stmt left = parser_parse_call_member_expr();
+
+            ast_stmt ret = {
+                .type = NODE_EXPR_UNARY,
+                .right = xmalloc(sizeof left),
+                .operator = STREQ(parser_at().value, "++") ? OP_POST_INCREMENT : (
+                    STREQ(parser_at().value, "--") ? OP_POST_DECREMENT : OP_POST_DECREMENT
+                ),
+                .line = line
+            };
+
+            parser_shift();
+
+            while (!parser_eof() && parser_at().type == T_SEMICOLON)
+                parser_shift();
+            
+            memcpy(ret.right, &left, sizeof left);
+            return ret;
+        }
+    }
+
     if (parser_at().type != T_UNARY_OPERATOR || 
-        (parser_at().value[0] != '+' && parser_at().value[0] != '-' && parser_at().value[0] != '!')) 
+        (
+            parser_at().value[0] != '+' && 
+            parser_at().value[0] != '-' && 
+            parser_at().value[0] != '!' &&
+            !STREQ(parser_at().value, "++") &&
+            !STREQ(parser_at().value, "--")))
     {
         return parser_parse_call_member_expr();
     }
 
-    char operator = parser_shift().value[0];
+    char *full_operator = parser_shift().value;
+    char operator = full_operator[0];
     line = parser_line();
     ast_stmt right = parser_parse_call_member_expr();
 
     ast_stmt ret = {
         .type = NODE_EXPR_UNARY,
         .right = xmalloc(sizeof right),
-        .operator = operator == '+' ? OP_PLUS : operator == '-' ? OP_MINUS : OP_LOGICAL_NOT,
+        .operator = STREQ(full_operator, "++") ? OP_PRE_INCREMENT : (
+            STREQ(full_operator, "--") ? OP_PRE_DECREMENT : (
+                operator == '+' ? OP_PLUS : operator == '-' ? OP_MINUS : OP_LOGICAL_NOT
+            )
+        ),
         .line = line
     };
+
+    while (!parser_eof() && parser_at().type == T_SEMICOLON)
+        parser_shift();
 
     memcpy(ret.right, &right, sizeof right);
 
@@ -418,7 +459,11 @@ static ast_stmt parser_parse_comparison_expr()
     size_t line;
 
     while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
-        (STREQ(parser_at().value, "=="))) 
+        (STREQ(parser_at().value, "==") ||
+         STREQ(parser_at().value, "<") ||
+         STREQ(parser_at().value, "<=") ||
+         STREQ(parser_at().value, ">=") ||
+         STREQ(parser_at().value, ">"))) 
     {
         line = parser_line();
 
@@ -427,7 +472,15 @@ static ast_stmt parser_parse_comparison_expr()
 
         ast_stmt binop = {
             .type = NODE_EXPR_BINARY,
-            .operator = STREQ(operator, "==") ? OP_CMP_EQUALS : OP_CMP_EQUALS,
+            .operator = STREQ(operator, "==") ? OP_CMP_EQUALS : (
+                STREQ(operator, "<") ? OP_CMP_LESS_THAN : (
+                    STREQ(operator, "<=") ? OP_CMP_LESS_THAN_EQUALS : (
+                        STREQ(operator, ">") ? OP_CMP_GREATER_THAN : (
+                            STREQ(operator, ">=") ? OP_CMP_GREATER_THAN_EQUALS : OP_CMP_GREATER_THAN_EQUALS
+                        )
+                    )
+                )
+            ),
             .line = line
         };
 
@@ -677,6 +730,32 @@ ast_stmt parser_parse_codeblock()
     };
 }
 
+ast_stmt parser_parse_control_while()
+{
+    parser_shift();
+    parser_expect(T_PAREN_OPEN, "Expected open parenthesis after while keyword");
+    ast_stmt cond = parser_parse_expr();
+    parser_expect(T_PAREN_CLOSE, "Expected close parenthesis before while body");
+    
+    bool is_block = parser_at().type == T_BLOCK_BRACE_OPEN;
+    ast_stmt if_block = is_block ? parser_parse_codeblock() : parser_parse_stmt();
+
+    while (!is_block && parser_at().type == T_SEMICOLON)
+        parser_shift();
+
+    ast_stmt while_loop = {
+        .type = NODE_CTRL_WHILE,
+        .ctrl_body = xmalloc(sizeof (ast_stmt)),
+        .ctrl_cond = xmalloc(sizeof (ast_stmt)),
+        .line = parser_at().line
+    };
+
+    memcpy(while_loop.ctrl_cond, &cond, sizeof (ast_stmt));
+    memcpy(while_loop.ctrl_body, &if_block, sizeof (ast_stmt));
+
+    return while_loop;
+}
+
 ast_stmt parser_parse_control_if()
 {
     parser_shift();
@@ -692,14 +771,14 @@ ast_stmt parser_parse_control_if()
 
     ast_stmt if_cond = {
         .type = NODE_CTRL_IF,
-        .if_body = xmalloc(sizeof (ast_stmt)),
-        .if_cond = xmalloc(sizeof (ast_stmt)),
+        .ctrl_body = xmalloc(sizeof (ast_stmt)),
+        .ctrl_cond = xmalloc(sizeof (ast_stmt)),
         .else_body = NULL,
         .line = parser_at().line
     };
 
-    memcpy(if_cond.if_cond, &cond, sizeof (ast_stmt));
-    memcpy(if_cond.if_body, &if_block, sizeof (ast_stmt));
+    memcpy(if_cond.ctrl_cond, &cond, sizeof (ast_stmt));
+    memcpy(if_cond.ctrl_body, &if_block, sizeof (ast_stmt));
 
     if (parser_at().type == T_ELSE)
     {        
@@ -729,6 +808,9 @@ ast_stmt parser_parse_stmt()
 
         case T_IF:
             return parser_parse_control_if();
+
+        case T_WHILE:
+            return parser_parse_control_while();
 
         default:
             return parser_parse_expr();

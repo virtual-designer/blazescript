@@ -175,15 +175,29 @@ runtime_val_t eval_block(ast_stmt block, scope_t *scope)
 
 runtime_val_t eval_ctrl_if(ast_stmt node, scope_t *scope)
 {
-    runtime_val_t cond = eval(*node.if_cond, scope);
+    runtime_val_t cond = eval(*node.ctrl_cond, scope);
 
     if (IS_TRUTHY(cond))
     {
-        eval(*node.if_body, scope);
+        eval(*node.ctrl_body, scope);
     }
     else if (node.else_body != NULL)
     {
         eval(*node.else_body, scope);
+    }
+
+    return BLAZE_NULL;
+}
+
+runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
+{
+    runtime_val_t cond = eval(*node.ctrl_cond, scope);
+
+    while (IS_TRUTHY(cond))
+    {
+        eval(*node.ctrl_body, scope);
+        // __debug_map_print(&scope->identifiers, false);
+        cond = eval(*node.ctrl_cond, scope);
     }
 
     return BLAZE_NULL;
@@ -297,12 +311,38 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
     }
     else if (operator == OP_CMP_EQUALS)
     {
-        runtime_val_t val = {
+        return (runtime_val_t) {
             .type = VAL_BOOLEAN,
             .boolval = (NUM(left)) == (NUM(right))
         };
-
-        return val;
+    }
+    else if (operator == OP_CMP_LESS_THAN)
+    {
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN,
+            .boolval = (NUM(left)) < (NUM(right))
+        };
+    }
+    else if (operator == OP_CMP_LESS_THAN_EQUALS)
+    {
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN,
+            .boolval = (NUM(left)) <= (NUM(right))
+        };
+    }
+    else if (operator == OP_CMP_GREATER_THAN)
+    {
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN,
+            .boolval = (NUM(left)) > (NUM(right))
+        };
+    }
+    else if (operator == OP_CMP_GREATER_THAN_EQUALS)
+    {
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN,
+            .boolval = (NUM(left)) >= (NUM(right))
+        };
     }
     else
         blaze_error(true, "invalid binary operator: %d", operator);
@@ -417,14 +457,13 @@ runtime_val_t eval_unary_expr(ast_stmt expr, scope_t *scope)
 
     update_line(expr);
 
-    runtime_val_t right = eval(*expr.right, scope);
+    runtime_val_t operand = eval(*expr.right, scope);
 
-    
     if (expr.operator == OP_LOGICAL_NOT) 
     {
-        if (right.type == VAL_NUMBER || right.type == VAL_NULL || right.type == VAL_BOOLEAN)
+        if (operand.type == VAL_NUMBER || operand.type == VAL_NULL || operand.type == VAL_BOOLEAN)
         {
-            if (right.type == VAL_NULL)
+            if (operand.type == VAL_NULL)
                 return (runtime_val_t) {
                         .type = VAL_BOOLEAN, 
                         .boolval = true
@@ -432,7 +471,7 @@ runtime_val_t eval_unary_expr(ast_stmt expr, scope_t *scope)
 
             return (runtime_val_t) { 
                 .type = VAL_BOOLEAN,
-                .boolval = !(NUM(right))
+                .boolval = !(NUM(operand))
             };
         }
         else
@@ -444,21 +483,53 @@ runtime_val_t eval_unary_expr(ast_stmt expr, scope_t *scope)
         }
     }
 
-    if (right.type != VAL_NUMBER)
+    if (operand.type != VAL_NUMBER)
         eval_error(true, "Cannot apply unary plus or minus operators on a non-number value");
-
-    assert(expr.operator == OP_PLUS || expr.operator == OP_MINUS);
 
     runtime_val_t ret = {
         .type = VAL_NUMBER,
         .literal = false,
-        .is_float = right.is_float,
+        .is_float = operand.is_float,
     };
 
-    if (right.is_float)
-        ret.floatval = expr.operator == OP_PLUS ? +right.floatval : -right.floatval;
-    else 
-        ret.intval = expr.operator == OP_PLUS ? +right.intval : -right.intval;
+    if (expr.operator == OP_PLUS || expr.operator == OP_MINUS)
+    {
+        if (operand.is_float)
+            ret.floatval = expr.operator == OP_PLUS ? +operand.floatval : -operand.floatval;
+        else 
+            ret.intval = expr.operator == OP_PLUS ? +operand.intval : -operand.intval;
+    }
+    else if (expr.operator == OP_PRE_INCREMENT || expr.operator == OP_PRE_DECREMENT)
+    {
+        if (expr.right->type != NODE_IDENTIFIER)
+            eval_error(true, "Expression must a modifiable lvalue");
+            
+        if (operand.is_float)
+            ret.floatval = expr.operator == OP_PRE_INCREMENT ? ++operand.floatval : --operand.floatval;
+        else 
+            ret.intval = expr.operator == OP_PRE_INCREMENT ? ++operand.intval : --operand.intval;
+
+        scope_assign_identifier(scope, expr.right->symbol, &ret);        
+    }
+    else if (expr.operator == OP_POST_INCREMENT || expr.operator == OP_POST_DECREMENT)
+    {
+        if (expr.right->type != NODE_IDENTIFIER)
+            eval_error(true, "Expression must a modifiable lvalue");
+        
+        runtime_val_t store = ret;
+
+        if (operand.is_float)
+            ret.floatval = operand.floatval;
+        else
+            ret.intval = operand.intval;
+
+        if (operand.is_float)
+            store.floatval = expr.operator == OP_POST_INCREMENT ? operand.floatval + 1 : operand.floatval - 1;
+        else 
+            store.intval = expr.operator == OP_POST_INCREMENT ? operand.intval + 1 : operand.intval - 1;
+
+        scope_assign_identifier(scope, expr.right->symbol, &store);        
+    }
 
     return ret;
 }
@@ -545,6 +616,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 
         case NODE_CTRL_IF:
             return eval_ctrl_if(astnode, scope);
+
+        case NODE_CTRL_WHILE:
+            return eval_ctrl_while(astnode, scope);
 
         case NODE_EXPR_MEMBER_ACCESS:
             return eval_member_expr(astnode, scope);

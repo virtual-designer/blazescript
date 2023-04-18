@@ -20,6 +20,7 @@ typedef enum {
     NODE_EXPR_MEMBER_ACCESS,
     NODE_STRING,
     NODE_CTRL_IF,
+    NODE_CTRL_WHILE,
     NODE_BLOCK
 } ast_nodetype_t;
 
@@ -38,6 +39,10 @@ typedef enum {
     OP_CMP_LESS_THAN,
     OP_CMP_GREATER_THAN_EQUALS,
     OP_CMP_LESS_THAN_EQUALS,
+    OP_PRE_INCREMENT,
+    OP_PRE_DECREMENT,
+    OP_POST_INCREMENT,
+    OP_POST_DECREMENT
 } ast_operator_t;
 
 typedef struct ast_stmt {
@@ -54,11 +59,11 @@ typedef struct ast_stmt {
         };
         /* endif */     
 
-        /* if (NODE_CTRL_IF) */  
+        /* if (NODE_CTRL_IF || NODE_CTRL_WHILE) */  
         struct {
             struct ast_stmt *else_body;             /* Single statement. */
-            struct ast_stmt *if_body;               /* Single statement. */
-            struct ast_stmt *if_cond;
+            struct ast_stmt *ctrl_body;               /* Single statement. */
+            struct ast_stmt *ctrl_cond;
         };
         /* endif */                
 
