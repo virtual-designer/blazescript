@@ -33,4 +33,4 @@ blazec: $(BLAZEC_OBJECTS)
 	$(CC) $(CFLAGS) $(BLAZEC_OBJECTS) -o $@ -lm 
 
 clean:
-	rm -frv $(OBJECTS) blaze blazec
+	rm -frv $(BLAZEC_OBJECTS) $(BLAZE_OBJECTS) blaze blazec
