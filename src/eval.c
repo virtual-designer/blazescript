@@ -160,23 +160,30 @@ runtime_val_t eval_user_function_call(runtime_val_t callee, vector_t args)
 
 #define IS_TRUTHY(val) (NUM(val) != 0)
 
+runtime_val_t eval_block(ast_stmt block, scope_t *scope)
+{
+    scope_t newscope = scope_init(scope);
+
+    for (size_t i = 0; i < block.size; i++)
+    {
+        eval(block.body[i], &newscope);
+    }
+
+    scope_free(&newscope);
+    return BLAZE_NULL;
+}
+
 runtime_val_t eval_ctrl_if(ast_stmt node, scope_t *scope)
 {
     runtime_val_t cond = eval(*node.if_cond, scope);
 
     if (IS_TRUTHY(cond))
     {
-        for (size_t i = 0; i < node.if_size; i++)
-        {
-            eval(node.if_body[i], scope);
-        }
+        eval(*node.if_body, scope);
     }
-    else if (node.else_size > 0 && node.else_body != NULL)
+    else if (node.else_body != NULL)
     {
-        for (size_t i = 0; i < node.else_size; i++)
-        {
-            eval(node.else_body[i], scope);
-        }
+        eval(*node.else_body, scope);
     }
 
     return BLAZE_NULL;
@@ -354,6 +361,8 @@ runtime_val_t eval_string_binop(runtime_val_t left, runtime_val_t right, ast_ope
             .boolval = strcmp(left.strval, right.strval) == 0
         };
     }
+
+    return BLAZE_NULL;
 }
 
 runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
@@ -518,6 +527,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             val.strval = astnode.strval;
             val.literal = true;
         break;
+
+        case NODE_BLOCK:
+            return eval_block(astnode, scope);
 
         case NODE_DECL_FUNCTION:
             return eval_function_decl(astnode, scope);

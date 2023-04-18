@@ -19,7 +19,8 @@ typedef enum {
     NODE_PROPERTY_LITERAL,
     NODE_EXPR_MEMBER_ACCESS,
     NODE_STRING,
-    NODE_CTRL_IF
+    NODE_CTRL_IF,
+    NODE_BLOCK
 } ast_nodetype_t;
 
 typedef enum {
@@ -44,7 +45,7 @@ typedef struct ast_stmt {
     size_t line;
 
     union {
-        /* if (type == NODE_PROGRAM || NODE_DECL_FUNCTION || NODE_CTRL_IF) */  
+        /* if (type == NODE_PROGRAM || NODE_DECL_FUNCTION || NODE_BLOCK) */  
         struct {
             struct ast_stmt *body;                  /* Array of statements. */
             size_t size;                            /* Size of the array. */
@@ -55,10 +56,8 @@ typedef struct ast_stmt {
 
         /* if (NODE_CTRL_IF) */  
         struct {
-            struct ast_stmt *else_body;             /* Array of statements. */
-            struct ast_stmt *if_body;               /* Array of statements. */
-            size_t if_size;                         /* Size of the array. */
-            size_t else_size;                         /* Size of the array. */
+            struct ast_stmt *else_body;             /* Single statement. */
+            struct ast_stmt *if_body;               /* Single statement. */
             struct ast_stmt *if_cond;
         };
         /* endif */                

@@ -649,18 +649,13 @@ ast_stmt parser_parse_function_decl()
     };
 }
 
-ast_stmt parser_parse_control_if()
+ast_stmt parser_parse_codeblock()
 {
-    parser_shift();
-    parser_expect(T_PAREN_OPEN, "Expected open parenthesis after if keyword");
-    ast_stmt cond = parser_parse_expr();
-    parser_expect(T_PAREN_CLOSE, "Expected close parenthesis before if body");
-    
-    parser_expect(T_BLOCK_BRACE_OPEN, "Expected open brace after if condition");
-
     ast_stmt *body = NULL; 
     size_t size = 0;
-    
+
+    parser_expect(T_BLOCK_BRACE_OPEN, "Expected open braces to start block");
+
     while (!parser_eof() && parser_at().type != T_BLOCK_BRACE_CLOSE)
     {
         ast_stmt stmt = parser_parse_stmt();
@@ -671,37 +666,51 @@ ast_stmt parser_parse_control_if()
         body = xrealloc(body, sizeof (ast_stmt) * (++size));
         body[size - 1] = stmt;
     }
+
+    parser_expect(T_BLOCK_BRACE_CLOSE, "Missing close braces to end block");
+
+    return (ast_stmt) {
+        .type = NODE_BLOCK,
+        .body = body,
+        .size = size,
+        .line = parser_at().line
+    };
+}
+
+ast_stmt parser_parse_control_if()
+{
+    parser_shift();
+    parser_expect(T_PAREN_OPEN, "Expected open parenthesis after if keyword");
+    ast_stmt cond = parser_parse_expr();
+    parser_expect(T_PAREN_CLOSE, "Expected close parenthesis before if body");
     
-    parser_expect(T_BLOCK_BRACE_CLOSE, "Expected close brace after if body");
+    bool is_if_block = parser_at().type == T_BLOCK_BRACE_OPEN;
+    ast_stmt if_block = is_if_block ? parser_parse_codeblock() : parser_parse_stmt();
+
+    while (!is_if_block && parser_at().type == T_SEMICOLON)
+        parser_shift();
 
     ast_stmt if_cond = {
         .type = NODE_CTRL_IF,
-        .if_body = body,
-        .if_size = size,
+        .if_body = xmalloc(sizeof (ast_stmt)),
         .if_cond = xmalloc(sizeof (ast_stmt)),
-        .else_size = 0,
-        .else_body = NULL
+        .else_body = NULL,
+        .line = parser_at().line
     };
 
     memcpy(if_cond.if_cond, &cond, sizeof (ast_stmt));
+    memcpy(if_cond.if_body, &if_block, sizeof (ast_stmt));
 
     if (parser_at().type == T_ELSE)
     {        
         parser_shift();
-        parser_expect(T_BLOCK_BRACE_OPEN, "Expected open brace after else");
+        bool is_else_block = parser_at().type == T_BLOCK_BRACE_OPEN;
+        ast_stmt else_block = parser_at().type == T_BLOCK_BRACE_OPEN ? parser_parse_codeblock() : parser_parse_stmt();
+        if_cond.else_body = xmalloc(sizeof (ast_stmt));
+        memcpy(if_cond.else_body, &else_block, sizeof (ast_stmt));
 
-        while (!parser_eof() && parser_at().type != T_BLOCK_BRACE_CLOSE)
-        {
-            ast_stmt stmt = parser_parse_stmt();
-            
-            if (stmt.type == NODE_EXPR_CALL && parser_at().type == T_SEMICOLON)
-                parser_shift();
-
-            if_cond.else_body = xrealloc(if_cond.else_body, sizeof (ast_stmt) * (++if_cond.else_size));
-            if_cond.else_body[if_cond.else_size - 1] = stmt;
-        }
-
-        parser_expect(T_BLOCK_BRACE_CLOSE, "Expected close brace after else body");
+        while (!is_else_block && parser_at().type == T_SEMICOLON)
+            parser_shift();
     }
 
     return if_cond;
