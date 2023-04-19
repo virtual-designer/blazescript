@@ -1,6 +1,7 @@
 *.o
 *.exe
 /blaze
+/blazec
 /.vscode
 *.bak
 /*.bs
@@ -8,3 +9,9 @@
 /backup
 /test.c
 /test
+/*.ll
+/main
+/*.a
+src/blazec*
+src/compile*
+src/blaze_stdlib*
