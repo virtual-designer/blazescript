@@ -7,7 +7,7 @@
 
 void utils_error(bool _exit, const char *fmt, ...) 
 {
-    char *fmtadd = "%s: " COLOR("1;31", "error") ": %s\n";
+    char *fmtadd = COLOR("1", "%s") ": " COLOR("1;31", "error") ": %s\n";
     size_t len = strlen(fmtadd) + strlen(config.progname);
     char str[len];
     va_list args;

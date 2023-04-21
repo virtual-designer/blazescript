@@ -12,6 +12,5 @@
 /*.ll
 /main
 /*.a
-src/blazec*
-src/compile*
-src/blaze_stdlib*
+/blazevm
+/.idea

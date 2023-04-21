@@ -4,6 +4,8 @@
 #include "map.h"
 #include "runtimevalues.h"
 
+#define IDENTIFIER_MAX 256
+
 typedef struct scope {
     struct scope *parent;
     map_t identifiers;

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <errno.h>
 #include <assert.h>
 
 #include "xmalloc.h"
@@ -41,8 +42,8 @@ void *xrealloc(void *oldptr, size_t size)
 
     if (!newptr) 
     {
-        fprintf(stderr, "xrealloc: failed to reallocate memory\n");
-        exit(-1);
+        fprintf(stderr, "xrealloc: failed to reallocate memory: %s\n", strerror(errno));
+        assert(false);
     }
 
     return newptr;
