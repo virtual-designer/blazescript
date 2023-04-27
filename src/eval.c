@@ -162,15 +162,64 @@ runtime_val_t eval_user_function_call(runtime_val_t callee, vector_t args)
 
 runtime_val_t eval_block(ast_stmt block, scope_t *scope)
 {
-    scope_t newscope = scope_init(scope);
+    scope_t new_scope = scope_init(scope);
 
     for (size_t i = 0; i < block.size; i++)
     {
-        eval(block.body[i], &newscope);
+        eval(block.body[i], &new_scope);
+
+        if (new_scope.is_broken)
+        {
+            puts("Broken");
+            break;
+        }
+
+        if (new_scope.is_continued)
+        {
+            new_scope.is_continued = false;
+            continue;
+        }
     }
 
-    scope_free(&newscope);
+    scope_free(&new_scope);
     return BLAZE_NULL;
+}
+
+typedef enum {
+    LS_RET,
+    LS_BREAK,
+    LS_CONT
+} loop_status_t;
+
+loop_status_t eval_if_block(ast_stmt block, scope_t *scope)
+{
+    assert(block.type == NODE_BLOCK);
+
+    scope_t new_scope = scope_init(scope);
+
+    for (size_t i = 0; i < block.size; i++)
+    {
+        eval(block.body[i], &new_scope);
+
+        if (new_scope.is_broken)
+        {
+            break;
+        }
+
+        if (new_scope.is_continued)
+        {
+            break;
+        }
+    }
+
+    bool continued = new_scope.is_continued;
+    bool broken = new_scope.is_broken;
+
+    scope_free(&new_scope);
+
+    return continued ? LS_CONT : (
+        broken ? LS_BREAK : LS_RET
+    );
 }
 
 runtime_val_t eval_ctrl_if(ast_stmt node, scope_t *scope)
@@ -179,14 +228,62 @@ runtime_val_t eval_ctrl_if(ast_stmt node, scope_t *scope)
 
     if (IS_TRUTHY(cond))
     {
-        eval(*node.ctrl_body, scope);
+        if (node.ctrl_body->type == NODE_BLOCK)
+            return BLAZE_INT(eval_if_block(*node.ctrl_body, scope));
+        else
+            eval(*node.ctrl_body, scope);
     }
     else if (node.else_body != NULL)
     {
-        eval(*node.else_body, scope);
+        if (node.else_body->type == NODE_BLOCK)
+            return BLAZE_INT(eval_if_block(*node.else_body, scope));
+        else
+            eval(*node.else_body, scope);
     }
 
     return BLAZE_NULL;
+}
+
+loop_status_t eval_loop_block(ast_stmt block, scope_t *scope)
+{
+    assert(block.type == NODE_BLOCK);
+
+    scope_t new_scope = scope_init(scope);
+
+    for (size_t i = 0; i < block.size; i++)
+    {
+        runtime_val_t value = eval(block.body[i], &new_scope);
+
+        if (block.body[i].type == NODE_CTRL_IF)
+        {
+            if (value.type == VAL_NUMBER)
+            {
+                if (value.intval == LS_BREAK)
+                    new_scope.is_broken = true;
+                else if (value.intval == LS_CONT)
+                    new_scope.is_continued = true;
+            }
+        }
+
+        if (new_scope.is_broken)
+        {
+            break;
+        }
+
+        if (new_scope.is_continued)
+        {
+            break;
+        }
+    }
+
+    bool continued = new_scope.is_continued;
+    bool broken = new_scope.is_broken;
+
+    scope_free(&new_scope);
+
+    return continued ? LS_CONT : (
+        broken ? LS_BREAK : LS_RET
+    );
 }
 
 runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
@@ -195,8 +292,22 @@ runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
 
     while (IS_TRUTHY(cond))
     {
-        eval(*node.ctrl_body, scope);
-        // __debug_map_print(&scope->identifiers, false);
+        if (node.ctrl_body->type == NODE_BLOCK)
+        {
+            int status = eval_loop_block(*node.ctrl_body, scope);
+
+            if (status == LS_CONT)
+            {
+                cond = eval(*node.ctrl_cond, scope);
+                continue;
+            }
+
+            if (status == LS_BREAK)
+                break;
+        }
+        else
+            eval(*node.ctrl_body, scope);
+
         cond = eval(*node.ctrl_cond, scope);
     }
 
@@ -660,6 +771,17 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
             val.strval = astnode.strval;
             val.literal = true;
         break;
+
+        case NODE_CTRL_BREAK:
+        case NODE_CTRL_CONTINUE:
+            if (astnode.type == NODE_CTRL_BREAK)
+                scope->is_broken = true;
+            else
+                scope->is_continued = true;
+
+            return (runtime_val_t) {
+                .type = VAL_NULL
+            };
 
         case NODE_BLOCK:
             return eval_block(astnode, scope);

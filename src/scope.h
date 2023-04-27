@@ -10,6 +10,8 @@ typedef struct scope {
     struct scope *parent;
     map_t identifiers;
     char *name;
+    bool is_broken;
+    bool is_continued;
 } scope_t;
 
 scope_t scope_init(scope_t *parent_scope);

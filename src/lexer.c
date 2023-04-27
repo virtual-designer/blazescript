@@ -63,6 +63,10 @@ static lex_tokentype_t lex_keyword(char *s)
         return T_LOOP;
     if (strcmp(s, "as") == 0)
         return T_AS;
+    if (strcmp(s, "break") == 0)
+        return T_BREAK;
+    if (strcmp(s, "continue") == 0)
+        return T_CONTINUE;
 
     return T_SKIPPABLE;
 }

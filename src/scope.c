@@ -14,7 +14,7 @@
 
 scope_t scope_init(scope_t *parent_scope)
 {
-    scope_t scope = { .parent = parent_scope };
+    scope_t scope = { .parent = parent_scope, .is_broken = false, .is_continued = false };
     scope.identifiers = MAP_INIT(identifier_t *, SCOPE_STACK_SIZE);
     scope.name = strdup("Something: %d  ");
     sprintf(scope.name, "Something: %d", rand() % 9);

@@ -832,6 +832,12 @@ ast_stmt parser_parse_control_if()
     return if_cond;
 }
 
+void parser_shift_semicolons()
+{
+    while (parser_at().type == T_SEMICOLON)
+        parser_shift();
+}
+
 ast_stmt parser_parse_stmt()
 {
     switch (parser_at().type)
@@ -851,6 +857,17 @@ ast_stmt parser_parse_stmt()
 
         case T_LOOP:
             return parser_parse_control_loop();
+
+        case T_BREAK:
+        case T_CONTINUE:
+        {
+            lex_tokentype_t type = parser_shift().type;
+            parser_shift_semicolons();
+
+            return (ast_stmt) {
+                .type = type == T_BREAK ? NODE_CTRL_BREAK : NODE_CTRL_CONTINUE
+            };
+        }
 
         default:
             return parser_parse_expr();

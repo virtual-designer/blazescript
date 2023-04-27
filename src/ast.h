@@ -22,7 +22,9 @@ typedef enum {
     NODE_CTRL_IF,
     NODE_CTRL_WHILE,
     NODE_BLOCK,
-    NODE_CTRL_LOOP
+    NODE_CTRL_LOOP,
+    NODE_CTRL_BREAK,
+    NODE_CTRL_CONTINUE
 } ast_nodetype_t;
 
 typedef enum {
