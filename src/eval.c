@@ -203,6 +203,25 @@ runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
     return BLAZE_NULL;
 }
 
+runtime_val_t eval_ctrl_loop_block(ast_stmt block, scope_t *scope, char *ctrl_loop_identifier, long long int iteration)
+{
+    assert(block.type == NODE_BLOCK);
+    scope_t new_scope = scope_init(scope);
+
+    scope_declare_identifier(&new_scope, ctrl_loop_identifier == NULL ? "iteration" : ctrl_loop_identifier, & (runtime_val_t) {
+        .type = VAL_NUMBER,
+        .intval = iteration
+    }, false);
+
+    for (size_t i = 0; i < block.size; i++)
+    {
+        eval(block.body[i], &new_scope);
+    }
+
+    scope_free(&new_scope);
+    return BLAZE_NULL;
+}
+
 runtime_val_t eval_ctrl_loop(ast_stmt node, scope_t *scope)
 {
     runtime_val_t cond = eval(*node.ctrl_cond, scope);
@@ -220,13 +239,27 @@ runtime_val_t eval_ctrl_loop(ast_stmt node, scope_t *scope)
 
     if (cond.type == VAL_BOOLEAN && cond.boolval == true)
     {
+        long long int i = 0;
+
         while (true)
-            eval(*node.ctrl_body, scope);
+        {
+            if (node.ctrl_body->type == NODE_BLOCK)
+                eval_ctrl_loop_block(*node.ctrl_body, scope, node.ctrl_loop_identifier, i);
+            else
+                eval(*node.ctrl_body, scope);
+
+            i++;
+        }
     }
     else
     {
         for (long long int i = 0; i < value; i++)
-            eval(*node.ctrl_body, scope);
+        {
+            if (node.ctrl_body->type == NODE_BLOCK)
+                eval_ctrl_loop_block(*node.ctrl_body, scope, node.ctrl_loop_identifier, i);
+            else
+                eval(*node.ctrl_body, scope);
+        }
     }
 
     return BLAZE_NULL;

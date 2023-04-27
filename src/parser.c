@@ -758,11 +758,24 @@ ast_stmt parser_parse_control_while()
 
 ast_stmt parser_parse_control_loop()
 {
+    ast_stmt loop = {
+        .type = NODE_CTRL_LOOP,
+        .ctrl_loop_identifier = NULL
+    };
+
     parser_shift();
     ast_stmt cond = parser_at().type == T_BLOCK_BRACE_OPEN ? (ast_stmt) {
         .type = NODE_IDENTIFIER,
         .symbol = strdup("true")
     } : parser_parse_expr();
+
+    assert(parser_at().type == T_AS);
+
+    if (parser_at().type == T_AS)
+    {
+        parser_shift();
+        loop.ctrl_loop_identifier = parser_expect(T_IDENTIFIER, "Expected identifier after `as' keyword").value;
+    }
 
     bool is_block = parser_at().type == T_BLOCK_BRACE_OPEN;
     ast_stmt if_block = is_block ? parser_parse_codeblock() : parser_parse_stmt();
@@ -770,12 +783,9 @@ ast_stmt parser_parse_control_loop()
     while (!is_block && parser_at().type == T_SEMICOLON)
         parser_shift();
 
-    ast_stmt loop = {
-        .type = NODE_CTRL_LOOP,
-        .ctrl_body = xmalloc(sizeof (ast_stmt)),
-        .ctrl_cond = xmalloc(sizeof (ast_stmt)),
-        .line = parser_at().line
-    };
+    loop.ctrl_body = xmalloc(sizeof (ast_stmt));
+    loop.ctrl_cond = xmalloc(sizeof (ast_stmt));
+    loop.line = parser_at().line;
 
     memcpy(loop.ctrl_cond, &cond, sizeof (ast_stmt));
     memcpy(loop.ctrl_body, &if_block, sizeof (ast_stmt));

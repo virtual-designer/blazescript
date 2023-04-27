@@ -34,6 +34,7 @@ typedef enum
     T_ELSE,
     T_WHILE,
     T_LOOP,
+    T_AS
 } lex_tokentype_t;
 
 typedef struct 

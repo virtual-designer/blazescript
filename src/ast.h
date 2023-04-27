@@ -65,6 +65,7 @@ typedef struct ast_stmt {
             struct ast_stmt *else_body;             /* Single statement. */
             struct ast_stmt *ctrl_body;               /* Single statement. */
             struct ast_stmt *ctrl_cond;
+            char *ctrl_loop_identifier;
         };
         /* endif */                
 
