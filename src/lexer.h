@@ -33,6 +33,7 @@ typedef enum
     T_IF,
     T_ELSE,
     T_WHILE,
+    T_LOOP,
 } lex_tokentype_t;
 
 typedef struct 

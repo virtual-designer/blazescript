@@ -756,6 +756,33 @@ ast_stmt parser_parse_control_while()
     return while_loop;
 }
 
+ast_stmt parser_parse_control_loop()
+{
+    parser_shift();
+    ast_stmt cond = parser_at().type == T_BLOCK_BRACE_OPEN ? (ast_stmt) {
+        .type = NODE_IDENTIFIER,
+        .symbol = strdup("true")
+    } : parser_parse_expr();
+
+    bool is_block = parser_at().type == T_BLOCK_BRACE_OPEN;
+    ast_stmt if_block = is_block ? parser_parse_codeblock() : parser_parse_stmt();
+
+    while (!is_block && parser_at().type == T_SEMICOLON)
+        parser_shift();
+
+    ast_stmt loop = {
+        .type = NODE_CTRL_LOOP,
+        .ctrl_body = xmalloc(sizeof (ast_stmt)),
+        .ctrl_cond = xmalloc(sizeof (ast_stmt)),
+        .line = parser_at().line
+    };
+
+    memcpy(loop.ctrl_cond, &cond, sizeof (ast_stmt));
+    memcpy(loop.ctrl_body, &if_block, sizeof (ast_stmt));
+
+    return loop;
+}
+
 ast_stmt parser_parse_control_if()
 {
     parser_shift();
@@ -811,6 +838,9 @@ ast_stmt parser_parse_stmt()
 
         case T_WHILE:
             return parser_parse_control_while();
+
+        case T_LOOP:
+            return parser_parse_control_loop();
 
         default:
             return parser_parse_expr();

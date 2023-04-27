@@ -203,6 +203,35 @@ runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
     return BLAZE_NULL;
 }
 
+runtime_val_t eval_ctrl_loop(ast_stmt node, scope_t *scope)
+{
+    runtime_val_t cond = eval(*node.ctrl_cond, scope);
+
+    if (cond.type != VAL_NUMBER && cond.type != VAL_BOOLEAN)
+        eval_error(true, "Non-numeric values cannot be used with loop statement");
+
+    if (cond.is_float)
+        eval_error(true, "Float values cannot be used with loop statement");
+
+    long long int value = cond.intval;
+
+    if (value < 0)
+        eval_error(true, "Negative numbers cannot be used with loop statement");
+
+    if (cond.type == VAL_BOOLEAN && cond.boolval == true)
+    {
+        while (true)
+            eval(*node.ctrl_body, scope);
+    }
+    else
+    {
+        for (long long int i = 0; i < value; i++)
+            eval(*node.ctrl_body, scope);
+    }
+
+    return BLAZE_NULL;
+}
+
 runtime_val_t eval_call_expr(ast_stmt expr, scope_t *scope)
 {
     vector_t vector = VEC_INIT;
@@ -619,6 +648,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 
         case NODE_CTRL_WHILE:
             return eval_ctrl_while(astnode, scope);
+
+        case NODE_CTRL_LOOP:
+            return eval_ctrl_loop(astnode, scope);
 
         case NODE_EXPR_MEMBER_ACCESS:
             return eval_member_expr(astnode, scope);

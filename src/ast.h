@@ -21,7 +21,8 @@ typedef enum {
     NODE_STRING,
     NODE_CTRL_IF,
     NODE_CTRL_WHILE,
-    NODE_BLOCK
+    NODE_BLOCK,
+    NODE_CTRL_LOOP
 } ast_nodetype_t;
 
 typedef enum {
@@ -59,7 +60,7 @@ typedef struct ast_stmt {
         };
         /* endif */     
 
-        /* if (NODE_CTRL_IF || NODE_CTRL_WHILE) */  
+        /* if (NODE_CTRL_IF || NODE_CTRL_WHILE || NODE_CTRL_LOOP) */
         struct {
             struct ast_stmt *else_body;             /* Single statement. */
             struct ast_stmt *ctrl_body;               /* Single statement. */
