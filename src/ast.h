@@ -48,6 +48,14 @@ typedef enum {
     OP_POST_DECREMENT
 } ast_operator_t;
 
+typedef enum {
+    DT_UNKNOWN,
+    DT_INT,
+    DT_FLOAT,
+    DT_STRING,
+    DT_NULL
+} data_type_t;
+
 typedef struct ast_stmt {
     ast_nodetype_t type;                            /* Type of this statement. */
     size_t line;

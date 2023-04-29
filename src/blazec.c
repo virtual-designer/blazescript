@@ -65,12 +65,6 @@ static void blazec_init(int argc, char **argv)
     }
 
     config.outfile[i] = '\0';
-
-    // config.outfile[i] = '.';
-    // config.outfile[i + 1] = 'b';
-    // config.outfile[i + 2] = 'v';
-    // config.outfile[i + 3] = 'm';
-    // config.outfile[i + 4] = '\0';
 }
 
 static bool blazec_is_empty_file()
@@ -89,20 +83,7 @@ static bool blazec_is_empty_file()
 static void blazec_start_compilation()
 {
     FILE *output_file = fopen(config.outfile, "wb");
-    bool empty = blazec_is_empty_file();    
-
-    // bytecode_t bytecode = BYTECODE_INIT; 
-
-    // uint8_t bytes[] = {
-    //     OP_TEST,
-    //     OP_HLT
-    // };
-
-    // for (size_t i = 0; i < (sizeof (bytes) / sizeof (bytes[0])); i++)
-    // {
-    //     bytecode.bytes = xrealloc(bytecode.bytes, ++bytecode.size);
-    //     bytecode.bytes[i] = bytes[i];
-    // }
+    bool empty = blazec_is_empty_file();
 
     bytecode_write_magic_header(output_file);
     bytecode_write_shebang(output_file);

@@ -19,7 +19,11 @@ BLAZEC_OBJECTS = src/blazec.o \
 				 src/utils.o \
 				 src/bytecode.o \
 				 src/opcode.o \
-				 src/compile.o
+				 src/compile.o \
+				 src/functions.o \
+				 src/eval.o \
+				 src/scope.o \
+				 src/map.o
 
 BLAZEVM_OBJECTS = src/blazevm.o \
 				 src/debug.o \
@@ -28,7 +32,11 @@ BLAZEVM_OBJECTS = src/blazevm.o \
 				 src/utils.o \
 				 src/bytecode.o \
 				 src/opcode.o \
-				 src/compile.o
+				 src/compile.o \
+				 src/functions.o \
+				 src/eval.o \
+				 src/scope.o \
+				 src/map.o
 
 # BLAZE_STDLIB_OBJECTS = blaze_stdlib.o
 

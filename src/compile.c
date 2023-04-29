@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <sys/types.h>
+#include <string.h>
 
 #include "opcode.h"
 #include "bytecode.h"
@@ -7,6 +8,7 @@
 #include "ast.h"
 #include "vector.h"
 #include "utils.h"
+#include "runtimevalues.h"
 
 static void compile_program(ast_stmt astnode, bytecode_t *bytecode)
 {
@@ -21,6 +23,28 @@ static void compile_number(ast_stmt astnode, bytecode_t *bytecode)
     
 }
 
+data_type_t ast_node_to_dt(ast_stmt node)
+{
+    return node.type == NODE_NUMERIC_LITERAL ? (
+        node.is_float ? DT_FLOAT : DT_INT
+    ) : (
+        node.type == NODE_STRING ? DT_STRING : (
+            DT_UNKNOWN
+        )
+    );
+}
+
+runtime_valtype_t dt_to_rtval_type(data_type_t type)
+{
+    return type == DT_INT || type == DT_FLOAT ? (
+        VAL_NUMBER
+    ) : (
+        type == DT_STRING ? VAL_STRING : (
+            VAL_NULL
+        )
+    );
+}
+
 static void compile_callexpr(ast_stmt astnode, bytecode_t *bytecode)
 {    
     bytecode_push(bytecode, OP_BUILTIN_FN_CALL);
@@ -29,8 +53,23 @@ static void compile_callexpr(ast_stmt astnode, bytecode_t *bytecode)
 
     for (size_t i = 0; i < astnode.args.length; i++)
     {
-        assert(VEC_GET(astnode.args, i, ast_stmt).type == NODE_NUMERIC_LITERAL);
-        bytecode_push(bytecode, (uint8_t) VEC_GET(astnode.args, i, ast_stmt).value);
+        ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
+        bytecode_push(bytecode, (uint8_t) ast_node_to_dt(arg));
+
+        if (arg.type == NODE_NUMERIC_LITERAL)
+            bytecode_push(bytecode, (uint8_t) arg.value);
+        else if (arg.type == NODE_STRING)
+        {
+            size_t len = strlen(arg.strval);
+            bytecode_push(bytecode, (uint8_t) len);
+
+            for (size_t i = 0; i < len; i++)
+            {
+                bytecode_push(bytecode, (uint8_t) arg.strval[i]);
+            }
+        }
+        else
+            assert(false && "Unsupported AST Node");
     }
 }
 

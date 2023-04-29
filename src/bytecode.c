@@ -7,11 +7,12 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#include "bytecode.h"
+#include "compile.h"
 #include "opcode.h"
 #include "ast.h"
 #include "utils.h"
-#include "compile.h"
+#include "bytecode.h"
+#include "config.h"
 
 #if defined(__WIN32__)
 #define EOL "\r\n"
@@ -19,8 +20,12 @@
 #define EOL "\n"
 #endif
 
+#if !defined(vasprintf)
+int vasprintf(char **ptr, const char *fmt, ...);
+#endif
+
 #define __STDC_WANT_LIB_EXT2__ 1
-#define _GNU_SOURCE 
+#define _GNU_SOURCE
 
 static uint8_t magic_bytes_start[] = { 0x23, 0x21 }; /* '#', '!' */
 
@@ -41,7 +46,7 @@ void bytecode_write_magic_header(FILE *file)
 
 void bytecode_write_shebang(FILE *file)
 {
-    const char *path = BLAZE_VM_FULL_PATH;
+    const char *path = utils_blazevm_full_path();
     const char *newline = EOL;
     fwrite(path, sizeof (char), strlen(path), file);
     fwrite(newline, sizeof (char), strlen(newline), file);
@@ -216,11 +221,33 @@ void bytecode_disassemble(bytecode_t *bytecode)
                     ip++;
 
                     printf(", %u", *ip);
+
                     uint8_t len = *ip;
+
+                    if (len != 0)
+                        printf(", ");
                 
                     for (uint8_t i = 0; i < len; i++)
                     {
-                        printf(", %u", *++ip);
+                        data_type_t type = *++ip;
+
+                        if (type == DT_INT)
+                            printf("%u", *++ip);
+                        else if (type == DT_FLOAT)
+                            printf("%hhu", *++ip);
+                        else if (type == DT_STRING)
+                        {
+                            printf("\"");
+                            size_t str_len = *++ip;
+
+                            for (size_t i2 = 0; i2 < str_len; i2++)
+                                putchar(*++ip);
+
+                            printf("\"");
+                        }
+
+                        if (i != (len - 1))
+                            printf(", ");
                     }
 
                     printf("\n");

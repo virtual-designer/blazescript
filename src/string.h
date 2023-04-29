@@ -1,7 +1,10 @@
 #ifndef __BLAZE_STRING_H__
 #define __BLAZE_STRING_H__
 
-#define STREQ(str1, str2) (strcmp(str1, str2) == 0)
+#include <string.h>
+#include <stdbool.h>
+
+#define STREQ(str1, str2) ((bool) (strcmp(str1, str2) == 0))
 
 typedef char * string_t;
 

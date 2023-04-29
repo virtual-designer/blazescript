@@ -1,5 +1,5 @@
-#ifndef __COMPILE_H__
-#define __COMPILE_H__
+#ifndef __BYTECODE_H__
+#define __BYTECODE_H__
 
 #include <stdio.h>
 #include <sys/types.h>

@@ -5,7 +5,7 @@
 #include "scope.h"
 #include "vector.h"
 
-#define NATIVE_FN(name) runtime_val_t __native_##name##_fn(vector_t args, __attribute__((unused)) scope_t *scope)
+#define NATIVE_FN(name) runtime_val_t __native_##name##_fn(vector_t args, scope_t *scope)
 #define NATIVE_FN_REF(name) __native_##name##_fn
 
 NATIVE_FN(println);

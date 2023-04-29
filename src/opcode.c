@@ -9,6 +9,8 @@
 #include "scope.h"
 #include "vector.h"
 #include "string.h"
+#include "compile.h"
+#include "functions.h"
 
 #define OPCODE_HANDLER(name) static uint8_t *opcode_handler_##name(uint8_t *ip, bytecode_t *bytecode)
 #define OPCODE_HANDLER_REF(name) opcode_handler_##name
@@ -34,7 +36,7 @@ opcode_handler_t opcode_get_handler(opcode_t opcode)
 OPCODE_HANDLER(dump)
 {
     for (ssize_t i = sizeof (stack); i >= 0; i--)
-        printf("[%lu]: %u%s\n", i, stack[i], i == si ? "  <=" : "");
+        printf("[%lu]: %u%s\n", i, stack[i], i == (ssize_t) si ? "  <=" : "");
 
     return ++ip;
 }
@@ -147,7 +149,7 @@ OPCODE_HANDLER(builtin_fn_call)
     char *identifer_name = xmalloc(IDENTIFIER_MAX + 1);
     size_t i;
 
-    for (size_t i = 0; *ip != '\0'; i++, ip++)
+    for (i = 0; *ip != '\0'; i++, ip++)
         identifer_name[i] = *ip;
 
     identifer_name[i] = '\0';
@@ -155,17 +157,42 @@ OPCODE_HANDLER(builtin_fn_call)
     uint8_t arglen = *++ip;
     vector_t args = VEC_INIT;
 
-    for (uint8_t i = 0; i < arglen; i++)
+    for (uint8_t i2 = 0; i2 < arglen; i2++)
     {
-        VEC_PUSH(args, *++ip, uint8_t);
+        data_type_t type = *++ip;
+
+        runtime_val_t val = {
+            .type = dt_to_rtval_type(type),
+            .is_float = type == DT_FLOAT,
+        };
+
+        if (type == DT_INT)
+            val.intval = *++ip;
+        else if (type == DT_FLOAT)
+            val.floatval = *++ip;
+        else if (type == DT_STRING)
+        {
+            uint8_t len = *++ip;
+            val.strval = xmalloc(len + 1);
+
+            for (size_t i3 = 0; i3 < len; i3++)
+            {
+                val.strval[i3] = (char) *++ip;
+            }
+
+            val.strval[len] = '\0';
+        }
+        else
+        {
+            assert(false && "Unsupported data type");
+        }
+
+        VEC_PUSH(args, val, runtime_val_t);
     }
 
-    if (STREQ(identifer_name, "println") == 0)
+    if (STREQ(identifer_name, "println"))
     {
-        for (uint8_t i = 0; i < arglen; i++)
-        {
-            printf(COLOR("1;33", "%u\n"), VEC_GET(args, i, uint8_t));
-        }
+        (NATIVE_FN_REF(println))(args, NULL);
     }
 
     free(identifer_name);

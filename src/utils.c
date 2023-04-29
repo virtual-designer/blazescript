@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "blaze.h"
+#include "config.h"
 
 void utils_error(bool _exit, const char *fmt, ...) 
 {
@@ -20,4 +21,10 @@ void utils_error(bool _exit, const char *fmt, ...)
 
     if (_exit)
         exit(EXIT_FAILURE);
+}
+
+const char *utils_blazevm_full_path()
+{
+    const char *path = getenv("BLAZE_INTERPRETER");
+    return path != NULL ? path : BLAZE_VM_FULL_PATH;
 }
