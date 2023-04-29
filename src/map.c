@@ -9,7 +9,9 @@
 #include "xmalloc.h"
 #include "scope.h"
 
-static int callnumber = 1;
+static int call_number = 1;
+
+/* TODO: support dynamic resizing of maps */
 
 static inline size_t map_size(size_t size)
 {
@@ -60,7 +62,7 @@ void map_set(map_t *map, char *key, identifier_t *ptr)
     map->array[hash]->key = strdup(key);
     map->array[hash]->value = ptr;
 
-    callnumber++;
+    call_number++;
 }
 
 void map_delete(map_t *map, char *key, bool _free)
