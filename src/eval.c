@@ -294,7 +294,7 @@ runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
     {
         if (node.ctrl_body->type == NODE_BLOCK)
         {
-            int status = eval_loop_block(*node.ctrl_body, scope);
+            loop_status_t status = eval_loop_block(*node.ctrl_body, scope);
 
             if (status == LS_CONT)
             {
@@ -314,7 +314,7 @@ runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
     return BLAZE_NULL;
 }
 
-runtime_val_t eval_ctrl_loop_block(ast_stmt block, scope_t *scope, char *ctrl_loop_identifier, long long int iteration)
+loop_status_t eval_ctrl_loop_block(ast_stmt block, scope_t *scope, char *ctrl_loop_identifier, long long int iteration)
 {
     assert(block.type == NODE_BLOCK);
     scope_t new_scope = scope_init(scope);
@@ -326,11 +326,38 @@ runtime_val_t eval_ctrl_loop_block(ast_stmt block, scope_t *scope, char *ctrl_lo
 
     for (size_t i = 0; i < block.size; i++)
     {
-        eval(block.body[i], &new_scope);
+        runtime_val_t value = eval(block.body[i], &new_scope);
+
+        if (block.body[i].type == NODE_CTRL_IF)
+        {
+            if (value.type == VAL_NUMBER)
+            {
+                if (value.intval == LS_BREAK)
+                    new_scope.is_broken = true;
+                else if (value.intval == LS_CONT)
+                    new_scope.is_continued = true;
+            }
+        }
+
+        if (new_scope.is_broken)
+        {
+            break;
+        }
+
+        if (new_scope.is_continued)
+        {
+            break;
+        }
     }
 
+    bool continued = new_scope.is_continued;
+    bool broken = new_scope.is_broken;
+
     scope_free(&new_scope);
-    return BLAZE_NULL;
+
+    return continued ? LS_CONT : (
+        broken ? LS_BREAK : LS_RET
+    );;
 }
 
 runtime_val_t eval_ctrl_loop(ast_stmt node, scope_t *scope)
@@ -355,7 +382,19 @@ runtime_val_t eval_ctrl_loop(ast_stmt node, scope_t *scope)
         while (true)
         {
             if (node.ctrl_body->type == NODE_BLOCK)
-                eval_ctrl_loop_block(*node.ctrl_body, scope, node.ctrl_loop_identifier, i);
+            {
+                loop_status_t status = eval_ctrl_loop_block(*node.ctrl_body, scope, node.ctrl_loop_identifier, i);
+
+                if (status == LS_CONT)
+                {
+                    i++;
+                    continue;
+                }
+                else if (status == LS_BREAK)
+                {
+                    break;
+                }
+            }
             else
                 eval(*node.ctrl_body, scope);
 
@@ -367,7 +406,19 @@ runtime_val_t eval_ctrl_loop(ast_stmt node, scope_t *scope)
         for (long long int i = 0; i < value; i++)
         {
             if (node.ctrl_body->type == NODE_BLOCK)
-                eval_ctrl_loop_block(*node.ctrl_body, scope, node.ctrl_loop_identifier, i);
+            {
+                loop_status_t status = eval_ctrl_loop_block(*node.ctrl_body, scope, node.ctrl_loop_identifier, i);
+
+                if (status == LS_CONT)
+                {
+                    i++;
+                    continue;
+                }
+                else if (status == LS_BREAK)
+                {
+                    break;
+                }
+            }
             else
                 eval(*node.ctrl_body, scope);
         }
