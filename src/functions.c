@@ -7,13 +7,11 @@
 #include "runtimevalues.h"
 #include "scope.h"
 #include "vector.h"
-#include "map.h"
 #include "functions.h"
 #include "eval.h"
-#include "blaze.h"
 #include "utils.h"
 
-void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
+static void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
 {
     if (result->type == VAL_NULL)
         puts("\033[35mnull\033[0m");
@@ -30,25 +28,26 @@ void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_str
     }
     else if (result->type == VAL_OBJECT)
     {
-        printf("Object {\n");
+        printf(COLOR("1;36", "[Object]") " " COLOR("1;33", "{") "\n");
 
-        for (size_t i = 0; i < result->properties.size; i++)
+        for (size_t i = 0, c = 0; i < result->properties.size; i++)
         {
             if (result->properties.array[i] == NULL)
                 continue;
             
-            for (int i = 0; i < tabs; i++)
+            for (int j = 0; j < tabs; j++)
                 putchar('\t');
 
             printf("%s: ", result->properties.array[i]->key);
             handle_result(result->properties.array[i]->value->value, false, tabs + 1, true);
-            printf(",\n");
+            printf("%s\n", c != (result->properties.count - 1) ? "," : "");
+            c++;
         }
 
         for (int i = 0; i < (tabs - 1); i++)
             putchar('\t');
         
-        printf("}");
+        printf(COLOR("1;33", "}"));
     }
     else 
         printf("[Unknown Type: %d]", result->type);
@@ -76,9 +75,13 @@ NATIVE_FN(println)
     for (size_t i = 0; i < args.length; i++)
     {
         runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
-        handle_result(&arg, true, 1, false);
+        handle_result(&arg, false, 1, false);
+
+        if (i != (args.length - 1))
+            printf(" ");
     }
-    
+
+    printf("\n");
     VEC_FREE(args);
     return __native_null();
 }
@@ -89,6 +92,9 @@ NATIVE_FN(print)
     {
         runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
         handle_result(&arg, false, 1, false);
+
+        if (i != (args.length - 1))
+            printf(" ");
     }
     
     VEC_FREE(args);
