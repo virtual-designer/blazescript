@@ -702,6 +702,21 @@ ast_stmt parser_parse_function_decl()
     };
 }
 
+ast_stmt parser_parse_return_stmt()
+{
+    parser_expect(T_RETURN, "Expected return statement");
+    ast_stmt expr = parser_parse_expr();
+    parser_expect(T_SEMICOLON, "Expected semicolon after return statement");
+
+    ast_stmt ret = {
+        .type = NODE_RETURN,
+        .return_expr = xmalloc(sizeof expr)
+    };
+
+    memcpy(ret.return_expr, &expr, sizeof expr);
+    return ret;
+}
+
 ast_stmt parser_parse_codeblock()
 {
     ast_stmt *body = NULL; 
@@ -867,6 +882,9 @@ ast_stmt parser_parse_stmt()
                 .type = type == T_BREAK ? NODE_CTRL_BREAK : NODE_CTRL_CONTINUE
             };
         }
+
+        case T_RETURN:
+            return parser_parse_return_stmt();
 
         default:
             return parser_parse_expr();

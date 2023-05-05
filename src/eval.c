@@ -61,6 +61,72 @@ runtime_val_t eval_function_decl(ast_stmt decl, scope_t *scope)
     return fnval;
 }
 
+static runtime_val_t copy_rtval(runtime_val_t *value)
+{
+    runtime_val_t copy = {
+        .type = value->type
+    };
+
+    if (value->type == VAL_BOOLEAN)
+    {
+        copy.boolval = value->boolval;
+    }
+    else if (value->type == VAL_NUMBER)
+    {
+        copy.is_float = value->is_float;
+
+        if (copy.is_float)
+            copy.floatval = value->floatval;
+        else
+            copy.intval = value->intval;
+    }
+    else if (value->type == VAL_OBJECT)
+    {
+        copy.properties.array = xcalloc(sizeof (map_entry_t *), value->properties.size);
+        copy.properties.count = value->properties.count;
+        copy.properties.size = value->properties.size;
+        copy.properties.typesize = value->properties.typesize;
+
+        for (size_t i = 0; i < value->properties.size; i++)
+        {
+            if (value->properties.array[i] == NULL)
+                continue;
+
+            copy.properties.array[i] = xmalloc(sizeof (map_entry_t));
+            map_entry_t *entry = value->properties.array[i];
+            map_entry_t entry_copy = {
+                .key = strdup(entry->key),
+                .value = xmalloc(sizeof (identifier_t))
+            };
+
+            memcpy(entry_copy.value, value->properties.array[i]->value, sizeof (identifier_t));
+            memcpy(copy.properties.array[i], &entry_copy, sizeof (map_entry_t));
+        }
+    }
+    else if (value->type = VAL_STRING)
+    {
+        copy.strval = strdup(value->strval);
+    }
+    else if (value->type == VAL_USER_FN)
+    {
+        copy.fn_name = strdup(value->fn_name);
+        copy.scope = value->scope;
+        copy.argnames = value->argnames;
+        copy.body = value->body;
+        copy.size = value->size;
+    }
+    else if (value->type == VAL_NULL || value->type == VAL_NATIVE_FN)
+    {
+        copy = *value;
+    }
+    else 
+    {
+        assert(false && "Unknown value type");
+    }
+    
+    return copy;
+}
+
 runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
 {
     map_t properties = MAP_INIT(identifier_t *, 4096);
@@ -81,14 +147,21 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
                 eval_error(true, "Undefined identifier '%s' in the current scope", prop.key);
             }
 
-            memcpy(val, identifier, sizeof (identifier_t));
+            identifier_t identifier_copy = {
+                .is_const = identifier->is_const,
+                .name = strdup(identifier->name),
+                .value = xmalloc(sizeof (runtime_val_t))
+            };
 
-            val->value = xmalloc(sizeof (runtime_val_t));
-            memcpy(val->value, identifier->value, sizeof (runtime_val_t));
+            runtime_val_t rtval_copy = copy_rtval(identifier->value);
+
+            memcpy(identifier_copy.value, &rtval_copy, sizeof (runtime_val_t));
+            memcpy(val, &identifier_copy, sizeof (identifier_t));
         }
         else 
         {
             runtime_val_t eval_result = eval(*prop.propval, scope);
+            runtime_val_t copy = copy_rtval(&eval_result);
             
             identifier_t i = {
                 .is_const = false,
@@ -98,7 +171,7 @@ runtime_val_t eval_object_expr(ast_stmt object, scope_t *scope)
             memcpy(val, &i, sizeof i);
 
             val->value = xmalloc(sizeof (runtime_val_t));
-            memcpy(val->value, &eval_result, sizeof eval_result);
+            memcpy(val->value, &copy, sizeof copy);
         }
 
         map_set(&properties, prop.key, val);
@@ -137,19 +210,21 @@ runtime_val_t eval_user_function_call(runtime_val_t callee, vector_t args)
 #endif
 #endif
 
-    runtime_val_t ret;
+    runtime_val_t ret = {
+        .type = VAL_NULL
+    };
 
     for (size_t i = 0; i < callee.size; i++)
     {
-#ifdef _DEBUG
-#ifndef _NODEBUG
-        printf("Type: %d\n", callee.body[i].type);
-#endif
-#endif
-        ret = eval(callee.body[i], &newscope);
+        if (callee.body[i].type == NODE_RETURN)
+        {
+            runtime_val_t tmpval = eval(*callee.body[i].return_expr, &newscope);
+            ret = copy_rtval(&tmpval);
+            break;
+        }
 
-        if (i != (callee.size - 1))
-            scope_runtime_val_free(&ret);
+        runtime_val_t tmpval = eval(callee.body[i], &newscope);
+        scope_runtime_val_free(&tmpval);
     }
 
     if (ret.type != VAL_USER_FN)
@@ -610,11 +685,11 @@ runtime_val_t eval_string_binop(runtime_val_t left, runtime_val_t right, ast_ope
 
         runtime_val_t str = {
             .type = VAL_STRING,
-            .strval = xmalloc(len + 1)
+            .strval = xmalloc(len + 2)
         };
 
-        strncpy(str.strval, left.strval, leftlen);
-        strncat(str.strval, right.strval, rightlen);
+        strncpy(str.strval, left.strval, leftlen + 1);
+        strncat(str.strval, right.strval, rightlen + 1);
 
         return str;
     }
@@ -875,6 +950,10 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 
         case NODE_EXPR_UNARY:
             return eval_unary_expr(astnode, scope);
+
+        case NODE_RETURN:
+            eval_error(true, "Unexpected return statement");
+            break;
 
         default:
             fprintf(stderr, "Eval error: this AST node is not supported\n");

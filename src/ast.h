@@ -24,7 +24,8 @@ typedef enum {
     NODE_BLOCK,
     NODE_CTRL_LOOP,
     NODE_CTRL_BREAK,
-    NODE_CTRL_CONTINUE
+    NODE_CTRL_CONTINUE,
+    NODE_RETURN
 } ast_nodetype_t;
 
 typedef enum {
@@ -144,7 +145,11 @@ typedef struct ast_stmt {
             struct ast_stmt *prop;
             bool computed;
         };                          
-        /* endif */                
+        /* endif */     
+
+        /* if (type == NODE_RETURN) */      
+        struct ast_stmt *return_expr;
+        /* endif */     
     };
 } ast_stmt;
 

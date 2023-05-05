@@ -14,7 +14,7 @@
 static void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
 {
     if (result->type == VAL_NULL)
-        puts("\033[35mnull\033[0m");
+        printf("\033[35mnull\033[0m");
     else if (result->type == VAL_BOOLEAN)
         printf("\033[34m%s\033[0m", result->boolval ? "true" : "false");
     else if (result->type == VAL_STRING)
