@@ -9,6 +9,7 @@
 #include "config.h"
 
 #define BYTECODE_INIT { .bytes = NULL, .size = 0, .error = NULL }
+#define STRTERM 0x00
 
 typedef struct {
     uint8_t *bytes;

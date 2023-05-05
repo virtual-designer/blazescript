@@ -764,12 +764,11 @@ ast_stmt parser_parse_control_loop()
     };
 
     parser_shift();
+
     ast_stmt cond = parser_at().type == T_BLOCK_BRACE_OPEN ? (ast_stmt) {
         .type = NODE_IDENTIFIER,
         .symbol = strdup("true")
     } : parser_parse_expr();
-
-    assert(parser_at().type == T_AS);
 
     if (parser_at().type == T_AS)
     {

@@ -2,7 +2,6 @@
 #define __OPCODE_H__
 
 #include <inttypes.h>
-
 #include "bytecode.h"
 
 typedef enum {
@@ -20,6 +19,8 @@ typedef enum {
     OP_SCOPE,
     OP_RET,
     OP_BUILTIN_FN_CALL,
+    OP_PUSH_STR,
+    OP_POP_STR,
     OPCODE_COUNT
 } opcode_t;
 

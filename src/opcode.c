@@ -16,7 +16,7 @@
 #define OPCODE_HANDLER_REF(name) opcode_handler_##name
 
 static uint8_t stack[4096];
-static size_t si = 0;
+static size_t si = 0, count = 0;
 
 static opcode_handler_t handlers[OPCODE_COUNT];
 
@@ -27,7 +27,7 @@ OPCODE_HANDLER(nop)
 
 opcode_handler_t opcode_get_handler(opcode_t opcode)
 {
-    if (opcode >= OPCODE_COUNT || opcode < 0x00)
+    if (opcode >= OPCODE_COUNT)
         return NULL;
     
     return handlers[opcode];
@@ -60,12 +60,14 @@ OPCODE_HANDLER(test)
 OPCODE_HANDLER(push)
 {
     stack[si++] = *(++ip);
+    count++;
     return ++ip;
 }
 
 OPCODE_HANDLER(pop)
 {
     si--;
+    count--;
     return ++ip;
 }
 
@@ -75,11 +77,13 @@ static uint8_t *stack_pop()
         return NULL;
 
     si--;
+    count--;
     return (stack + si);
 }
 
 static void stack_push(uint8_t el)
 {
+    count++;
     stack[si++] = el;
 }
 
@@ -142,60 +146,122 @@ OPCODE_HANDLER(mod)
     return ++ip;
 }
 
+struct builtin_fn_info {
+    const char *name;
+    NATIVE_FN_TYPE(callback);
+    bool is_variadic;
+    size_t argument_count;
+    runtime_valtype_t argument_types[ARGS_MAX];
+};
+
+static struct builtin_fn_info const builtin_fn_list[] = {
+    { "println", NATIVE_FN_REF(println), true, 0, { VAL_ANY } }
+};
+
 OPCODE_HANDLER(builtin_fn_call)
 {
     ip++;
 
-    char *identifer_name = xmalloc(IDENTIFIER_MAX + 1);
+    char *identifier_name = xmalloc(IDENTIFIER_MAX + 1);
     size_t i;
 
     for (i = 0; *ip != '\0'; i++, ip++)
-        identifer_name[i] = *ip;
+        identifier_name[i] = (char) *ip;
 
-    identifer_name[i] = '\0';
+    ip++;
+    identifier_name[i] = '\0';
 
-    uint8_t arglen = *++ip;
-    vector_t args = VEC_INIT;
-
-    for (uint8_t i2 = 0; i2 < arglen; i2++)
+    for (size_t i2 = 0; i2 < sizeof (builtin_fn_list) / sizeof (builtin_fn_list[0]); i2++)
     {
-        data_type_t type = *++ip;
-
-        runtime_val_t val = {
-            .type = dt_to_rtval_type(type),
-            .is_float = type == DT_FLOAT,
-        };
-
-        if (type == DT_INT)
-            val.intval = *++ip;
-        else if (type == DT_FLOAT)
-            val.floatval = *++ip;
-        else if (type == DT_STRING)
+        if (STREQ(builtin_fn_list[i2].name, identifier_name))
         {
-            uint8_t len = *++ip;
-            val.strval = xmalloc(len + 1);
+            vector_t args = VEC_INIT, args_rev = VEC_INIT;
+            free(identifier_name);
+            NATIVE_FN_TYPE(callback) = builtin_fn_list[i2].callback;
 
-            for (size_t i3 = 0; i3 < len; i3++)
+            size_t iterations = builtin_fn_list[i2].is_variadic ? *ip : builtin_fn_list[i2].argument_count;
+
+            for (size_t i3 = 0; i3 < iterations; i3++)
             {
-                val.strval[i3] = (char) *++ip;
+                runtime_val_t value = {
+                    .type = dt_to_rtval_type(*(ip - i3 + iterations))
+                };
+
+                if (value.type == VAL_STRING)
+                {
+                    string_t str = _str("");
+                    size_t len = 0;
+                    uint8_t *c = stack_pop();
+
+                    while (c != NULL && *c != 0)
+                    {
+                        concat_c_safe(str, &len, (char) *c);
+                        c = stack_pop();
+                    }
+
+                    concat_c_safe(str, &len, 0);
+                    value.strval = str;
+                }
+                else if (value.type == VAL_NUMBER)
+                {
+                    value.intval = *stack_pop();
+                    value.is_float = false;
+                }
+                else
+                {
+                    assert(false && "Unsupported type");
+                }
+
+                VEC_PUSH(args, value, runtime_val_t);
             }
 
-            val.strval[len] = '\0';
-        }
-        else
-        {
-            assert(false && "Unsupported data type");
-        }
+            for (ssize_t j = (ssize_t) args.length - 1; j >= 0; j--)
+            {
+                VEC_PUSH(args_rev, VEC_GET(args, j, runtime_val_t), runtime_val_t);
+                ip++;
+            }
 
-        VEC_PUSH(args, val, runtime_val_t);
+            callback(args_rev, NULL);
+            return ip;
+        }
     }
 
-    if (STREQ(identifer_name, "println"))
+    bytecode_set_error(bytecode, "Undefined builtin function '%s'", identifier_name);
+    free(identifier_name);
+
+    return ++ip;
+}
+
+static uint8_t *str_forward(uint8_t *ip)
+{
+    while (*ip != 0)
+        ip++;
+
+    return ++ip;
+}
+
+OPCODE_HANDLER(push_str)
+{
+    string_t str = _str("");
+    size_t len = 0;
+
+    while (*ip != 0)
     {
-        (NATIVE_FN_REF(println))(args, NULL);
+        concat_c_safe(str, &len, (char) *(ip++));
     }
 
-    free(identifer_name);
+    stack_push(0);
+
+    for (ssize_t i = len - 1; i >= 0; i--)
+        stack_push(str[i]);
+
+    free(str);
+    return ++ip;
+}
+
+OPCODE_HANDLER(pop_str)
+{
+    while (stack_pop() != 0);
     return ++ip;
 }
 
@@ -211,6 +277,8 @@ static void opcode_set_handlers()
     handlers[OP_MODULUS] = OPCODE_HANDLER_REF(mod);
     handlers[OP_DUMP] = OPCODE_HANDLER_REF(dump);
     handlers[OP_POP] = OPCODE_HANDLER_REF(pop);
+    handlers[OP_PUSH_STR] = OPCODE_HANDLER_REF(push_str);
+    handlers[OP_POP_STR] = OPCODE_HANDLER_REF(pop_str);
     handlers[OP_BUILTIN_FN_CALL] = OPCODE_HANDLER_REF(builtin_fn_call);
 }
 

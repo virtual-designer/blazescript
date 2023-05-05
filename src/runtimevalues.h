@@ -17,7 +17,8 @@ typedef enum
     VAL_OBJECT,
     VAL_NATIVE_FN,
     VAL_STRING,
-    VAL_USER_FN
+    VAL_USER_FN,
+    VAL_ANY
 } runtime_valtype_t;
 
 typedef struct runtime_val_t

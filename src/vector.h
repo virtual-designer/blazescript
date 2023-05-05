@@ -1,6 +1,7 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include "xmalloc.h"
 

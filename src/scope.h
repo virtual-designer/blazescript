@@ -5,6 +5,7 @@
 #include "runtimevalues.h"
 
 #define IDENTIFIER_MAX 256
+#define ARGS_MAX 32
 
 typedef struct scope {
     struct scope *parent;

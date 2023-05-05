@@ -179,7 +179,7 @@ void bytecode_disassemble(bytecode_t *bytecode)
             return;
         }
 
-        printf("%p ", ip);
+        printf("%p %02x ", ip, *ip);
 
         switch (*ip)
         {
@@ -211,44 +211,32 @@ void bytecode_disassemble(bytecode_t *bytecode)
                 printf("push %u\n", (*++ip));
                 break;
 
+            case OP_PUSH_STR:
+            {
+                printf("push_str \"%s\"\n", (char *) (++ip));
+
+                while (*ip != STRTERM)
+                    ip++;
+            }
+                break;
+
+            case OP_POP_STR:
+                printf("pop_str\n");
+                break;
+
             case OP_BUILTIN_FN_CALL:
                 {
-                    printf("call %s", (++ip));
+                    printf("call_builtin_fn %s, ", (char *) (++ip));
 
                     while (*ip != '\0')
                         ip++;
 
-                    ip++;
+                    printf("%u, ", *++ip);
 
-                    printf(", %u", *ip);
+                    size_t size = *ip;
 
-                    uint8_t len = *ip;
-
-                    if (len != 0)
-                        printf(", ");
-                
-                    for (uint8_t i = 0; i < len; i++)
-                    {
-                        data_type_t type = *++ip;
-
-                        if (type == DT_INT)
-                            printf("%u", *++ip);
-                        else if (type == DT_FLOAT)
-                            printf("%hhu", *++ip);
-                        else if (type == DT_STRING)
-                        {
-                            printf("\"");
-                            size_t str_len = *++ip;
-
-                            for (size_t i2 = 0; i2 < str_len; i2++)
-                                putchar(*++ip);
-
-                            printf("\"");
-                        }
-
-                        if (i != (len - 1))
-                            printf(", ");
-                    }
+                    for (size_t i = 0; i < size; i++)
+                        printf("%u%s", *++ip, i == size - 1 ? "" : ", ");
 
                     printf("\n");
                 }

@@ -10,6 +10,8 @@
 #include "utils.h"
 #include "runtimevalues.h"
 
+static size_t si = 0;
+
 static void compile_program(ast_stmt astnode, bytecode_t *bytecode)
 {
     for (size_t i = 0; i < astnode.size; i++)
@@ -20,11 +22,54 @@ static void compile_program(ast_stmt astnode, bytecode_t *bytecode)
 
 static void compile_number(ast_stmt astnode, bytecode_t *bytecode)
 {
-    
+    bytecode_push(bytecode, OP_PUSH);
+    bytecode_push(bytecode, (uint8_t) astnode.value);
+    si++;
+}
+
+static void compile_string(ast_stmt astnode, bytecode_t *bytecode)
+{
+    size_t len = strlen(astnode.strval);
+
+    bytecode_push(bytecode, OP_PUSH_STR);
+
+    for (size_t i = 0; i < len; i++)
+    {
+        bytecode_push(bytecode, (uint8_t) astnode.strval[i]);
+    }
+
+    bytecode_push(bytecode, STRTERM);
+    si++;
+}
+
+bool is_number_dt(data_type_t type)
+{
+    return type == DT_INT || type == DT_FLOAT;
 }
 
 data_type_t ast_node_to_dt(ast_stmt node)
 {
+    if (node.type == NODE_EXPR_BINARY)
+    {
+        data_type_t left_dt = ast_node_to_dt(*node.left);
+        data_type_t right_dt = ast_node_to_dt(*node.right);
+
+        if (is_number_dt(left_dt) && is_number_dt(right_dt))
+        {
+            return left_dt == DT_FLOAT || right_dt == DT_FLOAT ? DT_FLOAT : DT_INT;
+        }
+        else if ((left_dt == DT_STRING && right_dt == DT_STRING) ||
+                (is_number_dt(left_dt) && right_dt == DT_STRING) ||
+                (is_number_dt(right_dt) && left_dt == DT_STRING))
+        {
+            return DT_STRING;
+        }
+        else
+        {
+            utils_error(true, "Unsupported binary operation");
+        }
+    }
+
     return node.type == NODE_NUMERIC_LITERAL ? (
         node.is_float ? DT_FLOAT : DT_INT
     ) : (
@@ -34,7 +79,7 @@ data_type_t ast_node_to_dt(ast_stmt node)
     );
 }
 
-runtime_valtype_t dt_to_rtval_type(data_type_t type)
+runtime_valtype_t inline dt_to_rtval_type(data_type_t type)
 {
     return type == DT_INT || type == DT_FLOAT ? (
         VAL_NUMBER
@@ -45,50 +90,45 @@ runtime_valtype_t dt_to_rtval_type(data_type_t type)
     );
 }
 
-static void compile_callexpr(ast_stmt astnode, bytecode_t *bytecode)
-{    
+static void compile_builtin_call_expr(ast_stmt astnode, bytecode_t *bytecode)
+{
+    for (size_t i = 0; i < astnode.args.length; i++)
+    {
+        ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
+        compile(arg, bytecode);
+    }
+
     bytecode_push(bytecode, OP_BUILTIN_FN_CALL);
-    bytecode_push_bytes(bytecode, (uint8_t *) astnode.callee->identifier, strlen(astnode.callee->identifier) + 1);
+
+    for (size_t i = 0; i < strlen(astnode.callee->identifier); i++)
+    {
+        bytecode_push(bytecode, astnode.callee->identifier[i]);
+    }
+
+    bytecode_push(bytecode, '\0');
     bytecode_push(bytecode, astnode.args.length);
 
     for (size_t i = 0; i < astnode.args.length; i++)
     {
         ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
-        bytecode_push(bytecode, (uint8_t) ast_node_to_dt(arg));
+        bytecode_push(bytecode, ast_node_to_dt(arg));
+    }
 
-        if (arg.type == NODE_NUMERIC_LITERAL)
-            bytecode_push(bytecode, (uint8_t) arg.value);
-        else if (arg.type == NODE_STRING)
-        {
-            size_t len = strlen(arg.strval);
-            bytecode_push(bytecode, (uint8_t) len);
+    for (ssize_t i = astnode.args.length - 1; i >= 0; i--)
+    {
+        ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
 
-            for (size_t i = 0; i < len; i++)
-            {
-                bytecode_push(bytecode, (uint8_t) arg.strval[i]);
-            }
-        }
-        else
-            assert(false && "Unsupported AST Node");
+        if (arg.type == NODE_STRING)
+            bytecode_push(bytecode, OP_POP_STR);
+        else if (arg.type != NODE_IDENTIFIER)
+            bytecode_push(bytecode, OP_POP);
     }
 }
 
-static void compile_binexpr(ast_stmt astnode, bytecode_t *bytecode)
+static void compile_bin_expr(ast_stmt astnode, bytecode_t *bytecode)
 {
     compile(*astnode.left, bytecode);
     compile(*astnode.right, bytecode);
-
-    if (astnode.left->type == NODE_NUMERIC_LITERAL)
-    {
-        bytecode_push(bytecode, OP_PUSH);
-        bytecode_push(bytecode, (uint8_t) astnode.left->value);
-    }
-
-    if (astnode.right->type == NODE_NUMERIC_LITERAL)
-    {
-        bytecode_push(bytecode, OP_PUSH);
-        bytecode_push(bytecode, (uint8_t) astnode.right->value);
-    }
 
     uint8_t opcode;
 
@@ -130,16 +170,20 @@ void compile(ast_stmt astnode, bytecode_t *bytecode)
             compile_program(astnode, bytecode);
             return;
 
+        case NODE_STRING:
+            compile_string(astnode, bytecode);
+            return;
+
         case NODE_NUMERIC_LITERAL:
             compile_number(astnode, bytecode);
             return;
 
         case NODE_EXPR_BINARY:
-            compile_binexpr(astnode, bytecode);
+            compile_bin_expr(astnode, bytecode);
             return;
 
         case NODE_EXPR_CALL:
-            compile_callexpr(astnode, bytecode);
+            compile_builtin_call_expr(astnode, bytecode);
             return;
         
         default:
