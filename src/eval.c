@@ -103,7 +103,7 @@ static runtime_val_t copy_rtval(runtime_val_t *value)
             memcpy(copy.properties.array[i], &entry_copy, sizeof (map_entry_t));
         }
     }
-    else if (value->type = VAL_STRING)
+    else if (value->type == VAL_STRING)
     {
         copy.strval = strdup(value->strval);
     }
