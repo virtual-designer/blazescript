@@ -37,7 +37,8 @@ typedef enum
     T_AS,
     T_BREAK,
     T_CONTINUE,
-    T_RETURN
+    T_RETURN,
+    T_FOR
 } lex_tokentype_t;
 
 typedef struct 

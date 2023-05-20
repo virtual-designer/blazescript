@@ -389,6 +389,44 @@ runtime_val_t eval_ctrl_while(ast_stmt node, scope_t *scope)
     return BLAZE_NULL;
 }
 
+runtime_val_t eval_ctrl_for(ast_stmt node, scope_t *scope)
+{
+    scope_t newscope = scope_init(scope);
+
+    if (node.for_init != NULL)
+        eval(*node.for_init, &newscope);
+
+    runtime_val_t cond = node.for_cond == NULL ? BLAZE_TRUE : eval(*node.for_cond, &newscope);
+
+    while (IS_TRUTHY(cond))
+    {
+        if (node.for_body->type == NODE_BLOCK)
+        {
+            loop_status_t status = eval_loop_block(*node.for_body, &newscope);
+
+            if (status == LS_CONT)
+            {
+                cond = eval(*node.for_cond, &newscope);
+                continue;
+            }
+
+            if (status == LS_BREAK)
+                break;
+        }
+        else
+            eval(*node.for_body, &newscope);
+
+        if (node.for_incdec != NULL)    
+            eval(*node.for_incdec, &newscope);
+
+        if (node.for_cond != NULL)
+            cond = eval(*node.for_cond, &newscope);
+    }
+
+    scope_free(&newscope);
+    return BLAZE_NULL;
+}
+
 loop_status_t eval_ctrl_loop_block(ast_stmt block, scope_t *scope, char *ctrl_loop_identifier, long long int iteration)
 {
     assert(block.type == NODE_BLOCK);
@@ -929,6 +967,9 @@ runtime_val_t eval(ast_stmt astnode, scope_t *scope)
 
         case NODE_CTRL_WHILE:
             return eval_ctrl_while(astnode, scope);
+        
+        case NODE_CTRL_FOR:
+            return eval_ctrl_for(astnode, scope);
 
         case NODE_CTRL_LOOP:
             return eval_ctrl_loop(astnode, scope);

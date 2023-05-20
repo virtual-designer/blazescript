@@ -21,11 +21,13 @@ typedef enum {
     NODE_STRING,
     NODE_CTRL_IF,
     NODE_CTRL_WHILE,
+    NODE_CTRL_FOR,
     NODE_BLOCK,
     NODE_CTRL_LOOP,
     NODE_CTRL_BREAK,
     NODE_CTRL_CONTINUE,
-    NODE_RETURN
+    NODE_RETURN,
+    NODE_UNKNOWN
 } ast_nodetype_t;
 
 typedef enum {
@@ -71,14 +73,23 @@ typedef struct ast_stmt {
         };
         /* endif */     
 
-        /* if (NODE_CTRL_IF || NODE_CTRL_WHILE || NODE_CTRL_LOOP) */
+        /* if (type == NODE_CTRL_IF || type == NODE_CTRL_WHILE || type == NODE_CTRL_LOOP) */
         struct {
             struct ast_stmt *else_body;             /* Single statement. */
-            struct ast_stmt *ctrl_body;               /* Single statement. */
+            struct ast_stmt *ctrl_body;             /* Single statement. */
             struct ast_stmt *ctrl_cond;
             char *ctrl_loop_identifier;
         };
-        /* endif */                
+        /* endif */ 
+
+        /* if (type == NODE_CTRL_FOR) */                
+        struct {
+            struct ast_stmt *for_body;              /* Single statement. */
+            struct ast_stmt *for_init;
+            struct ast_stmt *for_cond;              
+            struct ast_stmt *for_incdec;
+        };
+        /* endif */     
 
         /* if (type == NODE_EXPR_BINARY) || (type == NODE_EXPR_UNARY) */
         struct {

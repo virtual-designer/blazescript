@@ -178,6 +178,9 @@ int main(int argc, char **argv)
 
     for (size_t i = 0; i < len; i++)
     {
+        if (content == NULL)
+            break;
+        
         if (content[i] != '\n' && content[i] != ' ' && content[i] != '\r' && content[i] != '\t')
         {
             empty = false;

@@ -580,7 +580,7 @@ ast_stmt parser_parse_object_expr()
     };
 }
 
-ast_stmt parser_parse_assignment_expr()
+ast_stmt parser_parse_assignment_expr_orig(bool semicolon)
 {
     ast_stmt left = parser_parse_object_expr();
     size_t line = parser_line();
@@ -588,10 +588,13 @@ ast_stmt parser_parse_assignment_expr()
     if (parser_at().type == T_ASSIGNMENT) 
     {
         parser_shift();
-        ast_stmt val = parser_parse_assignment_expr();
+        ast_stmt val = parser_parse_assignment_expr_orig(semicolon);
 
         if (val.type != NODE_EXPR_ASSIGNMENT)
-            parser_expect(T_SEMICOLON, "Expected semicolon (T_SEMICOLON) after assignment");
+        {
+            if (semicolon)
+                parser_expect(T_SEMICOLON, "Expected semicolon (T_SEMICOLON) after assignment");
+        }
 
         ast_stmt *val_heap = xmalloc(sizeof (ast_stmt)),
                  *left_heap = xmalloc(sizeof (ast_stmt));
@@ -610,9 +613,19 @@ ast_stmt parser_parse_assignment_expr()
     return left;
 }
 
+ast_stmt parser_parse_assignment_expr() 
+{
+    return parser_parse_assignment_expr_orig(true);
+}
+
 ast_stmt parser_parse_expr()
 {
     return parser_parse_assignment_expr();
+}
+
+ast_stmt parser_parse_expr_assignment_orig(bool semicolon)
+{
+    return parser_parse_assignment_expr_orig(semicolon);
 }
 
 ast_stmt parser_parse_var_decl()
@@ -807,6 +820,72 @@ ast_stmt parser_parse_control_loop()
     return loop;
 }
 
+#define NODE_UNKNOWN_INIT { .type = NODE_UNKNOWN }
+#define IS_UNKNOWN(node) ((node).type == NODE_UNKNOWN)
+
+ast_stmt parser_parse_control_for()
+{
+    ast_stmt init = NODE_UNKNOWN_INIT,  
+             cond = NODE_UNKNOWN_INIT,
+             incdec = NODE_UNKNOWN_INIT;
+    
+    parser_shift();
+    parser_expect(T_PAREN_OPEN, "Expected open parenthesis after for keyword");
+
+    if (parser_at().type == T_SEMICOLON) 
+        parser_shift();
+    else 
+    {
+        init = parser_at().type == T_VAR || parser_at().type == T_CONST ? parser_parse_var_decl() : parser_parse_expr_assignment_orig(false);
+
+        if (init.type != NODE_DECL_VAR)
+            parser_expect(T_SEMICOLON, "Expected semicolon after for loop initialization");
+    }
+
+    if (parser_at().type == T_SEMICOLON) 
+        parser_shift();
+    else 
+    {
+        cond = parser_parse_expr_assignment_orig(false);
+
+        if (cond.type != NODE_EXPR_ASSIGNMENT)
+            parser_expect(T_SEMICOLON, "Expected semicolon after for loop condition");
+    }
+
+    if (parser_at().type != T_PAREN_CLOSE)
+        incdec = parser_parse_expr_assignment_orig(false);
+
+    parser_expect(T_PAREN_CLOSE, "Expected close parenthesis before for body");
+    
+    bool is_block = parser_at().type == T_BLOCK_BRACE_OPEN;
+    ast_stmt block = is_block ? parser_parse_codeblock() : parser_parse_stmt();
+
+    while (!is_block && parser_at().type == T_SEMICOLON)
+        parser_shift();
+
+    ast_stmt for_loop = {
+        .type = NODE_CTRL_FOR,
+        .for_body = xmalloc(sizeof (ast_stmt)),
+        .for_cond = IS_UNKNOWN(cond) ? NULL : xmalloc(sizeof (ast_stmt)),
+        .for_incdec = IS_UNKNOWN(incdec) ? NULL : xmalloc(sizeof (ast_stmt)),
+        .for_init = IS_UNKNOWN(init) ? NULL : xmalloc(sizeof (ast_stmt)),
+        .line = parser_at().line
+    };
+
+    if (for_loop.for_init != NULL)
+        memcpy(for_loop.for_init, &init, sizeof (ast_stmt));
+
+    if (for_loop.for_cond)
+        memcpy(for_loop.for_cond, &cond, sizeof (ast_stmt));
+        
+    if (for_loop.for_incdec)
+        memcpy(for_loop.for_incdec, &incdec, sizeof (ast_stmt));
+
+    memcpy(for_loop.for_body, &block, sizeof (ast_stmt));
+
+    return for_loop;
+}
+
 ast_stmt parser_parse_control_if()
 {
     parser_shift();
@@ -871,6 +950,9 @@ ast_stmt parser_parse_stmt()
 
         case T_LOOP:
             return parser_parse_control_loop();
+        
+        case T_FOR:
+            return parser_parse_control_for();
 
         case T_BREAK:
         case T_CONTINUE:

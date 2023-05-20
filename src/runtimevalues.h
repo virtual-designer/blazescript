@@ -8,6 +8,8 @@
 
 #define BLAZE_NULL ((runtime_val_t) { .type = VAL_NULL })
 #define BLAZE_INT(n) ((runtime_val_t) { .type = VAL_NUMBER, .is_float = false, .intval = n })
+#define BLAZE_TRUE ((runtime_val_t) { .type = VAL_BOOLEAN, .boolval = true })
+#define BLAZE_FALSE ((runtime_val_t) { .type = VAL_BOOLEAN, .boolval = false })
 
 typedef enum 
 {

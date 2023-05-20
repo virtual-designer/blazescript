@@ -59,6 +59,9 @@ runtime_val_t *scope_assign_identifier(scope_t *scope, char *name, runtime_val_t
     if (scope->parent == NULL && identifier == NULL) 
         eval_error(true, "Undefined identifier '%s' in the current scope", name);
 
+    if (identifier->is_const) 
+        eval_error(true, "Cannot modify constant identifier '%s' in the current scope", name);
+
     identifier_t copy = *identifier;
     runtime_val_t *val_heap = xmalloc(sizeof (runtime_val_t));
     memcpy(val_heap, value, sizeof (runtime_val_t));
