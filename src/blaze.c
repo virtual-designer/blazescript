@@ -24,11 +24,6 @@
 
 config_t config = { 0 };
 
-typedef struct {
-    char *name;
-    runtime_val_t (*callback)(vector_t, scope_t *);
-} function_t;
-
 static function_t __native_functions[] = {
     { "println", NATIVE_FN_REF(println) },
     { "print", NATIVE_FN_REF(print) },
