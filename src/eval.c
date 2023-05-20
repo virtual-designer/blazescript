@@ -11,6 +11,7 @@
 #include "blaze.h"
 #include "runtimevalues.h"
 #include "xmalloc.h"
+#include "string.h"
 
 #define NUM(node) (node.is_float ? node.floatval : (node.type == VAL_BOOLEAN ? node.boolval : node.intval))
 
@@ -711,25 +712,78 @@ bool runtime_val_to_bool(runtime_val_t *val)
     );
 }
 
+#if !defined(asprintf)
+int asprintf(char **ptr, const char *fmt, ...) __attribute__((format(printf, 2, 3))); 
+#endif
+
 runtime_val_t eval_string_binop(runtime_val_t left, runtime_val_t right, ast_operator_t operator)
 {
-    assert(left.type == VAL_STRING && right.type == VAL_STRING);
+    assert(left.type == VAL_STRING || right.type == VAL_STRING);
 
     if (operator == OP_PLUS)
     {
-        size_t leftlen = strlen(left.strval);
-        size_t rightlen = strlen(right.strval);
-        size_t len = leftlen + rightlen;
+        if (left.type == VAL_STRING && right.type == VAL_STRING) 
+        {
+            size_t leftlen = strlen(left.strval);
+            size_t rightlen = strlen(right.strval);
+            size_t len = leftlen + rightlen;
 
-        runtime_val_t str = {
-            .type = VAL_STRING,
-            .strval = xmalloc(len + 2)
-        };
+            runtime_val_t str = {
+                .type = VAL_STRING,
+                .strval = xmalloc(len + 2)
+            };
 
-        strncpy(str.strval, left.strval, leftlen + 1);
-        strncat(str.strval, right.strval, rightlen + 1);
+            strncpy(str.strval, left.strval, leftlen + 1);
+            strncat(str.strval, right.strval, rightlen + 1);
 
-        return str;
+            return str;
+        }
+        else if ((left.type == VAL_STRING && right.type == VAL_NUMBER) || (left.type == VAL_NUMBER && right.type == VAL_STRING))
+        {
+            runtime_val_t str = {
+                .type = VAL_STRING,
+                .strval = NULL
+            };
+
+            string_t fmt = _str(""); 
+
+            if (left.type == VAL_STRING)
+                concat(fmt, "%s");
+
+            if (left.type == VAL_NUMBER)
+            {
+                concat(fmt, left.is_float ? "%Lg" : "%lld");
+            }
+
+            if (right.type == VAL_STRING)
+                concat(fmt, "%s");
+
+            if (right.type == VAL_NUMBER)
+            {
+                concat(fmt, right.is_float ? "%Lg" : "%lld");
+            }
+
+            if (left.type == VAL_NUMBER)
+            {
+                if (left.is_float)
+                    asprintf(&str.strval, fmt, left.floatval, right.strval); 
+                else 
+                    asprintf(&str.strval, fmt, left.intval, right.strval); 
+            }
+            else if (right.type == VAL_NUMBER)
+            {
+                if (right.is_float)
+                    asprintf(&str.strval, fmt, left.strval, right.floatval); 
+                else 
+                    asprintf(&str.strval, fmt, left.strval, right.intval); 
+            }
+
+            strfree(fmt);
+
+            return str;
+        }
+        else 
+            eval_error(true, "Invalid binary operation");
     }
     else if (operator == OP_CMP_EQUALS)
     {
@@ -772,7 +826,7 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
         update_line(binop);
         return eval_numeric_binop(left, right, binop.operator);
     }
-    else if (right.type == VAL_STRING || left.type == VAL_BOOLEAN)
+    else if (right.type == VAL_STRING || left.type == VAL_STRING)
     {
         return eval_string_binop(left, right, binop.operator);
     }

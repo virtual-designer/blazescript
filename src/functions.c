@@ -82,6 +82,8 @@ NATIVE_FN(println)
     }
 
     printf("\n");
+    fflush(stdout);
+
     VEC_FREE(args);
     return __native_null();
 }
@@ -96,6 +98,8 @@ NATIVE_FN(print)
         if (i != (args.length - 1))
             printf(" ");
     }
+    
+    fflush(stdout);
     
     VEC_FREE(args);
     return __native_null();
@@ -115,6 +119,25 @@ NATIVE_FN(pause)
     pause();
 #endif
     
+    return __native_null();
+}
+
+NATIVE_FN(sleep)
+{
+    if (args.length != 1) 
+        eval_error(true, "sleep() takes exactly 1 parameter");
+
+    runtime_val_t number = VEC_GET(args, 0, runtime_val_t);
+
+    if (number.type != VAL_NUMBER) 
+        eval_error(true, "Parameter #1 of sleep() must be a Number");
+
+    if ((number.is_float ? number.floatval : number.intval) < 0) 
+        eval_error(true, "Parameter #1 of sleep() must be a positive number");
+    
+    usleep((unsigned long long int) ((number.is_float ? number.floatval : number.intval) * 1000000));
+
+    VEC_FREE(args);    
     return __native_null();
 }
 

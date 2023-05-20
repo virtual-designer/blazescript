@@ -12,6 +12,7 @@
 NATIVE_FN(println);
 NATIVE_FN(print);
 NATIVE_FN(pause);
+NATIVE_FN(sleep);
 NATIVE_FN(typeof);
 NATIVE_FN(read);
 

@@ -247,6 +247,47 @@ void lex_tokenize(lex_t *array, char *code)
 
                         if (code[i] == '\n' || code[i] == '\r')
                             line_update(&line, 1);
+
+                        if ((i + 1) < len && code[i] == '\\')
+                        {
+                            if (code[i + 1] == 'n')
+                            {
+                                concat_c_safe(str, &length, '\n');
+                                i += 2;
+                            }
+                            else if (code[i + 1] == 'r')
+                            {
+                                concat_c_safe(str, &length, '\r');
+                                i += 2;
+                            }
+                            else if (code[i + 1] == 'b')
+                            {
+                                concat_c_safe(str, &length, '\b');
+                                i += 2;
+                            }
+                            else if (code[i + 1] == 'a')
+                            {
+                                concat_c_safe(str, &length, '\a');
+                                i += 2;
+                            }
+                            else if (code[i + 1] == 't')
+                            {
+                                concat_c_safe(str, &length, '\t');
+                                i += 2;
+                            }
+                            else if (code[i + 1] == 'v')
+                            {
+                                concat_c_safe(str, &length, '\v');
+                                i += 2;
+                            }
+                            else
+                            {
+                                concat_c_safe(str, &length, code[i]);
+                                i++;
+                            }
+
+                            continue;
+                        }
                         
                         concat_c_safe(str, &length, code[i]);
                         i++;

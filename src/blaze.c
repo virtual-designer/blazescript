@@ -32,6 +32,7 @@ typedef struct {
 static function_t __native_functions[] = {
     { "println", NATIVE_FN_REF(println) },
     { "print", NATIVE_FN_REF(print) },
+    { "sleep", NATIVE_FN_REF(sleep) },
     { "pause", NATIVE_FN_REF(pause) },
     { "typeof", NATIVE_FN_REF(typeof) },
     { "read", NATIVE_FN_REF(read) }
