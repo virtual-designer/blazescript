@@ -21,7 +21,7 @@
 #define EOL "\n"
 #endif
 
-#if !defined(vasprintf)
+#if !defined(vasprintf) && defined(__linux__)
 int vasprintf(char **ptr, const char *fmt, ...);
 #endif
 
