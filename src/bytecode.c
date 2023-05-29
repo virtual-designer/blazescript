@@ -219,7 +219,7 @@ void bytecode_disassemble(bytecode_t *bytecode)
 
             case OP_BUILTIN_FN_CALL:
                 {
-                    printf("call_builtin_fn %02x, %s\n", *ip, (char *) (++ip));
+                    printf("call_builtin_fn %02x, %s\n", *++ip, (char *) (++ip));
 
                     while (*ip != '\0')
                         ip++;

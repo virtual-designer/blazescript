@@ -92,13 +92,14 @@ runtime_valtype_t inline dt_to_rtval_type(data_type_t type)
 
 static void compile_builtin_call_expr(ast_stmt astnode, bytecode_t *bytecode)
 {
-    for (size_t i = 0; i < astnode.args.length; i++)
+    for (ssize_t i = (astnode.args.length - 1); i >= 0; i--)
     {
         ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
         compile(arg, bytecode);
     }
 
     bytecode_push(bytecode, OP_BUILTIN_FN_CALL);
+    bytecode_push(bytecode, astnode.args.length);
 
     for (size_t i = 0; i < strlen(astnode.callee->identifier); i++)
     {
@@ -106,23 +107,6 @@ static void compile_builtin_call_expr(ast_stmt astnode, bytecode_t *bytecode)
     }
 
     bytecode_push(bytecode, '\0');
-    bytecode_push(bytecode, astnode.args.length);
-
-    for (size_t i = 0; i < astnode.args.length; i++)
-    {
-        ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
-        bytecode_push(bytecode, ast_node_to_dt(arg));
-    }
-
-    for (ssize_t i = astnode.args.length - 1; i >= 0; i--)
-    {
-        ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
-
-        if (arg.type == NODE_STRING)
-            bytecode_push(bytecode, OP_POP_STR);
-        else if (arg.type != NODE_IDENTIFIER)
-            bytecode_push(bytecode, OP_POP);
-    }
 }
 
 static void compile_bin_expr(ast_stmt astnode, bytecode_t *bytecode)

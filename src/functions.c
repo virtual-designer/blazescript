@@ -75,7 +75,11 @@ NATIVE_FN(println)
     for (size_t i = 0; i < args.length; i++)
     {
         runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
-        handle_result(&arg, false, 1, false);
+
+        if (arg.type == VAL_STRING)
+            printf("%s", arg.strval);
+        else
+            handle_result(&arg, false, 1, false);
 
         if (i != (args.length - 1))
             printf(" ");
