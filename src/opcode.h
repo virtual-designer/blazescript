@@ -21,12 +21,10 @@ typedef enum {
     OP_BUILTIN_FN_CALL,
     OP_PUSH_STR,
     OP_POP_STR,
+    OP_DECL_VAR,
+    OP_STORE_VARVAL,
     OPCODE_COUNT
 } opcode_t;
-
-typedef enum {
-    FN_PRINTLN
-} builtin_fn_t;
 
 typedef uint8_t *(*opcode_handler_t)(uint8_t *ip __attribute__((maybe_unused)), bytecode_t *bytecode __attribute__((maybe_unused)));
 

@@ -67,7 +67,7 @@ void bytecode_push(bytecode_t *bytecode, uint8_t byte)
     bytecode->bytes[bytecode->size - 1] = byte;
 }
 
-void bytecode_push_bytes(bytecode_t *bytecode, uint8_t *bytes, size_t len)
+void bytecode_push_bytes(bytecode_t *bytecode, const uint8_t *bytes, size_t len)
 {
     bytecode->bytes = xrealloc(bytecode->bytes, len + bytecode->size);
 
@@ -219,7 +219,7 @@ void bytecode_disassemble(bytecode_t *bytecode)
 
             case OP_BUILTIN_FN_CALL:
                 {
-                    printf("call_builtin_fn %02x, %s\n", *++ip, (char *) (++ip));
+                    printf("call_builtin_fn %02u, %s\n", *ip++, (char *) (++ip));
 
                     while (*ip != '\0')
                         ip++;
@@ -236,6 +236,22 @@ void bytecode_disassemble(bytecode_t *bytecode)
 
             case OP_TEST:
                 puts("test");
+                break;
+
+            case OP_DECL_VAR:
+                printf("decl_var %s\n", (char *) ++ip);
+
+                while (*ip != '\0')
+                    ip++;
+
+                break;
+
+            case OP_STORE_VARVAL:
+                printf("store_varval %s\n", (char *) ++ip);
+
+                while (*ip != '\0')
+                    ip++;
+
                 break;
 
             default:

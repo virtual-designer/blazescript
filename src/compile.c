@@ -95,7 +95,7 @@ static void compile_builtin_call_expr(ast_stmt astnode, bytecode_t *bytecode)
     for (ssize_t i = (astnode.args.length - 1); i >= 0; i--)
     {
         ast_stmt arg = VEC_GET(astnode.args, i, ast_stmt);
-        compile(arg, bytecode);
+        compile_force_push(arg, bytecode);
     }
 
     bytecode_push(bytecode, OP_BUILTIN_FN_CALL);
@@ -111,8 +111,8 @@ static void compile_builtin_call_expr(ast_stmt astnode, bytecode_t *bytecode)
 
 static void compile_bin_expr(ast_stmt astnode, bytecode_t *bytecode)
 {
-    compile(*astnode.left, bytecode);
-    compile(*astnode.right, bytecode);
+    compile_force_push(*astnode.left, bytecode);
+    compile_force_push(*astnode.right, bytecode);
 
     uint8_t opcode;
 
@@ -143,7 +143,27 @@ static void compile_bin_expr(ast_stmt astnode, bytecode_t *bytecode)
     }
 
     bytecode_push(bytecode, opcode);
-    // bytecode_push(bytecode, OP_DUMP);
+}
+
+void compile_vardecl(ast_stmt astnode, bytecode_t* bytecode)
+{
+    bytecode_push(bytecode, OP_DECL_VAR);
+
+    for (size_t i = 0; i < strlen(astnode.identifier); i++)
+        bytecode_push(bytecode, astnode.identifier[i]);
+
+    bytecode_push(bytecode, 0);
+
+    if (astnode.has_val)
+    {
+        compile_force_push(*astnode.varval, bytecode);
+        bytecode_push(bytecode, OP_STORE_VARVAL);
+
+        for (size_t i = 0; i < strlen(astnode.identifier); i++)
+            bytecode_push(bytecode, astnode.identifier[i]);
+
+        bytecode_push(bytecode, 0);
+    }
 }
 
 void compile(ast_stmt astnode, bytecode_t *bytecode)
@@ -154,6 +174,28 @@ void compile(ast_stmt astnode, bytecode_t *bytecode)
             compile_program(astnode, bytecode);
             return;
 
+        case NODE_EXPR_BINARY:
+            compile_bin_expr(astnode, bytecode);
+            return;
+
+        case NODE_EXPR_CALL:
+            compile_builtin_call_expr(astnode, bytecode);
+            return;
+
+        case NODE_DECL_VAR:
+            compile_vardecl(astnode, bytecode);
+            return;
+        
+        default:
+            utils_error(true, "unsupported AST node found");
+            return;
+    }
+}
+
+void compile_force_push(ast_stmt astnode, bytecode_t *bytecode)
+{
+    switch (astnode.type)
+    {
         case NODE_STRING:
             compile_string(astnode, bytecode);
             return;
@@ -162,16 +204,7 @@ void compile(ast_stmt astnode, bytecode_t *bytecode)
             compile_number(astnode, bytecode);
             return;
 
-        case NODE_EXPR_BINARY:
-            compile_bin_expr(astnode, bytecode);
-            return;
-
-        case NODE_EXPR_CALL:
-            compile_builtin_call_expr(astnode, bytecode);
-            return;
-        
         default:
-            utils_error(true, "unsupported AST node found");
-            return;
+            return compile(astnode, bytecode);
     }
 }

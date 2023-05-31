@@ -1,15 +1,11 @@
-#include <inttypes.h>
 #include <stdio.h>
 #include <errno.h>
-#include <assert.h>
 #include <stdlib.h>
 
-#include "utils.h"
 #include "opcode.h"
 #include "scope.h"
 #include "vector.h"
 #include "string.h"
-#include "compile.h"
 #include "functions.h"
 #include "stack.h"
 #include "blaze.h"
@@ -19,6 +15,7 @@
 
 static opcode_handler_t handlers[OPCODE_COUNT];
 static stack_t global;
+static scope_t global_scope;
 
 OPCODE_HANDLER(nop)
 {
@@ -46,6 +43,7 @@ OPCODE_HANDLER(hlt)
     (OPCODE_HANDLER_REF(dump))(ip, bytecode);
 #endif
 #endif
+    scope_free(&global_scope);
     exit(errno != 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
@@ -57,8 +55,9 @@ OPCODE_HANDLER(test)
 
 OPCODE_HANDLER(push)
 {
-    stack_push(&global, (stack_element_t) {
-        .type = ST_VAL_INT,
+    stack_push(&global, (runtime_val_t) {
+        .type = VAL_NUMBER,
+        .is_float = false,
         .intval = *++ip
     });
 
@@ -73,12 +72,12 @@ OPCODE_HANDLER(pop)
 
 static void binary_operation(bytecode_t *bytecode, ast_operator_t operator)
 {
-    stack_element_t num2 = stack_pop(&global);
-    stack_element_t num1 = stack_pop(&global);
+    runtime_val_t num2 = stack_pop(&global);
+    runtime_val_t num1 = stack_pop(&global);
 
-    if (num1.type != ST_VAL_INT)
+    if (num1.type != VAL_NUMBER)
         bytecode_set_error(bytecode, "Value #1 in stack is not a number");
-    else if (num2.type == ST_VAL_INT)
+    else if (num2.type != VAL_NUMBER)
         bytecode_set_error(bytecode, "Value #0 in stack is not a number");
 
     if (operator == OP_DIVIDE || operator == OP_MOD)
@@ -87,8 +86,8 @@ static void binary_operation(bytecode_t *bytecode, ast_operator_t operator)
             bytecode_set_error(bytecode, "Cannot divide by 0 (value #0)");
     }
 
-    stack_push(&global, (stack_element_t) {
-        .type = ST_VAL_INT,
+    stack_push(&global, (runtime_val_t) {
+        .type = VAL_NUMBER,
         .intval = operator == OP_PLUS ? num1.intval + num2.intval : (
             operator == OP_MINUS ? num1.intval - num2.intval : (
                 operator == OP_TIMES ? num1.intval * num2.intval : (
@@ -131,6 +130,23 @@ OPCODE_HANDLER(mod)
     return ++ip;
 }
 
+OPCODE_HANDLER(decl_var)
+{
+    ip++;
+    char *identifier = bytecode_get_next_string(&ip);
+    scope_declare_identifier(&global_scope, identifier, & BLAZE_NULL, false);
+    return ++ip;
+}
+
+OPCODE_HANDLER(store_varval)
+{
+    ip++;
+    char *identifier = bytecode_get_next_string(&ip);
+    runtime_val_t value = stack_pop(&global);
+    scope_assign_identifier(&global_scope, identifier, &value);
+    return ++ip;
+}
+
 static function_t __native_functions[] = {
     { "println", NATIVE_FN_REF(println) },
     { "print", NATIVE_FN_REF(print) },
@@ -152,14 +168,19 @@ OPCODE_HANDLER(builtin_fn_call)
 
     for (uint8_t i = 0; i < numargs; i++)  
     { 
-        stack_element_t element = stack_pop(&global);
+        runtime_val_t element = stack_pop(&global);
         runtime_val_t value = {
             .type = element.type
         };
 
-        if (element.type == ST_VAL_INT)
-            value.intval = element.intval;
-        else if (element.type == ST_VAL_STRING)
+        if (element.type == VAL_NUMBER)
+        {
+            if (element.is_float)
+                value.floatval = element.floatval;
+            else
+                value.intval = element.intval;
+        }
+        else if (element.type == VAL_STRING)
             value.strval = strdup(element.strval);
 
         VEC_PUSH(args, value, runtime_val_t);
@@ -193,8 +214,8 @@ OPCODE_HANDLER(push_str)
 {
     ip++;
                     
-    stack_push(&global, (stack_element_t) {
-        .type = ST_VAL_STRING,
+    stack_push(&global, (runtime_val_t) {
+        .type = VAL_STRING,
         .strval = bytecode_get_next_string(&ip)
     });
 
@@ -221,11 +242,14 @@ static void opcode_set_handlers()
     handlers[OP_PUSH_STR] = OPCODE_HANDLER_REF(push_str);
     handlers[OP_POP_STR] = OPCODE_HANDLER_REF(pop_str);
     handlers[OP_BUILTIN_FN_CALL] = OPCODE_HANDLER_REF(builtin_fn_call);
+    handlers[OP_DECL_VAR] = OPCODE_HANDLER_REF(decl_var);
+    handlers[OP_STORE_VARVAL] = OPCODE_HANDLER_REF(store_varval);
 }
 
 void opcode_init()
 {
     global = stack_create(20);
+    global_scope = scope_init(NULL);
 
     for (size_t i = 0; i < OPCODE_COUNT; i++)
         handlers[i] = &opcode_handler_nop;

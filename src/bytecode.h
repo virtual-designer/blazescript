@@ -27,7 +27,7 @@ void bytecode_exec(bytecode_t *bytecode);
 char *bytecode_error(bytecode_t *bytecode);
 void bytecode_set_error(bytecode_t *bytecode, const char *error, ...);
 void bytecode_push(bytecode_t *bytecode, uint8_t byte);
-void bytecode_push_bytes(bytecode_t *bytecode, uint8_t *byte, size_t len);
+void bytecode_push_bytes(bytecode_t *bytecode, const uint8_t *bytes, size_t len);
 void bytecode_disassemble(bytecode_t *bytecode);
 char *bytecode_get_next_string(uint8_t **ip);
 
