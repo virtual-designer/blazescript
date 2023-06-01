@@ -231,11 +231,15 @@ void bytecode_disassemble(bytecode_t *bytecode)
                 break;
 
             case OP_DUMP:
-                puts("dump_stack");
+                puts("dmp");
                 break;
 
             case OP_TEST:
                 puts("test");
+                break;
+
+            case OP_PRINT:
+                puts("print");
                 break;
 
             case OP_DECL_VAR:
@@ -254,12 +258,22 @@ void bytecode_disassemble(bytecode_t *bytecode)
 
                 break;
 
+            case OP_PUSH_VARVAL:
+                printf("push_varval %s\n", (char *) ++ip);
+
+                while (*ip != '\0')
+                    ip++;
+
+                break;
+
             default:
                 utils_error(true, "invalid opcode: %02x", *ip);
         }
 
         ip++;
     }
+
+    printf("%p %02x hlt\n", ip, *ip);
 }
 
 char *bytecode_get_next_string(uint8_t **ip)

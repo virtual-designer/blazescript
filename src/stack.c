@@ -25,6 +25,8 @@ void stack_push(stack_t *stack, runtime_val_t value)
 
 void stack_print(stack_t *stack)
 {
+    puts("* STACK DUMP");
+
     for (size_t i = 0; i < stack->size; i++)
     {
         printf("%04lx: ", i);
@@ -37,11 +39,11 @@ void stack_print(stack_t *stack)
                 printf("%lld", stack->array[i].intval);
         }
         else if (stack->array[i].type == VAL_STRING)
-            printf("%s", stack->array[i].strval);
+            printf("\"%s\"", stack->array[i].strval);
         else 
-            printf("[Unknown]");
+            printf("[Unknown %d]", stack->array[i].type);
 
-        if (stack->si == i)
+        if ((stack->si - 1) == i)
             printf("  <==");
 
         printf("\n");

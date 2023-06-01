@@ -23,6 +23,8 @@ typedef enum {
     OP_POP_STR,
     OP_DECL_VAR,
     OP_STORE_VARVAL,
+    OP_PUSH_VARVAL,
+    OP_PRINT,
     OPCODE_COUNT
 } opcode_t;
 

@@ -147,6 +147,20 @@ OPCODE_HANDLER(store_varval)
     return ++ip;
 }
 
+OPCODE_HANDLER(push_varval)
+{
+    ip++;
+    char *identifier = bytecode_get_next_string(&ip);
+    identifier_t *i = scope_resolve_identifier(&global_scope, identifier);
+
+    if (i == NULL)
+        bytecode_set_error(bytecode, "'%s' is not defined", identifier);
+    else
+        stack_push(&global, *i->value);
+
+    return ++ip;
+}
+
 static function_t __native_functions[] = {
     { "println", NATIVE_FN_REF(println) },
     { "print", NATIVE_FN_REF(print) },
@@ -227,6 +241,15 @@ OPCODE_HANDLER(pop_str)
     return opcode_handler_pop(ip, bytecode);
 }
 
+OPCODE_HANDLER(print)
+{
+    vector_t args = VEC_INIT; 
+    runtime_val_t value = stack_pop(&global);
+    VEC_PUSH(args, value, runtime_val_t);
+    NATIVE_FN_REF(println)(args, &global_scope);    
+    return ++ip;
+}
+
 static void opcode_set_handlers() 
 {
     handlers[OP_HLT] = OPCODE_HANDLER_REF(hlt);
@@ -244,6 +267,8 @@ static void opcode_set_handlers()
     handlers[OP_BUILTIN_FN_CALL] = OPCODE_HANDLER_REF(builtin_fn_call);
     handlers[OP_DECL_VAR] = OPCODE_HANDLER_REF(decl_var);
     handlers[OP_STORE_VARVAL] = OPCODE_HANDLER_REF(store_varval);
+    handlers[OP_PUSH_VARVAL] = OPCODE_HANDLER_REF(push_varval);
+    handlers[OP_PRINT] = OPCODE_HANDLER_REF(print);
 }
 
 void opcode_init()
