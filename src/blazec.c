@@ -143,6 +143,9 @@ static void write_compiled_bytecode(bytecode_t *bytecode)
     bytecode_write_shebang(output_file);
     bytecode_write(bytecode, output_file);
 
+    if (fchmod(fileno(output_file), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0)
+        utils_warn("Cannot change permissions of output file '%s': %s", config.outfile, strerror(errno));
+
     fclose(output_file);
 }
 
