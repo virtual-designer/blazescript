@@ -1,7 +1,7 @@
-mov        %r0, 30 ; comment
-mov        %r1, 10 ; swap all these out
-xor        %r0, %r1
-xor        %r1, %r0
-xor        %r0, %r1
-regdump
-hlt
+mov       %r0, 30   ; move 30 to r0 register
+mov       %r1, 10   ; move 10 to r1 register
+xor       %r0, %r1  ; perform xor operation (repeat 2 times)
+xor       %r1, %r0
+xor       %r0, %r1
+regdump             ; dump the values of the register in stdout
+hlt                 ; halt the cpu

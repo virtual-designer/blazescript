@@ -90,6 +90,7 @@ static char *make_output_file_name()
 static void write_output(bytecode_t *bytecode)
 {
     char *filename = make_output_file_name();
+    config.outfile = strdup(filename);
     FILE *file = fopen(filename, "w");
 
     if (file == NULL)
@@ -98,6 +99,9 @@ static void write_output(bytecode_t *bytecode)
     bytecode_write_magic_header(file);
     bytecode_write_shebang(file);
     bytecode_write(bytecode, file);
+
+    if (fchmod(fileno(file), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0)
+        utils_warn("Cannot change permissions of output file '%s': %s", config.outfile, strerror(errno));
 
     fclose(file);
 }
