@@ -17,6 +17,161 @@ static opcode_handler_t handlers[OPCODE_COUNT];
 static stack_t global;
 static scope_t global_scope;
 
+runtime_val_t registers[REG_COUNT];
+
+static bool is_valid_regid(bytecode_t *bytecode, int regid)
+{
+    if (regid < 0 || regid >= REG_COUNT)
+    {
+        bytecode_set_error(bytecode, "regid operand is invalid: %u", regid);
+        return false;
+    }
+
+    return true;
+}
+
+#define REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) (reg2_is_reg == 0x01 ? registers[reg2id].intval : number)
+
+static uint8_t *binary_operation_reg(bytecode_t *bytecode, uint8_t *ip, char operator)
+{
+    uint8_t reg2_is_reg = *++ip,
+            reg1id = *++ip, 
+            reg2id = *(ip + 1);
+
+    int number;
+
+    if (!is_valid_regid(bytecode, reg1id))
+        return ++ip;
+
+    if (reg2_is_reg && !is_valid_regid(bytecode, reg2id))
+        return ++ip;
+
+    if (reg2_is_reg)
+        ip++;
+    else 
+    {
+        uint8_t byte1 = *++ip,   
+                byte2 = *++ip,
+                byte3 = *++ip,
+                byte4 = *++ip;
+        
+        number = byte1 | byte2 << 8 | byte3 << 16 | byte4 << 32;
+    }
+
+    if (registers[reg1id].type != VAL_NUMBER || (reg2_is_reg && registers[reg2id].type != VAL_NUMBER)) 
+    {
+        bytecode_set_error(bytecode, "operands must be number");
+        return ++ip;
+    }
+
+    if ((operator == '%' || operator == '/') && ((reg2_is_reg && registers[reg2id].intval == 0) || (!reg2_is_reg && number == 0)))
+    {
+        bytecode_set_error(bytecode, "operand #2 must be non-zero number");
+        return ++ip;
+    }
+
+    int value = operator == '+' ? registers[reg1id].intval + REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+        operator == '-' ? registers[reg1id].intval - REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+            operator == '*' ? registers[reg1id].intval * REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+                operator == '/' ? registers[reg1id].intval / REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+                    operator == '%' ? registers[reg1id].intval % REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+                        operator == '|' ? registers[reg1id].intval | REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+                            operator == '&' ? registers[reg1id].intval & REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+                                operator == '^' ? registers[reg1id].intval ^ REG2_OR_NUM_VAL(reg2_is_reg, reg2id, number) : (
+                                    -1
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    );
+
+    registers[reg1id] = (runtime_val_t) {
+        .type = VAL_NUMBER,
+        .is_float = false,
+        .intval = value
+    };
+    
+    return ++ip;
+}
+
+OPCODE_HANDLER(regadd)
+{
+    return binary_operation_reg(bytecode, ip, '+');
+}
+
+OPCODE_HANDLER(regsub)
+{
+    return binary_operation_reg(bytecode, ip, '-');
+}
+
+OPCODE_HANDLER(regmul)
+{
+    return binary_operation_reg(bytecode, ip, '*');
+}
+
+OPCODE_HANDLER(regdiv)
+{
+    return binary_operation_reg(bytecode, ip, '/');
+}
+
+OPCODE_HANDLER(regmod)
+{
+    return binary_operation_reg(bytecode, ip, '%');
+}
+
+OPCODE_HANDLER(regor)
+{
+    return binary_operation_reg(bytecode, ip, '|');
+}
+
+OPCODE_HANDLER(regand)
+{
+    return binary_operation_reg(bytecode, ip, '&');
+}
+
+OPCODE_HANDLER(regxor)
+{
+    return binary_operation_reg(bytecode, ip, '^');
+}
+
+OPCODE_HANDLER(mov)
+{
+    uint8_t regid = *++ip;
+    uint8_t byte1 = *++ip,   
+            byte2 = *++ip,
+            byte3 = *++ip,
+            byte4 = *++ip;
+
+    int number = byte1 | byte2 << 8 | byte3 << 16 | byte4 << 32;
+    
+    if (!is_valid_regid(bytecode, regid))
+        return ++ip;
+    
+    registers[regid] = (runtime_val_t) {
+        .type = VAL_NUMBER,
+        .is_float = false,
+        .intval = number
+    };
+    
+    return ++ip;
+}
+
+OPCODE_HANDLER(regdump)
+{
+    puts("* REGDUMP");
+
+    for (int i = 0; i < REG_COUNT; i++)
+    {
+        printf("%%r%d: ", i);
+        print_rtval(&registers[i], true, 0, true);
+    }
+
+    return ++ip;
+}
+
 OPCODE_HANDLER(nop)
 {
     return ++ip;
@@ -269,6 +424,16 @@ static void opcode_set_handlers()
     handlers[OP_STORE_VARVAL] = OPCODE_HANDLER_REF(store_varval);
     handlers[OP_PUSH_VARVAL] = OPCODE_HANDLER_REF(push_varval);
     handlers[OP_PRINT] = OPCODE_HANDLER_REF(print);
+    handlers[OP_MOV] = OPCODE_HANDLER_REF(mov);
+    handlers[OP_REGDUMP] = OPCODE_HANDLER_REF(regdump);
+    handlers[OP_REGADD] = OPCODE_HANDLER_REF(regadd);
+    handlers[OP_REGSUB] = OPCODE_HANDLER_REF(regsub);
+    handlers[OP_REGMUL] = OPCODE_HANDLER_REF(regmul);
+    handlers[OP_REGDIV] = OPCODE_HANDLER_REF(regdiv);
+    handlers[OP_REGMOD] = OPCODE_HANDLER_REF(regmod);
+    handlers[OP_REGOR] = OPCODE_HANDLER_REF(regor);
+    handlers[OP_REGAND] = OPCODE_HANDLER_REF(regand);
+    handlers[OP_REGXOR] = OPCODE_HANDLER_REF(regxor);
 }
 
 void opcode_init()
@@ -278,6 +443,9 @@ void opcode_init()
 
     for (size_t i = 0; i < OPCODE_COUNT; i++)
         handlers[i] = &opcode_handler_nop;
-
+    
     opcode_set_handlers();
+    
+    for (size_t i = 0; i < REG_COUNT; i++)
+        registers[i] = BLAZE_NULL;
 }

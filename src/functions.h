@@ -16,4 +16,6 @@ NATIVE_FN(sleep);
 NATIVE_FN(typeof);
 NATIVE_FN(read);
 
+void print_rtval(runtime_val_t *result, bool newline, int tabs, bool quote_strings);
+
 #endif

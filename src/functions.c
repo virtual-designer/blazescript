@@ -11,7 +11,7 @@
 #include "eval.h"
 #include "utils.h"
 
-static void handle_result(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
+void print_rtval(runtime_val_t *result, bool newline, int tabs, bool quote_strings)
 {
     if (result->type == VAL_NULL)
         printf("\033[35mnull\033[0m");
@@ -39,7 +39,7 @@ static void handle_result(runtime_val_t *result, bool newline, int tabs, bool qu
                 putchar('\t');
 
             printf("%s: ", result->properties.array[i]->key);
-            handle_result(result->properties.array[i]->value->value, false, tabs + 1, true);
+            print_rtval(result->properties.array[i]->value->value, false, tabs + 1, true);
             printf("%s\n", c != (result->properties.count - 1) ? "," : "");
             c++;
         }
@@ -79,7 +79,7 @@ NATIVE_FN(println)
         if (arg.type == VAL_STRING)
             printf("%s", arg.strval);
         else
-            handle_result(&arg, false, 1, false);
+            print_rtval(&arg, false, 1, false);
 
         if (i != (args.length - 1))
             printf(" ");
@@ -97,7 +97,7 @@ NATIVE_FN(print)
     for (size_t i = 0; i < args.length; i++)
     {
         runtime_val_t arg = VEC_GET(args, i, runtime_val_t);
-        handle_result(&arg, false, 1, false);
+        print_rtval(&arg, false, 1, false);
 
         if (i != (args.length - 1))
             printf(" ");

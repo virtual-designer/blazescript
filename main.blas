@@ -1,3 +1,7 @@
-push 10
-dump
+mov        %r0, 30 ; comment
+mov        %r1, 10 ; swap all these out
+xor        %r0, %r1
+xor        %r1, %r0
+xor        %r0, %r1
+regdump
 hlt
