@@ -25,6 +25,7 @@ typedef enum {
     OP_STORE_VARVAL,
     OP_PUSH_VARVAL,
     OP_PRINT,
+    OP_MOV,
     OPCODE_COUNT
 } opcode_t;
 

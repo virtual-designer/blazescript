@@ -40,17 +40,25 @@ BLAZEVM_OBJECTS = src/blazevm.o \
 				 src/map.o \
 				 src/stack.o
 
-# BLAZE_STDLIB_OBJECTS = blaze_stdlib.o
+BLAZEAS_OBJECTS = src/blazeas.o \
+				 src/debug.o \
+				 src/xmalloc.o \
+				 src/utils.o \
+				 src/bytecode.o \
+				 src/opcode.o \
+				 src/map.o \
+				 src/stack.o \
+				 src/scope.o \
+				 src/functions.o \
+				 src/eval.o \
+				 src/string.o \
+				 src/compile.o \
+				 src/assemble.o
 
 CC = gcc
-# AR = ar
 CFLAGS = -g -D_DEBUG -D_NODEBUG -std=gnu11 -Wall -Wextra
-# BLAZEC_CFLAGS := $(shell llvm-config --cflags)
-# BLAZEC_LDFLAGS := $(shell llvm-config --ldflags --system-libs --libs core)
 
-all: blaze blazevm blazec
-
-# blazec blazevm
+all: blaze blazevm blazec blazeas
 
 blaze: $(BLAZE_OBJECTS)
 	$(CC) $(CFLAGS) $(BLAZE_OBJECTS) -o $@ -lm
@@ -61,11 +69,8 @@ blazec: $(BLAZEC_OBJECTS)
 blazevm: $(BLAZEVM_OBJECTS)
 	$(CC) $(CFLAGS) $(BLAZEVM_OBJECTS) -o $@ -lm
 
-# libblaze.a: $(BLAZE_STDLIB_OBJECTS)
-# 	$(AR) cvr $@ $(BLAZE_STDLIB_OBJECTS)
+blazeas: $(BLAZEAS_OBJECTS)
+	$(CC) $(CFLAGS) $(BLAZEAS_OBJECTS) -o $@ -lm
 
 clean:
-	rm -frv $(BLAZE_OBJECTS) $(BLAZEVM_OBJECTS) $(BLAZEC_OBJECTS) blaze blazevm blazec
-	
-# $(BLAZEC_OBJECTS) $(BLAZEVM_OBJECTS) blazec blazevm
-# blaze blazec$(BLAZEC_OBJECTS)
+	rm -frv $(BLAZE_OBJECTS) $(BLAZEVM_OBJECTS) $(BLAZEC_OBJECTS) $(BLAZEAS_OBJECTS) blaze blazevm blazec blazeas
