@@ -654,6 +654,13 @@ runtime_val_t eval_numeric_binop(runtime_val_t left, runtime_val_t right, ast_op
             .boolval = (NUM(left)) == (NUM(right))
         };
     }
+    else if (operator == OP_CMP_EQUALS_STRICT)
+    {
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN,
+            .boolval = left.type == right.type && (NUM(left)) == (NUM(right))
+        };
+    }
     else if (operator == OP_CMP_LESS_THAN)
     {
         return (runtime_val_t) {
@@ -715,6 +722,14 @@ bool runtime_val_to_bool(runtime_val_t *val)
 #if !defined(asprintf)
 int asprintf(char **ptr, const char *fmt, ...) __attribute__((format(printf, 2, 3))); 
 #endif
+
+static bool cmp_str_num(const runtime_val_t *str, const runtime_val_t *num)
+{
+    if (strstr(str->strval, ".") == NULL)
+        return atoll(str->strval) == (num->is_float ? ((long long int) num->floatval) : num->intval);
+    else
+        return strtold(str->strval, NULL) == (num->is_float ? num->floatval : ((long double) num->intval));
+}
 
 runtime_val_t eval_string_binop(runtime_val_t left, runtime_val_t right, ast_operator_t operator)
 {
@@ -787,9 +802,42 @@ runtime_val_t eval_string_binop(runtime_val_t left, runtime_val_t right, ast_ope
     }
     else if (operator == OP_CMP_EQUALS)
     {
+        if ((left.type != VAL_NULL &&
+            left.type != VAL_BOOLEAN &&
+            left.type != VAL_NUMBER &&
+            left.type != VAL_STRING) || 
+            (right.type != VAL_NULL &&
+            right.type != VAL_BOOLEAN &&
+            right.type != VAL_NUMBER &&
+            right.type != VAL_STRING))
+            return BLAZE_FALSE;
+
+        if ((left.type == VAL_NULL && right.type != VAL_NULL) ||
+            (left.type != VAL_NULL && right.type == VAL_NULL))
+            return BLAZE_FALSE;
+
+        if (left.type == VAL_STRING && right.type == VAL_NUMBER)
+            return (runtime_val_t) {
+                .type = VAL_BOOLEAN,
+                .boolval = cmp_str_num(&left, &right)
+            };
+
+        if (right.type == VAL_STRING && left.type == VAL_NUMBER)
+            return (runtime_val_t) {
+                .type = VAL_BOOLEAN,
+                .boolval = cmp_str_num(&right, &left)
+            };
+
         return (runtime_val_t) {
             .type = VAL_BOOLEAN,
             .boolval = strcmp(left.strval, right.strval) == 0
+        };
+    }
+    else if (operator == OP_CMP_EQUALS_STRICT)
+    {
+        return (runtime_val_t) {
+            .type = VAL_BOOLEAN,
+            .boolval = left.type == VAL_STRING && right.type == VAL_STRING && strcmp(left.strval, right.strval) == 0
         };
     }
 
@@ -807,6 +855,14 @@ runtime_val_t eval_binop(ast_stmt binop, scope_t *scope)
 
     runtime_val_t right = eval(*binop.right, scope);
     runtime_val_t left = eval(*binop.left, scope);
+
+    if (left.type == VAL_NULL && right.type == VAL_NULL) 
+    {
+        if (binop.operator == OP_CMP_EQUALS_STRICT || binop.operator == OP_CMP_EQUALS)
+            return BLAZE_TRUE;
+
+        return BLAZE_FALSE;
+    }
 
     if (binop.operator == OP_LOGICAL_AND || binop.operator == OP_LOGICAL_OR)
     {

@@ -196,7 +196,7 @@ ast_stmt parser_parse_primary_expr()
         break;
 
         default:
-            parser_error(true, "Unexpected token '%s' found", token.value);
+            parser_error(true, "Unexpected token '%s' found (%d)", token.value, token.type);
             parser_shift();
         break;
     } 
@@ -460,6 +460,7 @@ static ast_stmt parser_parse_comparison_expr()
 
     while (conf.lexer_data.size > 0 && conf.lexer_data.tokens[0].type == T_BINARY_OPERATOR &&
         (STREQ(parser_at().value, "==") ||
+         STREQ(parser_at().value, "===") ||
          STREQ(parser_at().value, "<") ||
          STREQ(parser_at().value, "<=") ||
          STREQ(parser_at().value, ">=") ||
@@ -476,7 +477,9 @@ static ast_stmt parser_parse_comparison_expr()
                 STREQ(operator, "<") ? OP_CMP_LESS_THAN : (
                     STREQ(operator, "<=") ? OP_CMP_LESS_THAN_EQUALS : (
                         STREQ(operator, ">") ? OP_CMP_GREATER_THAN : (
-                            STREQ(operator, ">=") ? OP_CMP_GREATER_THAN_EQUALS : OP_CMP_GREATER_THAN_EQUALS
+                            STREQ(operator, ">=") ? OP_CMP_GREATER_THAN_EQUALS : (
+                                STREQ(operator, "===") ? OP_CMP_EQUALS_STRICT : OP_CMP_EQUALS_STRICT
+                            )
                         )
                     )
                 )
