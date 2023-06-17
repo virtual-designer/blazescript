@@ -2,6 +2,7 @@
 *.exe
 /blaze
 /blazec
+/blazeas
 /.vscode
 *.bak
 /*.bs
