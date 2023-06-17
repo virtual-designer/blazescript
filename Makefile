@@ -74,3 +74,6 @@ blazeas: $(BLAZEAS_OBJECTS)
 
 clean:
 	rm -frv $(BLAZE_OBJECTS) $(BLAZEVM_OBJECTS) $(BLAZEC_OBJECTS) $(BLAZEAS_OBJECTS) blaze blazevm blazec blazeas
+
+test: 
+	$(MAKE) -C tests
