@@ -1,8 +1,9 @@
 *.o
 *.exe
-/blaze
-/blazec
-/blazeas
+blaze
+blazec
+blazeas
+blazevm
 /.vscode
 *.bak
 /*.bs
@@ -33,3 +34,5 @@ autom4te.cache
 /build
 .deps
 stamp-*
+/*.status
+/config.h
