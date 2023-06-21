@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #define STREQ(str1, str2) ((bool) (strcmp(str1, str2) == 0))
 

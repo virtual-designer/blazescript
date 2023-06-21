@@ -1,5 +1,0 @@
-Your name [Attempt #0]: Hiya!
-Your name [Attempt #1]: Iterating: 1 àl?²ü
-Your name [Attempt #2]: Iterating: 2 àl?²ü
-Your name [Attempt #3]: Iterating: 3 àl?²ü
-Your name [Attempt #4]: Iterating: 4 àl?²ü
