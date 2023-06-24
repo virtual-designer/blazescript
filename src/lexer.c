@@ -8,7 +8,7 @@
 
 #include "xmalloc.h"
 #include "lexer.h"
-#include "string.h"
+#include "bstring.h"
 #include "blaze.h"
 
 static size_t line = 1;

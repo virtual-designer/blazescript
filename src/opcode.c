@@ -5,7 +5,7 @@
 #include "opcode.h"
 #include "scope.h"
 #include "vector.h"
-#include "string.h"
+#include "bstring.h"
 #include "functions.h"
 #include "stack.h"
 #include "blaze.h"
@@ -14,7 +14,7 @@
 #define OPCODE_HANDLER_REF(name) opcode_handler_##name
 
 static opcode_handler_t handlers[OPCODE_COUNT];
-static stack_t global;
+static bstack_t global;
 static scope_t global_scope;
 
 runtime_val_t registers[REG_COUNT];

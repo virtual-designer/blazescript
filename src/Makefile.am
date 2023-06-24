@@ -9,7 +9,7 @@ blaze_SOURCES = \
     map.c \
     parser.c \
     scope.c \
-    string.c \
+    bstring.c \
     xmalloc.c \
     utils.c
 
@@ -18,7 +18,7 @@ blazec_SOURCES = \
     debug.c \
     lexer.c \
     parser.c \
-    string.c \
+    bstring.c \
     xmalloc.c \
     utils.c \
     bytecode.c \
@@ -33,7 +33,7 @@ blazec_SOURCES = \
 blazevm_SOURCES = \
     blazevm.c \
     debug.c \
-    string.c \
+    bstring.c \
     xmalloc.c \
     utils.c \
     bytecode.c \
@@ -57,7 +57,7 @@ blazeas_SOURCES = \
     scope.c \
     functions.c \
     eval.c \
-    string.c \
+    bstring.c \
     compile.c \
     assemble.c
 

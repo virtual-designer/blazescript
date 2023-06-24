@@ -13,7 +13,7 @@
 #include "utils.h"
 #include "bytecode.h"
 #include "config.h"
-#include "string.h"
+#include "bstring.h"
 
 #if defined(__WIN32__)
 #define EOL "\r\n"

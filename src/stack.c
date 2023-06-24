@@ -4,26 +4,26 @@
 #include "xmalloc.h"
 #include "utils.h"
 
-stack_t stack_create(size_t size) 
+bstack_t stack_create(size_t size) 
 {
-    return (stack_t) {
+    return (bstack_t) {
         .size = size,
         .si = 0,
         .array = xcalloc(sizeof (runtime_val_t), size)
     };
 }
 
-void stack_free(stack_t *stack)
+void stack_free(bstack_t *stack)
 {
     free(stack->array);
 }
 
-void stack_push(stack_t *stack, runtime_val_t value)
+void stack_push(bstack_t *stack, runtime_val_t value)
 {
     stack->array[stack->si++] = value;
 }
 
-void stack_print(stack_t *stack)
+void stack_print(bstack_t *stack)
 {
     puts("* STACK DUMP");
 
@@ -50,7 +50,7 @@ void stack_print(stack_t *stack)
     }
 }
 
-runtime_val_t stack_pop(stack_t *stack)
+runtime_val_t stack_pop(bstack_t *stack)
 {
     if (stack->si == 0)
         utils_error(true, "Cannot pop stack as it's empty!");

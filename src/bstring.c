@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include "string.h"
+#include "bstring.h"
 #include "xmalloc.h"
 
 string_t _str(const char *s)

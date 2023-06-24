@@ -10,7 +10,7 @@
 #include "blaze.h"
 #include "xmalloc.h"
 #include "vector.h"
-#include "string.h"
+#include "bstring.h"
 
 typedef struct {
     lex_t lexer_data;

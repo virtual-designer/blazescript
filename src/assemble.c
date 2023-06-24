@@ -4,7 +4,7 @@
 
 #include "bytecode.h"
 #include "assemble.h"
-#include "string.h"
+#include "bstring.h"
 #include "utils.h"
 #include "opcode.h"
 
@@ -90,7 +90,10 @@ static opcode_t inst_to_opcode(const char *inst)
     else if (strcmp(inst, "xor") == 0)
         return OP_REGXOR; 
     else 
+    {
         utils_error(true, "Invalid instruction '%s' (2)", inst);
+        return 0;
+    }
 }
 
 static bool opcode_has_arg(const opcode_t opcode)

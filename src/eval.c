@@ -11,7 +11,7 @@
 #include "blaze.h"
 #include "runtimevalues.h"
 #include "xmalloc.h"
-#include "string.h"
+#include "bstring.h"
 
 #define NUM(node) (node.is_float ? node.floatval : (node.type == VAL_BOOLEAN ? node.boolval : node.intval))
 
