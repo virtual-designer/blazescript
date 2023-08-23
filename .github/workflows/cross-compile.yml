@@ -36,7 +36,7 @@ jobs:
       run: git pull --all && git switch workflow
       
     - name: Copy release
-      run: "sudo cp $(pwd)/blaze /tmp/blaze"
+      run: "sudo cp $(pwd)/src/blaze /tmp/blaze"
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       
     - name: Move release
@@ -54,7 +54,7 @@ jobs:
       
     - name: Commit
       run: |
-        (ls && rm ./blaze-windows && mv $(pwd)/build/bin/blaze.exe ./blaze-windows && git config --global user.name 'GitHub Actions' &&
+        (ls && rm ./blaze-windows && mv $(pwd)/src/blaze.exe ./blaze-windows && git config --global user.name 'GitHub Actions' &&
         git config --global user.email 'virtual-designer@users.noreply.github.com' &&
         git add ./blaze-windows &&
         git commit -a -m "Automated Build Workflow Commit" &&
