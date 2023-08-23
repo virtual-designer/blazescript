@@ -37,6 +37,7 @@ jobs:
 
     - name: configure (Windows)
       run: C:/msys64/usr/bin/bash -c "./configure --prefix=$(pwd)/build"
+      if: matrix.os == 'windows-latest'
 
     - name: make
       run: make
