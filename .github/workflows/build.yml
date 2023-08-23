@@ -23,6 +23,11 @@ jobs:
 
     - name: autoreconf
       run: autoreconf -i
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+
+    - name: autoreconf (Windows)
+      run: C:/msys64/usr/bin/autoreconf -i
+      if: matrix.os == 'windows-latest'
 
     - name: configure
       run: ./configure --prefix=$(pwd)/build
