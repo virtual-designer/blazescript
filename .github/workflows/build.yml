@@ -13,14 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-#    - name: configure
-#      run: ./configure --prefix=$(pwd)/build
+    - name: configure
+      run: ./configure --prefix=$(pwd)/build
 
     - name: make
       run: make
-#
-#    - name: test
-#      run: make test
 
-#    - name: install
-#      run: make install
+    - name: test
+      run: make test
+
+    - name: install
+      run: make install
