@@ -3,11 +3,11 @@
 TEST_NAME="Unnamed"
 
 blaze_run() {
-    echo $($BLAZE "$FILE" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")
+    $($BLAZE "$FILE" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")
 }
 
 blaze_file() {
-    echo "$(cat /dev/stdin)" > $FILE
+    cat /dev/stdin > $FILE
 }
 
 blaze_test_name() {
