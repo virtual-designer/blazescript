@@ -33,6 +33,10 @@ jobs:
 
     - name: configure
       run: ./configure --prefix=$(pwd)/build
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+
+    - name: configure (Windows)
+      run: C:/msys64/usr/bin/bash -c "./configure --prefix=$(pwd)/build"
 
     - name: make
       run: make
