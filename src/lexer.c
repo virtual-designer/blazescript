@@ -130,7 +130,7 @@ static void lex_string(struct lex *lex)
         strbuf[strbuf_size - 1] = lex_char_forward(lex);
     }
 
-    if (lex_char(lex) != quote)
+    if (!lex_has_value(lex) || lex_char(lex) != quote)
         syntax_error("unterminated string: expected '%c'", quote);
 
     lex_char_forward(lex);
@@ -164,7 +164,7 @@ static void lex_number(struct lex *lex)
     numbuf[numbuf_size - 1] = 0;
 
     lex_tokens_array_push(lex, (struct lex_token) {
-        .type = T_NUM_LIT,
+        .type = T_INT_LIT,
         .value = numbuf,
         .line_start = lex->current_line,
         .line_end = lex->current_line,
@@ -248,6 +248,16 @@ void lex_analyze(struct lex *lex)
     lex_token_push_nocol(lex, T_EOF, strdup("[EOF]"));
 }
 
+struct lex_token *lex_get_tokens(struct lex *lex)
+{
+    return lex->tokens;
+}
+
+size_t lex_get_token_count(struct lex *lex)
+{
+    return lex->token_count;
+}
+
 #ifndef _NDEBUG
 void blaze_debug__lex_print(struct lex *lex)
 {
@@ -255,7 +265,7 @@ void blaze_debug__lex_print(struct lex *lex)
         [T_IDENTIFIER] = "T_IDENTIFIER",
         [T_STRING] = "T_STRING",
         [T_BINARY_OPERATOR] = "T_BINARY_OPERATOR",
-        [T_NUM_LIT] = "T_NUM_LIT",
+        [T_INT_LIT] = "T_INT_LIT",
         [T_EOF] = "T_EOF",
         [T_SEMICOLON] = "T_SEMICOLON",
     };

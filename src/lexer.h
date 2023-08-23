@@ -8,7 +8,7 @@
 enum lex_token_type
 {
     T_SEMICOLON,
-    T_NUM_LIT,
+    T_INT_LIT,
     T_EOF,
     T_STRING,
     T_BINARY_OPERATOR,
@@ -28,6 +28,8 @@ struct lex_token
 struct lex *lex_init(const char *buf);
 void lex_free(struct lex *lex);
 void lex_analyze(struct lex *lex);
+struct lex_token *lex_get_tokens(struct lex *lex);
+size_t lex_get_token_count(struct lex *lex);
 
 #ifndef _NDEBUG
 void blaze_debug__lex_print(struct lex *lex);

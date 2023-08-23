@@ -4,16 +4,22 @@
 #include "utils.h"
 #include "file.h"
 #include "lexer.h"
+#include "parser.h"
 
 void process_file(const char *name)
 {
-    struct filebuf buf = filebuf_init(name);
+    struct filebuf buf;
+    struct lex *lex;
+    struct parser *parser;
+
+    buf = filebuf_init(name);
     filebuf_read(&buf);
-    struct lex *lex = lex_init(buf.content);
+    lex = lex_init(buf.content);
     lex_analyze(lex);
     blaze_debug__lex_print(lex);
+    parser = parser_init_from_lex(lex);
+    parser_free(parser);
     lex_free(lex);
-//    printf("Contents:\n%s\n", buf.content);
     filebuf_free(&buf);
 }
 
