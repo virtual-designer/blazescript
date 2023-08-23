@@ -11,7 +11,8 @@ enum lex_token_type
     T_NUM_LIT,
     T_EOF,
     T_STRING,
-    T_BINARY_OPERATOR
+    T_BINARY_OPERATOR,
+    T_IDENTIFIER
 };
 
 struct lex_token

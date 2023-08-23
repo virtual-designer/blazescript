@@ -7,5 +7,6 @@
 
 void fatal_error(const char *fmt, ...) __attribute__((noreturn));
 void syntax_error(const char *fmt, ...) __attribute__((noreturn));
+char *ctos(char c);
 
 #endif /* BLAZESCRIPT_UTILS_H */

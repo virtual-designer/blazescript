@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include "utils.h"
 #include "log.h"
+#include "alloca.h"
 
 void fatal_error(const char *fmt, ...)
 {
@@ -26,4 +27,12 @@ void syntax_error(const char *fmt, ...)
     fprintf(stderr, "\n");
     va_end(args);
     exit(EXIT_FAILURE);
+}
+
+char *ctos(char c)
+{
+    char *s = xmalloc(2);
+    s[0] = c;
+    s[1] = 0;
+    return s;
 }
