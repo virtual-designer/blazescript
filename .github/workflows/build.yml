@@ -26,7 +26,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: autoreconf (Windows)
-      run: C:/msys64/usr/bin/autoreconf -i
+      run: bash -c "C:/msys64/usr/bin/autoreconf -i"
       if: matrix.os == 'windows-latest'
 
     - name: configure
