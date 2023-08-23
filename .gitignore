@@ -37,3 +37,4 @@ stamp-*
 /*.status
 /config.h
 /tmp
+/tests/tmp.bl
