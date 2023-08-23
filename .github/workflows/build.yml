@@ -18,7 +18,7 @@ jobs:
       if: matrix.os == 'macos-latest'
 
     - name: Installation (Windows)
-      run: C:/msys64/usr/bin/pacman -S autotools automake automake-wrapper libtool autoconf --noconfirm
+      run: C:/msys64/usr/bin/pacman -S automake-wrapper automake libtool autoconf --noconfirm
       if: matrix.os == 'windows-latest'
 
     - name: autoreconf
@@ -26,7 +26,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: autoreconf (Windows)
-      run: C:/msys64/usr/bin/bash -c "ln -s /usr/bin/aclocal-1.16 /usr/bin/aclocal; ln -s /usr/bin/automake-1.16 /usr/bin/automake; /usr/bin/autoreconf -i"
+      run: C:/msys64/usr/bin/bash -c "/usr/bin/autoreconf -i"
       if: matrix.os == 'windows-latest'
 
     - name: configure
