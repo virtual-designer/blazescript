@@ -1,15 +1,8 @@
-#ifndef __PARSER_H__
-#define __PARSER_H__
+/*
+ * Created by rakinar2 on 8/22/23.
+ */
 
-#include "ast.h"
+#ifndef BLAZESCRIPT_PARSER_H
+#define BLAZESCRIPT_PARSER_H
 
-ast_stmt parser_create_ast(char *code);
-ast_stmt parser_parse_expr();
-ast_stmt parser_parse_assignment_expr();
-ast_stmt parser_parse_stmt();
-
-#ifdef _DEBUG
-void __debug_parser_print_ast_stmt(ast_stmt *prog);
-#endif
-
-#endif
+#endif /* BLAZESCRIPT_PARSER_H */

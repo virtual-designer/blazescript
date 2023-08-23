@@ -1,66 +1,31 @@
-#ifndef __LEXER_H__
-#define __LEXER_H__
+/*
+ * Created by rakinar2 on 8/22/23.
+ */
 
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#ifndef BLAZESCRIPT_LEXER_H
+#define BLAZESCRIPT_LEXER_H
 
-#define LEX_INIT { .size = 0, .tokens = NULL }
-
-typedef enum 
+enum lex_token_type
 {
-    T_VAR,
-    T_CONST,
-    T_BINARY_OPERATOR,
-    T_IDENTIFIER,
-    T_NUMBER,
-    T_ASSIGNMENT,
-    T_PAREN_OPEN,
-    T_PAREN_CLOSE,
-    T_SKIPPABLE,
-    T_EOF,
     T_SEMICOLON,
-    T_COMMA,
-    T_BLOCK_BRACE_OPEN,
-    T_BLOCK_BRACE_CLOSE,
-    T_COLON,
-    T_DOT,
-    T_ARRAY_BRACKET_OPEN,
-    T_ARRAY_BRACKET_CLOSE,
-    T_STRING,
-    T_FUNCTION,
-    T_UNARY_OPERATOR,
-    T_IF,
-    T_ELSE,
-    T_WHILE,
-    T_LOOP,
-    T_AS,
-    T_BREAK,
-    T_CONTINUE,
-    T_RETURN,
-    T_FOR
-} lex_tokentype_t;
+    T_NUM_LIT,
+    T_EOF
+};
 
-typedef struct 
+struct lex_token
 {
+    enum lex_token_type type;
     char *value;
-    lex_tokentype_t type;
-    size_t line;
-} lex_token_t;
+    size_t line_start;
+    size_t line_end;
+};
 
-typedef struct 
-{
-    lex_token_t *tokens;
-    size_t size;
-} lex_t;
+struct lex *lex_init(const char *buf);
+void lex_free(struct lex *lex);
+void lex_analyze(struct lex *lex);
 
-void lex_tokenize(lex_t *array, char *restrict code);
-void lex_free(lex_t *array);
-bool lex_token_array_shift(lex_t *array, lex_token_t *token);
-char *lex_token_stringify(lex_token_t token, bool quotes);
-
-#ifdef _DEBUG
-void __debug_lex_print_token_array(lex_t *array);
+#ifndef _NDEBUG
+void blaze_debug__lex_print(struct lex *lex);
 #endif
 
-#endif
+#endif /* BLAZESCRIPT_LEXER_H */
