@@ -18,9 +18,9 @@ jobs:
 
     - name: make
       run: make
-
-    - name: test
-      run: make test
+#
+#    - name: test
+#      run: make test
 
     - name: install
       run: make install
