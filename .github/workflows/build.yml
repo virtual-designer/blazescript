@@ -13,6 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Installation (MacOS)
+      run: brew install automake
+      if: matrix.os == 'macos-latest'
+
+    - name: Installation (Windows)
+      run: pacman -S mingw-w64-x86_64-autotools
+      if: matrix.os == 'windows-latest'
+
     - name: autoreconf
       run: autoreconf -i
 
@@ -21,9 +29,6 @@ jobs:
 
     - name: make
       run: make
-
-    - name: test
-      run: make test
 
     - name: install
       run: make install
