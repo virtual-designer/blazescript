@@ -28,7 +28,7 @@ struct filebuf filebuf_init(const char *filename)
     FILE *file = fopen(filename, "r");
 
     if (file == NULL)
-        fatal_error("could not open file '%s': %s", file, strerror(errno));
+        fatal_error("could not open file '%s': %s", filename, strerror(errno));
 
     struct filebuf buf = {
         .size = 0,

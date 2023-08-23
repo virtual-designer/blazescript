@@ -9,7 +9,9 @@ enum lex_token_type
 {
     T_SEMICOLON,
     T_NUM_LIT,
-    T_EOF
+    T_EOF,
+    T_STRING,
+    T_BINARY_OPERATOR
 };
 
 struct lex_token
@@ -18,6 +20,8 @@ struct lex_token
     char *value;
     size_t line_start;
     size_t line_end;
+    size_t column_start;
+    size_t column_end;
 };
 
 struct lex *lex_init(const char *buf);
