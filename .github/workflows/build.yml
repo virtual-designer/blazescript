@@ -34,7 +34,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: configure (Windows)
-      run: C:/msys64/usr/bin/bash -c "${GITHUB_WORKSPACE}/configure --prefix=$(pwd)/build"
+      run: C:/msys64/usr/bin/bash -c "${{ github.workspace }}/configure --prefix=$(pwd)/build"
       if: matrix.os == 'windows-latest'
 
     - name: make
