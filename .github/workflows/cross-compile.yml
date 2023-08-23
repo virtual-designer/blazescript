@@ -25,7 +25,7 @@ jobs:
       run: git pull --all && git switch workflow
       
     - name: Copy release
-      run: "sudo cp $(pwd)/build/bin/blaze /tmp/blaze"
+      run: "sudo cp $(pwd)/blaze /tmp/blaze"
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       
     - name: Move release
