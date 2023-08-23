@@ -10,6 +10,12 @@
 struct parser *parser_init();
 struct parser *parser_init_from_lex(struct lex *lex);
 void parser_free(struct parser *parser);
-ast_root_t parser_create_ast_node(struct parser *parser);
+ast_node_t *parser_create_ast_node(struct parser *parser);
+void parser_ast_free_inner(ast_node_t *node);
+void parser_ast_free(ast_node_t *node);
+
+#ifndef _NDEBUG
+void blaze_debug__print_ast(ast_node_t *node);
+#endif
 
 #endif /* BLAZESCRIPT_PARSER_H */

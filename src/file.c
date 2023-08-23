@@ -44,15 +44,17 @@ struct filebuf filebuf_init(const char *filename)
 void filebuf_read(struct filebuf *buf)
 {
     assert(buf != NULL);
-    char *content = xmalloc(buf->size);
+    char *content = xmalloc(buf->size + 1);
 
-    if (fread(content, sizeof (char), buf->size, buf->file) != buf->size)
+    if (fread(content, buf->size, 1, buf->file) != 1)
         fatal_error("could not read file '%s': %s", buf->filename, strerror(errno));
 
+    content[buf->size] = 0;
     buf->content = content;
 }
 
 void filebuf_free(struct filebuf *buf)
 {
+    free(buf->filename);
     free(buf->content);
 }

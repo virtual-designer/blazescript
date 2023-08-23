@@ -35,6 +35,19 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([atexit strchr strdup strerror strstr])
 
+AC_ARG_ENABLE(
+    [debug],
+    [  --enable-debug    Turn on debugging],
+    [case "${enableval}" in
+      yes)
+       AC_SUBST([BLAZE_CFLAGS], ["-fsanitize=address -fsanitize=leak"])
+       ;;
+      no)  debug=false ;;
+      *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+    esac],
+    [debug=false]
+)
+
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
 AC_OUTPUT

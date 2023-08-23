@@ -12,7 +12,9 @@ enum lex_token_type
     T_EOF,
     T_STRING,
     T_BINARY_OPERATOR,
-    T_IDENTIFIER
+    T_IDENTIFIER,
+    T_PAREN_OPEN,
+    T_PAREN_CLOSE,
 };
 
 struct lex_token
@@ -25,11 +27,12 @@ struct lex_token
     size_t column_end;
 };
 
-struct lex *lex_init(const char *buf);
+struct lex *lex_init(char *buf);
 void lex_free(struct lex *lex);
 void lex_analyze(struct lex *lex);
 struct lex_token *lex_get_tokens(struct lex *lex);
 size_t lex_get_token_count(struct lex *lex);
+const char *lex_token_to_str(enum lex_token_type type);
 
 #ifndef _NDEBUG
 void blaze_debug__lex_print(struct lex *lex);

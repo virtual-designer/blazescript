@@ -25,6 +25,7 @@ blazevm
 *.log
 *.scan
 *.in
+/Makefile
 /src/Makefile
 /configure
 *~

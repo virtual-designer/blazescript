@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <string.h>
 #include <malloc.h>
-#include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -16,7 +15,7 @@
 struct lex
 {
     size_t len;
-    const char *buf;
+    char *buf;
     struct lex_token *tokens;
     size_t token_count;
     size_t current_line;
@@ -24,12 +23,12 @@ struct lex
     size_t index;
 };
 
-struct lex *lex_init(const char *buf)
+struct lex *lex_init(char *buf)
 {
     struct lex *lex = xmalloc(sizeof (struct lex));
 
-    lex->buf = buf;
-    lex->len = strlen(buf);
+    lex->buf = strdup(buf);
+    lex->len = strlen(lex->buf);
     lex->current_line = 1;
     lex->current_column = 1;
     lex->token_count = 0;
@@ -45,6 +44,7 @@ void lex_free(struct lex *lex)
         free(lex->tokens[i].value);
 
     free(lex->tokens);
+    free(lex->buf);
     free(lex);
 }
 
@@ -77,6 +77,7 @@ static inline void lex_token_push_nocol(struct lex *lex, enum lex_token_type typ
         .column_end = 1,
     });
 }
+
 static inline void lex_token_push_noline(struct lex *lex, enum lex_token_type type, char *value)
 {
     lex_tokens_array_push(lex, (struct lex_token) {
@@ -197,17 +198,17 @@ static void lex_identifier(struct lex *lex)
         .column_end = lex->current_column,
     });
 }
-static void lex_binary_operator(struct lex *lex)
+static void lex_push_char_token(struct lex *lex, enum lex_token_type type)
 {
     size_t column_start = lex->current_column;
 
     lex_tokens_array_push(lex, (struct lex_token) {
-            .type = T_BINARY_OPERATOR,
-            .value = ctos(lex_char_forward(lex)),
-            .line_start = lex->current_line,
-            .line_end = lex->current_line,
-            .column_start = column_start,
-            .column_end = lex->current_column,
+        .type = type,
+        .value = ctos(lex_char_forward(lex)),
+        .line_start = lex->current_line,
+        .line_end = lex->current_line,
+        .column_start = column_start,
+        .column_end = lex->current_column,
     });
 }
 
@@ -230,7 +231,15 @@ void lex_analyze(struct lex *lex)
             case '/':
             case '*':
             case '%':
-                lex_binary_operator(lex);
+                lex_push_char_token(lex, T_BINARY_OPERATOR);
+                break;
+
+            case '(':
+                lex_push_char_token(lex, T_PAREN_OPEN);
+                break;
+
+            case ')':
+                lex_push_char_token(lex, T_PAREN_CLOSE);
                 break;
 
             default:
@@ -258,8 +267,7 @@ size_t lex_get_token_count(struct lex *lex)
     return lex->token_count;
 }
 
-#ifndef _NDEBUG
-void blaze_debug__lex_print(struct lex *lex)
+const char *lex_token_to_str(enum lex_token_type type)
 {
     const char *translate[] = {
         [T_IDENTIFIER] = "T_IDENTIFIER",
@@ -268,12 +276,23 @@ void blaze_debug__lex_print(struct lex *lex)
         [T_INT_LIT] = "T_INT_LIT",
         [T_EOF] = "T_EOF",
         [T_SEMICOLON] = "T_SEMICOLON",
+        [T_PAREN_OPEN] = "T_PAREN_OPEN",
+        [T_PAREN_CLOSE] = "T_PAREN_CLOSE",
     };
 
+    size_t length = sizeof (translate) / sizeof (const char *);
+
+    assert(type < length && "Invalid token type");
+    return translate[type];
+}
+
+#ifndef _NDEBUG
+void blaze_debug__lex_print(struct lex *lex)
+{
     for (size_t i = 0; i < lex->token_count; i++)
     {
         printf("[%lu] Token { type: %s(%d), value: \"%s\", line: [%lu-%lu], column: [%lu-%lu] }\n",
-               i, translate[lex->tokens[i].type], lex->tokens[i].type, lex->tokens[i].value, lex->tokens[i].line_start,
+               i, lex_token_to_str(lex->tokens[i].type), lex->tokens[i].type, lex->tokens[i].value, lex->tokens[i].line_start,
                lex->tokens[i].line_end, lex->tokens[i].column_start, lex->tokens[i].column_end);
     }
 }
