@@ -25,7 +25,7 @@ jobs:
       if: matrix.os == 'macos-latest'
 
     - name: Installation (Windows)
-      run: C:/msys64/usr/bin/bash -c "aclocal"
+      run: C:/msys64/usr/bin/bash -c "ls /usr/bin | grep aclocal"
       if: matrix.os == 'windows-latest'
 
     - name: autoreconf
