@@ -13,12 +13,19 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          autotools
+      if: matrix.os == 'windows-latest'
+
     - name: Installation (MacOS)
       run: brew install automake
       if: matrix.os == 'macos-latest'
 
     - name: Installation (Windows)
-      run: C:/msys64/usr/bin/pacman -S automake-wrapper automake libtool autoconf --noconfirm
+      run: C:/msys64/usr/bin/bash -c "aclocal"
       if: matrix.os == 'windows-latest'
 
     - name: autoreconf
