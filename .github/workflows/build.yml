@@ -6,47 +6,23 @@ jobs:
   build:
     strategy:
       matrix:
-       os: [ubuntu-latest, windows-latest, macos-latest]
+       os: [ubuntu-latest, macos-latest]
        
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
 
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: >-
-          autotools
-      if: matrix.os == 'windows-latest'
-
     - name: Installation (MacOS)
       run: brew install automake
       if: matrix.os == 'macos-latest'
-
-    - name: Installation (Windows)
-      run: C:/msys64/usr/bin/bash -c "ls /usr/bin | grep aclocal"
-      if: matrix.os == 'windows-latest'
 
     - name: autoreconf
       run: autoreconf -i
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
-    - name: autoreconf (Windows)
-      run: C:/msys64/usr/bin/bash -c "/usr/bin/autoreconf -i"
-      if: matrix.os == 'windows-latest'
-
     - name: configure
       run: ./configure --prefix=$(pwd)/build
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
-
-    - name: pre-configure (Windows)
-      run: dir
-      if: matrix.os == 'windows-latest'
-      
-    - name: configure (Windows)
-      run: configure --prefix=$(pwd)/build
-      if: matrix.os == 'windows-latest'
 
     - name: make
       run: make
