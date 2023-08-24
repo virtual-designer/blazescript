@@ -132,8 +132,8 @@ ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
     ast_node_t left = parser_parse_primary_expr(parser);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
-           (parser_at(parser).value[0] == '*' || parser_at(parser).value[0] == '/' ||
-            parser_at(parser).value[0] == '%'))
+           (parser_at(parser).value[0] == OP_TIMES || parser_at(parser).value[0] == OP_DIVIDE ||
+            parser_at(parser).value[0] == OP_MODULUS))
     {
         const char operator = parser_ret_forward(parser).value[0];
         ast_node_t right = parser_parse_primary_expr(parser);
@@ -148,7 +148,7 @@ ast_node_t parser_parse_binexp_additive(struct parser *parser)
     ast_node_t left = parser_parse_binexp_multiplicative(parser);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
-           (parser_at(parser).value[0] == '+' || parser_at(parser).value[0] == '-'))
+           (parser_at(parser).value[0] == OP_PLUS || parser_at(parser).value[0] == OP_MINUS))
     {
         const char operator = parser_ret_forward(parser).value[0];
         ast_node_t right = parser_parse_binexp_multiplicative(parser);
