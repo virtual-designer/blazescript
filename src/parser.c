@@ -27,7 +27,6 @@ struct parser
 ast_node_t parser_parse_stmt(struct parser *parser);
 ast_node_t parser_parse_expr(struct parser *parser);
 ast_node_t parser_parse_primary_expr(struct parser *parser);
-ast_node_t parser_parse_binexp(struct parser *parser);
 ast_node_t parser_parse_binexp_additive(struct parser *parser);
 ast_node_t parser_parse_binexp_multiplicative(struct parser *parser);
 
@@ -108,12 +107,24 @@ ast_node_t parser_parse_stmt(struct parser *parser)
 
 ast_node_t parser_parse_expr(struct parser *parser)
 {
-    return parser_parse_binexp(parser);
+    return parser_parse_binexp_additive(parser);
 }
 
-ast_node_t parser_parse_binexp(struct parser *parser)
+ast_node_t parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t left, ast_node_t right)
 {
-    return parser_parse_binexp_additive(parser);
+    ast_node_t binexpr = {
+        .type = NODE_BINARY_EXPR,
+        .binexpr = xcalloc(1, sizeof (ast_binexpr_t))
+    };
+
+    binexpr.binexpr->operator = (unsigned char) operator;
+
+    binexpr.binexpr->left = xcalloc(1, sizeof left);
+    memcpy(binexpr.binexpr->left, &left, sizeof left);
+
+    binexpr.binexpr->right = xcalloc(1, sizeof right);
+    memcpy(binexpr.binexpr->right, &right, sizeof right);
+    return binexpr;
 }
 
 ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
@@ -124,22 +135,9 @@ ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
            (parser_at(parser).value[0] == '*' || parser_at(parser).value[0] == '/' ||
             parser_at(parser).value[0] == '%'))
     {
-        char operator = parser_ret_forward(parser).value[0];
+        const char operator = parser_ret_forward(parser).value[0];
         ast_node_t right = parser_parse_primary_expr(parser);
-        ast_node_t binexpr = {
-            .type = NODE_BINARY_EXPR,
-            .binexpr = xcalloc(1, sizeof (ast_binexpr_t))
-        };
-
-        binexpr.binexpr->operator = (unsigned char) operator;
-
-        binexpr.binexpr->left = xcalloc(1, sizeof left);
-        memcpy(binexpr.binexpr->left, &left, sizeof left);
-
-        binexpr.binexpr->right = xcalloc(1, sizeof right);
-        memcpy(binexpr.binexpr->right, &right, sizeof right);
-
-        left = binexpr;
+        left = parser_parse_binexp_inner(parser, operator, left, right);
     }
 
     return left;
@@ -147,7 +145,17 @@ ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
 
 ast_node_t parser_parse_binexp_additive(struct parser *parser)
 {
-    return parser_parse_binexp_multiplicative(parser);
+    ast_node_t left = parser_parse_binexp_multiplicative(parser);
+
+    while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
+           (parser_at(parser).value[0] == '+' || parser_at(parser).value[0] == '-'))
+    {
+        const char operator = parser_ret_forward(parser).value[0];
+        ast_node_t right = parser_parse_binexp_multiplicative(parser);
+        left = parser_parse_binexp_inner(parser, operator, left, right);
+    }
+
+    return left;
 }
 
 ast_node_t parser_parse_primary_expr(struct parser *parser)
