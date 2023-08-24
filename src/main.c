@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "eval.h"
 #include "file.h"
 #include "lexer.h"
 #include "parser.h"
@@ -21,8 +22,10 @@ void process_file(const char *name)
     parser = parser_init_from_lex(lex);
     ast_node_t *node = parser_create_ast_node(parser);
     blaze_debug__print_ast(node);
-    parser_ast_free_inner(node);
-    free(node);
+    val_t *val = eval(node);
+    print_val(val);
+    val_free(val);
+    parser_ast_free(node);
     parser_free(parser);
     lex_free(lex);
     filebuf_free(&buf);

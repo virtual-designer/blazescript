@@ -4,6 +4,9 @@
 
 #ifndef BLAZESCRIPT_LOG_H
 #define BLAZESCRIPT_LOG_H
+
+#include <stdarg.h>
+
 #define INTERNAL__LOG_FUNCTION(name) \
     void __attribute__((format(printf, 1, 2))) log_##name(const char *fmt, ...)
 

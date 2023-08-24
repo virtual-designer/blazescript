@@ -24,11 +24,11 @@ struct parser
     struct lex_token *tokens;
 };
 
-ast_node_t parser_parse_stmt(struct parser *parser);
-ast_node_t parser_parse_expr(struct parser *parser);
-ast_node_t parser_parse_primary_expr(struct parser *parser);
-ast_node_t parser_parse_binexp_additive(struct parser *parser);
-ast_node_t parser_parse_binexp_multiplicative(struct parser *parser);
+static ast_node_t parser_parse_stmt(struct parser *parser);
+static ast_node_t parser_parse_expr(struct parser *parser);
+static ast_node_t parser_parse_primary_expr(struct parser *parser);
+static ast_node_t parser_parse_binexp_additive(struct parser *parser);
+static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser);
 
 struct parser *parser_init()
 {
@@ -100,17 +100,17 @@ void parser_free(struct parser *parser)
     free(parser);
 }
 
-ast_node_t parser_parse_stmt(struct parser *parser)
+static ast_node_t parser_parse_stmt(struct parser *parser)
 {
     return parser_parse_expr(parser);
 }
 
-ast_node_t parser_parse_expr(struct parser *parser)
+static ast_node_t parser_parse_expr(struct parser *parser)
 {
     return parser_parse_binexp_additive(parser);
 }
 
-ast_node_t parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t left, ast_node_t right)
+static ast_node_t parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t left, ast_node_t right)
 {
     ast_node_t binexpr = {
         .type = NODE_BINARY_EXPR,
@@ -127,7 +127,7 @@ ast_node_t parser_parse_binexp_inner(struct parser *parser, const char operator,
     return binexpr;
 }
 
-ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
+static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
 {
     ast_node_t left = parser_parse_primary_expr(parser);
 
@@ -143,7 +143,7 @@ ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
     return left;
 }
 
-ast_node_t parser_parse_binexp_additive(struct parser *parser)
+static ast_node_t parser_parse_binexp_additive(struct parser *parser)
 {
     ast_node_t left = parser_parse_binexp_multiplicative(parser);
 
@@ -158,7 +158,7 @@ ast_node_t parser_parse_binexp_additive(struct parser *parser)
     return left;
 }
 
-ast_node_t parser_parse_primary_expr(struct parser *parser)
+static ast_node_t parser_parse_primary_expr(struct parser *parser)
 {
     struct lex_token token = parser_at(parser);
 
@@ -234,7 +234,7 @@ const char *ast_type_to_str(enum ast_node_type type)
     return translate[type];
 }
 
-void parser_ast_free_inner(ast_node_t *node)
+static void parser_ast_free_inner(ast_node_t *node)
 {
     log_info("Freeing: %p", node);
 

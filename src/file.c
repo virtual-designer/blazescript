@@ -46,7 +46,7 @@ void filebuf_read(struct filebuf *buf)
     assert(buf != NULL);
     char *content = xmalloc(buf->size + 1);
 
-    if (fread(content, buf->size, 1, buf->file) != 1)
+    if (fread(content, 1, buf->size, buf->file) != buf->size)
         fatal_error("could not read file '%s': %s", buf->filename, strerror(errno));
 
     content[buf->size] = 0;
