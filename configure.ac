@@ -39,13 +39,15 @@ AC_ARG_ENABLE(
     [  --enable-debug    Turn on debugging],
     [case "${enableval}" in
       yes)
-       AC_SUBST([BLAZE_CFLAGS], ["-fsanitize=address -fsanitize=leak"])
+       DEBUG=1
        ;;
       no)  debug=false ;;
       *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
     esac],
     [debug=false]
 )
+
+AM_CONDITIONAL([DEBUG], [test x"${DEBUG}" != x])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])

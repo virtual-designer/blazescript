@@ -1,4 +1,6 @@
-AM_CFLAGS = @BLAZE_CFLAGS@
+if DEBUG
+__CFLAGS = -fsanitize=address -fsanitize=leak
+endif
 
 bin_PROGRAMS = blaze
 blaze_SOURCES = alloca.c \
@@ -9,3 +11,4 @@ blaze_SOURCES = alloca.c \
                 parser.c \
                 utils.c \
                 eval.c
+blaze_CFLAGS = $(__CFLAGS)
