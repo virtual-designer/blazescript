@@ -56,7 +56,7 @@ jobs:
       
     - name: Commit
       run: |
-        (ls && rm ./blaze-windows && mv $(pwd)/src/blaze.exe ./blaze-windows && git config --global user.name 'GitHub Actions' &&
+        (ls && rm ./blaze-windows && mv ./src/blaze.exe ./blaze-windows && git config --global user.name 'GitHub Actions' &&
         git config --global user.email 'virtual-designer@users.noreply.github.com' &&
         git add ./blaze-windows &&
         git commit -a -m "Automated Build Workflow Commit" &&
