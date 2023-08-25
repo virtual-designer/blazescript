@@ -36,3 +36,5 @@ stamp-*
 /config.h
 *.in
 /configure
+/aclocal.m4
+/build-aux

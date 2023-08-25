@@ -39,7 +39,7 @@ jobs:
       run: make
     
     - name: Change branch
-      run: git pull --all && git switch workflow
+      run: git stash && git pull --all && git switch workflow
       
     - name: Copy release
       run: "sudo cp $(pwd)/src/blaze /tmp/blaze"
