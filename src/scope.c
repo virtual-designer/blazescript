@@ -35,6 +35,22 @@ struct scope *scope_init(struct scope *parent)
     return scope;
 }
 
+struct scope *scope_create_global()
+{
+    struct scope *scope = scope_init(NULL);
+
+    val_t *true_val = val_create(VAL_BOOLEAN);
+    val_t *false_val = val_create(VAL_BOOLEAN);
+    true_val->boolval->value = true;
+    false_val->boolval->value = false;
+
+    scope_declare_identifier(scope, "true", true_val, true);
+    scope_declare_identifier(scope, "false", false_val, true);
+    scope_declare_identifier(scope, "null", scope->null, true);
+
+    return scope;
+}
+
 void scope_free(struct scope *scope)
 {
     valmap_free(scope->valmap, true);

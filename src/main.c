@@ -28,7 +28,7 @@ void process_file(const char *name)
 #ifndef NDEBUG
     blaze_debug__print_ast(node);
 #endif
-    scope_t *scope = scope_init(NULL);
+    scope_t *scope = scope_create_global();
     val_t *val = eval(scope, node);
     print_val(val);
     scope_free(scope);
