@@ -334,7 +334,7 @@ const char *lex_token_to_str(enum lex_token_type type)
     return translate[type];
 }
 
-#ifndef _NDEBUG
+#ifndef NDEBUG
 void blaze_debug__lex_print(struct lex *lex)
 {
     for (size_t i = 0; i < lex->token_count; i++)

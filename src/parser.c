@@ -34,6 +34,7 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser);
 static ast_node_t parser_parse_binexp_additive(struct parser *parser);
 static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser);
 static ast_node_t parser_parse_var_decl(struct parser *parser);
+static ast_node_t parser_parse_assignment_expr(struct parser *parser);
 
 struct parser *parser_init()
 {
@@ -154,6 +155,28 @@ static ast_node_t parser_parse_var_decl(struct parser *parser)
 
 static ast_node_t parser_parse_expr(struct parser *parser)
 {
+    return parser_parse_assignment_expr(parser);
+}
+
+static ast_node_t parser_parse_assignment_expr(struct parser *parser)
+{
+    if (!parser_is_eof(parser) && (parser->index + 1) < parser->token_count &&
+        parser->tokens[parser->index + 1].type == T_ASSIGNMENT)
+    {
+        char *identifier = strdup(parser_expect(parser, T_IDENTIFIER).value);
+        parser_expect(parser, T_ASSIGNMENT);
+        ast_node_t value = parser_parse_expr(parser);
+        ast_node_t node = {
+            .type = NODE_ASSIGNMENT,
+            .assignment_expr = xcalloc(1, sizeof (ast_assignment_expr_t))
+        };
+        node.assignment_expr->identifier = xcalloc(1, sizeof (ast_identifier_t));
+        node.assignment_expr->identifier->symbol = identifier;
+        node.assignment_expr->value = xcalloc(1, sizeof (ast_node_t));
+        memcpy(node.assignment_expr->value, &value, sizeof value);
+        return node;
+    }
+
     return parser_parse_binexp_additive(parser);
 }
 
@@ -272,7 +295,8 @@ const char *ast_type_to_str(enum ast_node_type type)
         [NODE_INT_LIT] = "INT_LIT",
         [NODE_ROOT] = "ROOT",
         [NODE_STRING] = "STRING",
-        [NODE_VAR_DECL] = "VAR_DECL"
+        [NODE_VAR_DECL] = "VAR_DECL",
+        [NODE_ASSIGNMENT] = "ASSIGNMENT",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -283,7 +307,7 @@ const char *ast_type_to_str(enum ast_node_type type)
 
 static void parser_ast_free_inner(ast_node_t *node)
 {
-    log_info("Freeing: %p", node);
+    log_debug("Freeing: %p", node);
 
     switch (node->type) {
         case NODE_ROOT:
@@ -314,6 +338,13 @@ static void parser_ast_free_inner(ast_node_t *node)
             free(node->binexpr);
             break;
 
+        case NODE_ASSIGNMENT:
+            free(node->assignment_expr->identifier->symbol);
+            free(node->assignment_expr->identifier);
+            parser_ast_free(node->assignment_expr->value);
+            free(node->assignment_expr);
+            break;
+
         case NODE_VAR_DECL:
             if (node->var_decl->value != NULL)
                 parser_ast_free(node->var_decl->value);
@@ -334,7 +365,7 @@ void parser_ast_free(ast_node_t *node)
     free(node);
 }
 
-#ifndef _NDEBUG
+#ifndef NDEBUG
 static void blaze_debug__print_ast_indent(int indent_level)
 {
     for (int i = 0; i < indent_level; i++)
@@ -397,9 +428,15 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
             blaze_debug__print_ast_internal(node->binexpr->right, inner_indent_level, true, false);
             break;
 
+        case NODE_ASSIGNMENT:
+            blaze_debug__print_ast_indent_string(inner_indent_level, "identifier: \"%s\",\n", node->assignment_expr->identifier->symbol);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "right: ");
+            blaze_debug__print_ast_internal(node->assignment_expr->value, inner_indent_level, true, false);
+            break;
+
         case NODE_VAR_DECL:
             blaze_debug__print_ast_indent_string(inner_indent_level, "name: \"%s\",\n", node->var_decl->name);
-            blaze_debug__print_ast_indent_string(inner_indent_level, "is_const: %s\n", node->var_decl->is_const ? "true" : "false");
+            blaze_debug__print_ast_indent_string(inner_indent_level, "is_const: %s,\n", node->var_decl->is_const ? "true" : "false");
             blaze_debug__print_ast_indent_string(inner_indent_level, "value: ");
 
             if (node->var_decl->value != NULL)

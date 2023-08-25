@@ -20,18 +20,19 @@ void process_file(const char *name)
     filebuf_read(&buf);
     lex = lex_init((char *) name, buf.content);
     lex_analyze(lex);
+#ifndef NDEBUG
     blaze_debug__lex_print(lex);
+#endif
     parser = parser_init_from_lex(lex);
     ast_node_t *node = parser_create_ast_node(parser);
+#ifndef NDEBUG
     blaze_debug__print_ast(node);
+#endif
     scope_t *scope = scope_init(NULL);
     val_t *val = eval(scope, node);
     print_val(val);
-
-    if (!val->is_in_scope)
-        val_free(val);
-
     scope_free(scope);
+    val_free_global();
     parser_ast_free(node);
     parser_free(parser);
     lex_free(lex);

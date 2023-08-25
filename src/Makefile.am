@@ -1,5 +1,7 @@
 if DEBUG
 __CFLAGS = -fsanitize=address -fsanitize=leak
+else
+__CFLAGS = -DNDEBUG
 endif
 
 bin_PROGRAMS = blaze

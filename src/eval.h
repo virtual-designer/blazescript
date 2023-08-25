@@ -14,6 +14,7 @@ val_t *eval(scope_t *scope, const ast_node_t *node);
 void print_val(val_t *val);
 const char *val_type_to_str(val_type_t type);
 val_t *val_create(val_type_t type);
-void val_free_scope(val_t *val);
+void val_free_global();
+void val_free_force(val_t *val);
 
 #endif /* BLAZESCRIPT_EVAL_H */

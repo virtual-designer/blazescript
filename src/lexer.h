@@ -38,7 +38,7 @@ size_t lex_get_token_count(struct lex *lex);
 const char *lex_token_to_str(enum lex_token_type type);
 char *lex_get_filename(struct lex *lex);
 
-#ifndef _NDEBUG
+#ifndef NDEBUG
 void blaze_debug__lex_print(struct lex *lex);
 #endif
 

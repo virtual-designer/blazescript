@@ -106,7 +106,7 @@ static const char *valmap_set_entry(struct valmap_entry *array,
             }
 
             if (attempt_free) {
-                free(array[index].value);
+                val_free(array[index].value);
                 array[index].value = NULL;
             }
 

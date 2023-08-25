@@ -39,8 +39,19 @@ INTERNAL__LOG_FUNCTION(warn)
 INTERNAL__LOG_FUNCTION(info)
 {
     LOG_FUNCTION_START;
-    fprintf(stdout, "\033[1minfo:\033[0m ");
+    fprintf(stdout, "\033[36minfo:\033[0m ");
     vfprintf(stdout, fmt, args);
     fprintf(stdout, "\n");
     LOG_FUNCTION_END;
+}
+
+INTERNAL__LOG_FUNCTION(debug)
+{
+#ifndef NDEBUG
+    LOG_FUNCTION_START;
+    fprintf(stdout, "\033[2mdebug:\033[0m ");
+    vfprintf(stdout, fmt, args);
+    fprintf(stdout, "\n");
+    LOG_FUNCTION_END;
+#endif
 }

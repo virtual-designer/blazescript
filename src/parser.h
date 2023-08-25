@@ -13,7 +13,7 @@ void parser_free(struct parser *parser);
 ast_node_t *parser_create_ast_node(struct parser *parser);
 void parser_ast_free(ast_node_t *node);
 
-#ifndef _NDEBUG
+#ifndef NDEBUG
 void blaze_debug__print_ast(ast_node_t *node);
 #endif
 

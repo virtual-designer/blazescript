@@ -6,10 +6,7 @@
 
 #include "alloca.h"
 #include "eval.h"
-#include "file.h"
-#include "log.h"
 #include "scope.h"
-#include "utils.h"
 #include "valmap.h"
 
 struct scope *scope_init(struct scope *parent)
@@ -21,7 +18,6 @@ struct scope *scope_init(struct scope *parent)
     if (parent == NULL)
     {
         scope->null = val_create(VAL_NULL);
-        scope->null->is_in_scope = true;
         scope->null->nofree = true;
     }
     else
@@ -44,7 +40,7 @@ void scope_free(struct scope *scope)
     valmap_free(scope->valmap, true);
 
     if (scope->parent == NULL)
-        free(scope->null);
+        val_free_force(scope->null);
 
     free(scope);
 }

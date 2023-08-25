@@ -13,6 +13,7 @@
 INTERNAL__LOG_FUNCTION(error);
 INTERNAL__LOG_FUNCTION(warn);
 INTERNAL__LOG_FUNCTION(info);
+INTERNAL__LOG_FUNCTION(debug);
 
 void log_error_va_list(const char *fmt, va_list args);
 

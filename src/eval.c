@@ -21,15 +21,33 @@ val_t *eval_string(scope_t *scope, const ast_node_t *node);
 val_t *eval_root(scope_t *scope, const ast_node_t *node);
 val_t *eval_binexp(scope_t *scope, const ast_node_t *node);
 val_t *eval_var_decl(scope_t *scope, const ast_node_t *node);
+val_t *eval_identifier(scope_t *scope, const ast_node_t *node);
+val_t *eval_assignment(scope_t *scope, const ast_node_t *node);
 
-val_t *eval_identifier(scope_t *p_scope, const ast_node_t *p_node);
+static val_t **values = NULL;
+static size_t values_count = 0;
 
 static inline val_t *val_init()
 {
     val_t *val = xmalloc(sizeof (val_t));
-    val->is_in_scope = false;
     val->nofree = false;
+
+    values = xrealloc(values, sizeof (val_t *) * ++values_count);
+    values[values_count - 1] = val;
+    val->index = values_count - 1;
+
+    log_debug("Created value: %p", val);
     return val;
+}
+
+void val_free_global()
+{
+    for (size_t i = 0; i < values_count; i++)
+    {
+        val_free(values[i]);
+    }
+
+    free(values);
 }
 
 val_t *val_create(val_type_t type)
@@ -65,16 +83,10 @@ val_t *val_create(val_type_t type)
     return val;
 }
 
-void val_free_scope(val_t *val)
+void val_free_force(val_t *val)
 {
-    if (!val->is_in_scope)
-        val_free(val);
-}
-
-void val_free(val_t *val)
-{
-    if (val == NULL || (val->type == VAL_NULL && val->nofree))
-        return;
+    log_debug("Freeing value: %p", val);
+    values[val->index] = NULL;
 
     switch (val->type)
     {
@@ -105,6 +117,14 @@ void val_free(val_t *val)
     free(val);
 }
 
+void val_free(val_t *val)
+{
+    if (val == NULL || (val->type == VAL_NULL && val->nofree))
+        return;
+
+    val_free_force(val);
+}
+
 val_t *eval(scope_t *scope, const ast_node_t *node)
 {
     switch (node->type)
@@ -127,9 +147,34 @@ val_t *eval(scope_t *scope, const ast_node_t *node)
         case NODE_IDENTIFIER:
             return eval_identifier(scope, node);
 
+        case NODE_ASSIGNMENT:
+            return eval_assignment(scope, node);
+
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
     }
+}
+
+static val_t *val_copy(val_t *value)
+{
+    val_t *copy = xcalloc(1, sizeof (val_t));
+    memcpy(copy, value, sizeof (val_t));
+    values = xrealloc(values, sizeof (val_t *) * ++values_count);
+    values[values_count - 1] = copy;
+    copy->index = values_count - 1;
+    return copy;
+}
+
+val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
+{
+    val_t *val = eval(scope, node->assignment_expr->value);
+
+    if (!scope_assign_identifier(scope, node->assignment_expr->identifier->symbol, val))
+    {
+        RUNTIME_ERROR(filebuf_current_file, 1, 1, "use of undeclared identifier '%s'", node->assignment_expr->identifier->symbol);
+    }
+
+    return val;
 }
 
 val_t *eval_identifier(scope_t *scope, const ast_node_t *node)
@@ -206,7 +251,6 @@ val_t *eval_var_decl(scope_t *scope, const ast_node_t *node)
 {
     val_t *val = node->var_decl->value == NULL ? scope->null : eval(scope, node->var_decl->value);
     scope_declare_identifier(scope, node->var_decl->name, val);
-    val->is_in_scope = true;
     return scope->null;
 }
 
@@ -223,9 +267,6 @@ val_t *eval_binexp(scope_t *scope, const ast_node_t *node)
                     val_type_to_str(left->type), left->type,
                     val_type_to_str(right->type), right->type);
 
-    val_free_scope(left);
-    val_free_scope(right);
-
     return ret;
 }
 
@@ -235,7 +276,6 @@ val_t *eval_root(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < node->root->size; i++)
     {
-        val_free(value);
         value = eval(scope, &node->root->nodes[i]);
     }
 
