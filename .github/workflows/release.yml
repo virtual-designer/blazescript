@@ -20,6 +20,7 @@ jobs:
                     github-token: ${{ secrets.GITHUB_TOKEN }}
                     version-file: './version.json'
                     git-user-name: "Conventional Release Action"
+                    output-file: './ChangeLog'
                     git-user-email: rakinar2@onesoftnet.eu.org
 
             -   name: Create Release
