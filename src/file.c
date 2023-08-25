@@ -27,7 +27,7 @@ static size_t filebuf_get_filesize(struct filebuf *buf)
 
 struct filebuf filebuf_init(const char *filename)
 {
-    FILE *file = fopen(filename, "r");
+    FILE *file = fopen(filename, "rb");
 
     if (file == NULL)
         fatal_error("could not open file '%s': %s", filename, strerror(errno));
