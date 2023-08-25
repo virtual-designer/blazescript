@@ -5,5 +5,4 @@ export PKG_CONFIG_PATH="/c/msys64/usr/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 pacman -S --noconfirm --needed autotools autoconf automake autoconf-wrapper libtool automake-wrapper
 
-rm -frv build-aux configure *.in src/*.in
 autoreconf -fvi

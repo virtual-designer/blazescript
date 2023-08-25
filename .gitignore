@@ -34,3 +34,5 @@ stamp-*
 /tmp
 /tests/tmp.bl
 /config.h
+*.in
+/configure
