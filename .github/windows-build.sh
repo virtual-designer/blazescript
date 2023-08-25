@@ -1,7 +1,7 @@
-export CPPFLAGS="-I/c/msys2/usr/include ${CPPFLAGS}"
-export LDFLAGS="-L/c/msys2/usr/lib ${LDFLAGS}"
-export PATH="/c/msys2/usr/bin/:${PATH}"
-export PKG_CONFIG_PATH="/c/msys2/usr/lib/pkgconfig:${PKG_CONFIG_PATH}"
+export CPPFLAGS="-I/c/msys64/usr/include ${CPPFLAGS}"
+export LDFLAGS="-L/c/msys64/usr/lib ${LDFLAGS}"
+export PATH="/c/msys64/usr/bin/:${PATH}"
+export PKG_CONFIG_PATH="/c/msys64/usr/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 pacman -S --noconfirm --needed autotools autoconf automake autoconf-wrapper libtool automake-wrapper aclocal
 
