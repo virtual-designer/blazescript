@@ -46,8 +46,12 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       
     - name: Move release
-      run: "sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-${{ matrix.os }}"
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: "sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-linux-latest"
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: Move release
+      run: "sudo mv /tmp/blaze $GITHUB_WORKSPACE/blaze-darwin-latest"
+      if: matrix.os == 'macos-latest'
       
     - name: Commit
       run: |
@@ -60,7 +64,7 @@ jobs:
       
     - name: Commit
       run: |
-        (ls && rm ./blaze-windows && mv ./src/blaze.exe ./blaze-windows-latest && git config --global user.name 'GitHub Actions' &&
+        (ls && rm ./blaze-windows-latest && mv ./src/blaze.exe ./blaze-windows-latest && git config --global user.name 'GitHub Actions' &&
         git config --global user.email 'virtual-designer@users.noreply.github.com' &&
         git add ./blaze-windows-latest &&
         git commit -a -m "Automated Build Workflow Commit" &&
