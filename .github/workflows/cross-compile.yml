@@ -24,7 +24,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: autoreconf (Windows)
-      run: C:\msys64\bin\bash .github/windows-build.sh
+      run: C:\msys64\usr\bin\bash .github/windows-build.sh
       if: matrix.os == 'windows-latest'
 
     - name: configure (Windows)
