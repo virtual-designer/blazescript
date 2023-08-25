@@ -7,6 +7,7 @@
 
 enum lex_token_type
 {
+    T_UNKNOWN,
     T_SEMICOLON,
     T_INT_LIT,
     T_EOF,
@@ -15,6 +16,8 @@ enum lex_token_type
     T_IDENTIFIER,
     T_PAREN_OPEN,
     T_PAREN_CLOSE,
+    T_VAR,
+    T_ASSIGNMENT
 };
 
 struct lex_token

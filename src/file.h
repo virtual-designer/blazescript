@@ -19,4 +19,6 @@ struct filebuf filebuf_init(const char *filename);
 void filebuf_read(struct filebuf *buf);
 void filebuf_free(struct filebuf *buf);
 
+extern char *filebuf_current_file;
+
 #endif /* BLAZESCRIPT_FILE_H */

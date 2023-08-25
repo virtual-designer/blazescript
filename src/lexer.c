@@ -28,6 +28,34 @@ struct lex
     size_t index;
 };
 
+struct keyword
+{
+    const char *identifier;
+    enum lex_token_type token_type;
+};
+
+struct char_to_token_map
+{
+    const char token_char;
+    enum lex_token_type token_type;
+};
+
+static const struct char_to_token_map chartokens[] = {
+    { ';', T_SEMICOLON },
+    { '(', T_PAREN_OPEN },
+    { ')', T_PAREN_CLOSE },
+    { '+', T_BINARY_OPERATOR },
+    { '-', T_BINARY_OPERATOR },
+    { '/', T_BINARY_OPERATOR },
+    { '*', T_BINARY_OPERATOR },
+    { '%', T_BINARY_OPERATOR },
+    { '=', T_ASSIGNMENT },
+};
+
+static const struct keyword keywords[] = {
+    { "var", T_VAR }
+};
+
 struct lex *lex_init(char *filename, char *buf)
 {
     struct lex *lex = xmalloc(sizeof (struct lex));
@@ -181,7 +209,18 @@ static void lex_number(struct lex *lex)
     });
 }
 
-static void lex_identifier(struct lex *lex)
+static enum lex_token_type convert_keyword_to_token(const char *keyword)
+{
+    for (size_t i = 0; i < (sizeof (keywords) / sizeof keywords[0]); i++)
+    {
+        if (strcmp(keywords[i].identifier, keyword) == 0)
+            return keywords[i].token_type;
+    }
+
+    return T_UNKNOWN;
+}
+
+static void lex_identifier_or_keyword(struct lex *lex)
 {
     size_t column_start = lex->current_column;
     char *identifier = NULL;
@@ -196,8 +235,10 @@ static void lex_identifier(struct lex *lex)
     identifier = xrealloc(identifier, ++size);
     identifier[size - 1] = 0;
 
+    enum lex_token_type keyword_token_type = convert_keyword_to_token(identifier);
+
     lex_tokens_array_push(lex, (struct lex_token) {
-        .type = T_IDENTIFIER,
+        .type = keyword_token_type == T_UNKNOWN ? T_IDENTIFIER : keyword_token_type,
         .value = identifier,
         .line_start = lex->current_line,
         .line_end = lex->current_line,
@@ -231,38 +272,26 @@ void lex_analyze(struct lex *lex)
             continue;
         }
 
-        switch (c)
+        for (size_t i = 0; i < (sizeof (chartokens) / sizeof (chartokens[0])); i++)
         {
-            case '+':
-            case '-':
-            case '/':
-            case '*':
-            case '%':
-                lex_push_char_token(lex, T_BINARY_OPERATOR);
-                break;
-
-            case '(':
-                lex_push_char_token(lex, T_PAREN_OPEN);
-                break;
-
-            case ')':
-                lex_push_char_token(lex, T_PAREN_CLOSE);
-                break;
-
-            case ';':
-                lex_push_char_token(lex, T_SEMICOLON);
-                break;
-
-            default:
-                if (c == '"' || c == '\'')
-                    lex_string(lex);
-                else if (isdigit(c))
-                    lex_number(lex);
-                else if (isalpha(c))
-                    lex_identifier(lex);
-                else
-                    syntax_error("unknown token '%c'", lex_char(lex));
+            if (c == chartokens[i].token_char)
+            {
+                lex_push_char_token(lex, chartokens[i].token_type);
+                goto loop_end;
+            }
         }
+
+        if (c == '"' || c == '\'')
+            lex_string(lex);
+        else if (isdigit(c))
+            lex_number(lex);
+        else if (isalpha(c))
+            lex_identifier_or_keyword(lex);
+        else
+            syntax_error("unknown token '%c'", lex_char(lex));
+
+        loop_end:
+            NULL;
     }
 
     lex_token_push_default(lex, T_EOF, strdup("[EOF]"));
@@ -294,6 +323,9 @@ const char *lex_token_to_str(enum lex_token_type type)
         [T_SEMICOLON] = "T_SEMICOLON",
         [T_PAREN_OPEN] = "T_PAREN_OPEN",
         [T_PAREN_CLOSE] = "T_PAREN_CLOSE",
+        [T_UNKNOWN] = "T_UNKNOWN",
+        [T_ASSIGNMENT] = "T_ASSIGNMENT",
+        [T_VAR] = "T_VAR",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);

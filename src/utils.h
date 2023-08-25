@@ -11,6 +11,14 @@
 #define SYNTAX_ERROR_LINE_ARGS(filename, line, column, fmt, ...) \
     syntax_error("\033[0m\033[1m%s\033[0m:%lu:%lu: " fmt, filename, line, column, __VA_ARGS__)
 
+#define RUNTIME_ERROR(filename, line, column, fmt, ...)     \
+    do {                                                    \
+        log_error("\033[0m\033[1m%s\033[0m:%lu:%lu: " fmt,  \
+                  filename, line, column, __VA_ARGS__);     \
+        exit(EXIT_FAILURE);                                 \
+    }                                                       \
+    while (0)
+
 void fatal_error(const char *fmt, ...) __attribute__((noreturn));
 void syntax_error(const char *fmt, ...) __attribute__((noreturn));
 char *ctos(char c);

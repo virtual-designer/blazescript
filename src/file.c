@@ -13,6 +13,8 @@
 #include "file.h"
 #include "alloca.h"
 
+char *filebuf_current_file = NULL;
+
 static size_t filebuf_get_filesize(struct filebuf *buf)
 {
     struct stat st;
@@ -37,6 +39,7 @@ struct filebuf filebuf_init(const char *filename)
         .file = file
     };
 
+    filebuf_current_file = buf.filename;
     buf.size = filebuf_get_filesize(&buf);
     return buf;
 }
@@ -57,4 +60,5 @@ void filebuf_free(struct filebuf *buf)
 {
     free(buf->filename);
     free(buf->content);
+    filebuf_current_file = NULL;
 }

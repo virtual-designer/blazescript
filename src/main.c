@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "utils.h"
+#include "valmap.h"
 
 void process_file(const char *name)
 {
@@ -22,9 +24,14 @@ void process_file(const char *name)
     parser = parser_init_from_lex(lex);
     ast_node_t *node = parser_create_ast_node(parser);
     blaze_debug__print_ast(node);
-    val_t *val = eval(node);
+    scope_t *scope = scope_init(NULL);
+    val_t *val = eval(scope, node);
     print_val(val);
-    val_free(val);
+
+    if (!val->is_in_scope)
+        val_free(val);
+
+    scope_free(scope);
     parser_ast_free(node);
     parser_free(parser);
     lex_free(lex);

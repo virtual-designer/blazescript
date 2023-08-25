@@ -5,6 +5,7 @@
 #ifndef BLAZESCRIPT_AST_H
 #define BLAZESCRIPT_AST_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 typedef enum ast_node_type {
@@ -12,7 +13,8 @@ typedef enum ast_node_type {
     NODE_INT_LIT,
     NODE_BINARY_EXPR,
     NODE_IDENTIFIER,
-    NODE_STRING
+    NODE_STRING,
+    NODE_VAR_DECL
 } ast_type_t;
 
 typedef enum ast_bin_operator {
@@ -41,6 +43,12 @@ typedef struct ast_identifier {
     char *symbol;
 } ast_identifier_t;
 
+typedef struct ast_var_decl {
+    char *name;
+    bool is_const;
+    struct ast_node *value;
+} ast_var_decl_t;
+
 typedef struct ast_root {
     size_t size;
     struct ast_node *nodes;
@@ -56,6 +64,7 @@ typedef struct ast_node
         ast_identifier_t *identifier;
         ast_root_t *root;
         ast_string_t *string;
+        ast_var_decl_t *var_decl;
     };
 } ast_node_t;
 

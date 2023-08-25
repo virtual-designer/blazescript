@@ -10,5 +10,7 @@ blaze_SOURCES = alloca.c \
                 main.c \
                 parser.c \
                 utils.c \
-                eval.c
+                eval.c \
+                scope.c \
+                valmap.c
 blaze_CFLAGS = $(__CFLAGS)

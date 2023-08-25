@@ -35,12 +35,14 @@ typedef struct {
 
 typedef struct value {
     val_type_t type;
+    bool is_in_scope;
 
     union {
         val_integer_t *intval;
         val_float_t *floatval;
         val_string_t *strval;
         val_boolean_t *boolval;
+        bool nofree;
     };
 } val_t;
 
