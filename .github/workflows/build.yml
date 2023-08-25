@@ -21,8 +21,13 @@ jobs:
       run: autoreconf -i
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
-    - name: configure
+    - name: configure (Windows)
       run: bash "./configure" --prefix=$(pwd)\build
+      if: matrix.os == 'windows-latest'
+
+    - name: configure
+      run: ./configure --prefix=$(pwd)/build
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: make
       run: make
