@@ -1,4 +1,13 @@
-# 2.1.0 (2023-08-25)
+## [2.1.1](https://github.com/virtual-designer/blazescript/compare/v2.1.0...v2.1.1) (2023-08-25)
+
+
+### Bug Fixes
+
+* update authors file ([2b369e4](https://github.com/virtual-designer/blazescript/commit/2b369e4703bc28b73f830ebe8a596a00228cb337))
+
+
+
+# [2.1.0](https://github.com/virtual-designer/blazescript/compare/9a268e24c9daf46c34d045d13cc6033bc036f294...v2.1.0) (2023-08-25)
 
 
 ### Bug Fixes
