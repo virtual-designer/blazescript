@@ -5,6 +5,12 @@
 #ifndef BLAZESCRIPT_UTILS_H
 #define BLAZESCRIPT_UTILS_H
 
+#define SYNTAX_ERROR_LINE(token, filename, fmt) \
+    syntax_error("\033[0m\033[1m%s\033[0m:%lu:%lu: " fmt, filename, token->line_start, token->column_start)
+
+#define SYNTAX_ERROR_LINE_ARGS(filename, line, column, fmt, ...) \
+    syntax_error("\033[0m\033[1m%s\033[0m:%lu:%lu: " fmt, filename, line, column, __VA_ARGS__)
+
 void fatal_error(const char *fmt, ...) __attribute__((noreturn));
 void syntax_error(const char *fmt, ...) __attribute__((noreturn));
 char *ctos(char c);

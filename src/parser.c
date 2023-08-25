@@ -17,11 +17,15 @@
 #include "log.h"
 #include "utils.h"
 
+#define PARSER_ERROR_ARGS(parser, fmt, ...) \
+    SYNTAX_ERROR_LINE_ARGS(parser->filename, parser_at(parser).line_start, parser_at(parser).column_start, fmt, __VA_ARGS__)
+
 struct parser
 {
     size_t index;
     size_t token_count;
     struct lex_token *tokens;
+    char *filename;
 };
 
 static ast_node_t parser_parse_stmt(struct parser *parser);
@@ -36,6 +40,7 @@ struct parser *parser_init()
     parser->token_count = 0;
     parser->index = 0;
     parser->tokens = NULL;
+    parser->filename = NULL;
     return parser;
 }
 
@@ -44,6 +49,7 @@ struct parser *parser_init_from_lex(struct lex *lex)
     struct parser *parser = parser_init();
     parser->token_count = lex_get_token_count(lex);
     parser->tokens = lex_get_tokens(lex);
+    parser->filename = strdup(lex_get_filename(lex));
     return parser;
 }
 
@@ -67,9 +73,9 @@ static inline bool parser_is_eof(struct parser *parser)
 static inline struct lex_token parser_expect(struct parser *parser, enum lex_token_type type)
 {
     if (parser_is_eof(parser))
-        syntax_error("unexpected end of file, expecting %s", lex_token_to_str(type));
+        PARSER_ERROR_ARGS(parser, "unexpected end of file, expecting %s", lex_token_to_str(type));
     else if (parser_at(parser).type != type)
-        syntax_error("unexpected token '%s' (%s), expecting %s", parser_at(parser).value,
+        PARSER_ERROR_ARGS(parser, "unexpected token '%s' (%s), expecting %s", parser_at(parser).value,
                      lex_token_to_str(parser_at(parser).type), lex_token_to_str(type));
 
     return parser->tokens[parser->index++];
@@ -97,12 +103,15 @@ ast_node_t *parser_create_ast_node(struct parser *parser)
 
 void parser_free(struct parser *parser)
 {
+    free(parser->filename);
     free(parser);
 }
 
 static ast_node_t parser_parse_stmt(struct parser *parser)
 {
-    return parser_parse_expr(parser);
+    ast_node_t expr = parser_parse_expr(parser);
+    parser_expect(parser, T_SEMICOLON);
+    return expr;
 }
 
 static ast_node_t parser_parse_expr(struct parser *parser)
@@ -213,8 +222,7 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
         }
 
         default:
-            syntax_error("%lu:%lu: unexpected token '%s' (%s)", token.line_start,
-                         token.column_start, token.value, lex_token_to_str(token.type));
+            PARSER_ERROR_ARGS(parser, "unexpected token '%s' (%s)", token.value, lex_token_to_str(token.type));
     }
 }
 

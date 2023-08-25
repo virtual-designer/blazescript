@@ -16,7 +16,7 @@ void process_file(const char *name)
 
     buf = filebuf_init(name);
     filebuf_read(&buf);
-    lex = lex_init(buf.content);
+    lex = lex_init((char *) name, buf.content);
     lex_analyze(lex);
     blaze_debug__lex_print(lex);
     parser = parser_init_from_lex(lex);

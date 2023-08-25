@@ -13,10 +13,14 @@
 #include "utils.h"
 #include "alloca.h"
 
+#define LEX_ERROR_ARGS(lex, fmt, ...) \
+    SYNTAX_ERROR_LINE_ARGS(lex->filename, lex->current_line, lex->current_column, fmt, __VA_ARGS__)
+
 struct lex
 {
     size_t len;
     char *buf;
+    char *filename;
     struct lex_token *tokens;
     size_t token_count;
     size_t current_line;
@@ -24,7 +28,7 @@ struct lex
     size_t index;
 };
 
-struct lex *lex_init(char *buf)
+struct lex *lex_init(char *filename, char *buf)
 {
     struct lex *lex = xmalloc(sizeof (struct lex));
 
@@ -35,6 +39,7 @@ struct lex *lex_init(char *buf)
     lex->token_count = 0;
     lex->index = 0;
     lex->tokens = NULL;
+    lex->filename = strdup(filename);
 
     return lex;
 }
@@ -46,6 +51,7 @@ void lex_free(struct lex *lex)
 
     free(lex->tokens);
     free(lex->buf);
+    free(lex->filename);
     free(lex);
 }
 
@@ -133,7 +139,7 @@ static void lex_string(struct lex *lex)
     }
 
     if (!lex_has_value(lex) || lex_char(lex) != quote)
-        syntax_error("unterminated string: expected '%c'", quote);
+        LEX_ERROR_ARGS(lex, "unterminated string: expected '%c'", quote);
 
     lex_char_forward(lex);
 
@@ -243,6 +249,10 @@ void lex_analyze(struct lex *lex)
                 lex_push_char_token(lex, T_PAREN_CLOSE);
                 break;
 
+            case ';':
+                lex_push_char_token(lex, T_SEMICOLON);
+                break;
+
             default:
                 if (c == '"' || c == '\'')
                     lex_string(lex);
@@ -255,7 +265,7 @@ void lex_analyze(struct lex *lex)
         }
     }
 
-    lex_token_push_nocol(lex, T_EOF, strdup("[EOF]"));
+    lex_token_push_default(lex, T_EOF, strdup("[EOF]"));
 }
 
 struct lex_token *lex_get_tokens(struct lex *lex)
@@ -266,6 +276,11 @@ struct lex_token *lex_get_tokens(struct lex *lex)
 size_t lex_get_token_count(struct lex *lex)
 {
     return lex->token_count;
+}
+
+char *lex_get_filename(struct lex *lex)
+{
+    return lex->filename;
 }
 
 const char *lex_token_to_str(enum lex_token_type type)
