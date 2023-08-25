@@ -22,7 +22,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: configure
-      run: bash -c "./configure --prefix=$(pwd)/build"
+      run: bash "./configure" --prefix=$(pwd)\build
 
     - name: make
       run: make
