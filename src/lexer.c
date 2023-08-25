@@ -53,7 +53,8 @@ static const struct char_to_token_map chartokens[] = {
 };
 
 static const struct keyword keywords[] = {
-    { "var", T_VAR }
+    { "var", T_VAR },
+    { "const", T_CONST },
 };
 
 struct lex *lex_init(char *filename, char *buf)
@@ -326,6 +327,7 @@ const char *lex_token_to_str(enum lex_token_type type)
         [T_UNKNOWN] = "T_UNKNOWN",
         [T_ASSIGNMENT] = "T_ASSIGNMENT",
         [T_VAR] = "T_VAR",
+        [T_CONST] = "T_CONST",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);

@@ -17,6 +17,7 @@ enum lex_token_type
     T_PAREN_OPEN,
     T_PAREN_CLOSE,
     T_VAR,
+    T_CONST,
     T_ASSIGNMENT
 };
 

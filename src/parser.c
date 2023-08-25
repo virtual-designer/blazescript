@@ -129,26 +129,39 @@ static ast_node_t parser_parse_stmt(struct parser *parser)
 
 static ast_node_t parser_parse_var_decl(struct parser *parser)
 {
-    assert(parser_at(parser).type == T_VAR);
-    parser_ret_forward(parser);
+    assert(parser_at(parser).type == T_VAR || parser_at(parser).type == T_CONST);
+    struct lex_token start_token = parser_ret_forward(parser);
+    bool is_const = start_token.type == T_CONST;
     struct lex_token identifier = parser_expect(parser, T_IDENTIFIER);
 
     ast_node_t node = {
         .type = NODE_VAR_DECL,
-        .var_decl = xcalloc(1, sizeof (ast_var_decl_t))
+        .var_decl = xcalloc(1, sizeof (ast_var_decl_t)),
+        .line_start = start_token.line_start,
+        .column_start = start_token.column_start
     };
 
     node.var_decl->name = strdup(identifier.value);
-    node.var_decl->is_const = false;
+    node.var_decl->is_const = is_const;
 
     if (parser_at(parser).type == T_SEMICOLON)
+    {
+        node.line_end = parser_at(parser).line_end;
+        node.column_end = parser_at(parser).column_end;
+
+        if (is_const)
+            PARSER_ERROR_ARGS(parser, "constant '%s' must have a value assigned to it when declaring", node.var_decl->name);
+
         return node;
+    }
 
     parser_expect(parser, T_ASSIGNMENT);
     ast_node_t expr = parser_parse_expr(parser);
     ast_node_t *expr_copy = xmalloc(sizeof expr);
     memcpy(expr_copy, &expr, sizeof expr);
     node.var_decl->value = expr_copy;
+    node.line_end = parser_at(parser).line_end;
+    node.column_end = parser_at(parser).column_end;
 
     return node;
 }
@@ -163,12 +176,15 @@ static ast_node_t parser_parse_assignment_expr(struct parser *parser)
     if (!parser_is_eof(parser) && (parser->index + 1) < parser->token_count &&
         parser->tokens[parser->index + 1].type == T_ASSIGNMENT)
     {
-        char *identifier = strdup(parser_expect(parser, T_IDENTIFIER).value);
+        struct lex_token start_token = parser_expect(parser, T_IDENTIFIER);
+        char *identifier = strdup(start_token.value);
         parser_expect(parser, T_ASSIGNMENT);
         ast_node_t value = parser_parse_expr(parser);
         ast_node_t node = {
             .type = NODE_ASSIGNMENT,
-            .assignment_expr = xcalloc(1, sizeof (ast_assignment_expr_t))
+            .assignment_expr = xcalloc(1, sizeof (ast_assignment_expr_t)),
+            .line_start = start_token.line_start,
+            .column_start = start_token.column_start,
         };
         node.assignment_expr->identifier = xcalloc(1, sizeof (ast_identifier_t));
         node.assignment_expr->identifier->symbol = identifier;

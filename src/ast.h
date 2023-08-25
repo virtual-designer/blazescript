@@ -63,6 +63,8 @@ typedef struct ast_root {
 typedef struct ast_node
 {
     ast_type_t type;
+    size_t line_start, line_end;
+    size_t column_start, column_end;
 
     union {
         ast_intlit_t *integer;
