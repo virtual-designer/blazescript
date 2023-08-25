@@ -26,6 +26,7 @@ struct valmap_entry
 {
     char *key;
     val_t *value;
+    bool is_const;
 };
 
 struct valmap *valmap_init(size_t size)
@@ -80,7 +81,13 @@ bool valmap_has(struct valmap *valmap, const char *key)
     return valmap_get(valmap, key) != NULL;
 }
 
-enum overwrite_mode {
+/*
+ * TODO: Make this function a bit more safe. Use specific modes for variable declaration
+ * and assignment. Return the right error code.
+ */
+
+enum overwrite_mode
+{
     OW_NO_OVERWRITE,
     OW_NO_CREATE,
     OW_DEFAULT
@@ -88,12 +95,12 @@ enum overwrite_mode {
 
 static const char *valmap_set_entry(struct valmap_entry *array,
             size_t capacity, const char *key, val_t *value, size_t *element_count,
-            bool attempt_free, enum overwrite_mode overwrite, bool *result)
+            bool is_const, bool attempt_free, enum overwrite_mode overwrite, enum valmap_set_status *result)
 {
     size_t index = hash_key(capacity, key);
 
     if (result != NULL)
-        *result = false;
+        *result = VAL_SET_OK;
 
     while (array[index].key != NULL)
     {
@@ -101,7 +108,13 @@ static const char *valmap_set_entry(struct valmap_entry *array,
         {
             if (overwrite == OW_NO_OVERWRITE && result != NULL)
             {
-                *result = true;
+                *result = VAL_SET_EXISTS;
+                return NULL;
+            }
+
+            if (array[index].is_const && result != NULL)
+            {
+                *result = VAL_SET_IS_CONST;
                 return NULL;
             }
 
@@ -122,12 +135,13 @@ static const char *valmap_set_entry(struct valmap_entry *array,
 
     if (overwrite == OW_NO_CREATE && result != NULL)
     {
-        *result = true;
+        *result = VAL_SET_NOT_FOUND;
         return NULL;
     }
 
     array[index].key = strdup(key);
     array[index].value = value;
+    array[index].is_const = is_const;
 
     if (element_count != NULL)
         (*element_count)++;
@@ -148,7 +162,7 @@ static void valmap_realloc(struct valmap *valmap, size_t new_capacity)
         if (old_array[i].key != NULL)
         {
             valmap_set_entry(valmap->array, valmap->capacity, old_array[i].key,
-                 old_array[i].value, NULL, false, true, NULL);
+                 old_array[i].value, NULL, old_array[i].is_const, false, true, NULL);
             free(old_array[i].key);
         }
     }
@@ -164,34 +178,34 @@ static void valmap_check_realloc(struct valmap *valmap)
     }
 }
 
-void valmap_set(struct valmap *valmap, const char *key, val_t *value, bool attempt_free)
+void valmap_set(struct valmap *valmap, const char *key, val_t *value, bool is_const, bool attempt_free)
 {
     valmap_check_realloc(valmap);
     valmap_set_entry(valmap->array, valmap->capacity, key, value,
- &valmap->elements, attempt_free, OW_DEFAULT, NULL);
+ &valmap->elements, is_const, attempt_free, OW_DEFAULT, NULL);
 }
 
-bool valmap_set_no_overwrite(struct valmap *valmap, const char *key, val_t *value, bool attempt_free)
+enum valmap_set_status valmap_set_no_overwrite(struct valmap *valmap, const char *key, val_t *value, bool is_const, bool attempt_free)
 {
-    bool need_to_overwrite = false;
+    enum valmap_set_status status = VAL_SET_OK;
     valmap_check_realloc(valmap);
     valmap_set_entry(valmap->array, valmap->capacity, key, value,
- &valmap->elements, attempt_free, OW_NO_OVERWRITE, &need_to_overwrite);
-    return !need_to_overwrite;
+ &valmap->elements, is_const, attempt_free, OW_NO_OVERWRITE, &status);
+    return status;
 }
 
-bool valmap_set_no_create(struct valmap *valmap, const char *key, val_t *value, bool attempt_free)
+enum valmap_set_status valmap_set_no_create(struct valmap *valmap, const char *key, val_t *value, bool is_const, bool attempt_free)
 {
-    bool does_not_exist = false;
+    enum valmap_set_status status = VAL_SET_OK;
     valmap_check_realloc(valmap);
     valmap_set_entry(valmap->array, valmap->capacity, key, value,
- &valmap->elements, attempt_free, OW_NO_CREATE, &does_not_exist);
-    return !does_not_exist;
+ &valmap->elements, is_const, attempt_free, OW_NO_CREATE, &status);
+    return status;
 }
 
-void valmap_set_no_free(struct valmap *valmap, const char *key, val_t *value)
+void valmap_set_no_free(struct valmap *valmap, const char *key, val_t *value, bool is_const)
 {
-    valmap_set(valmap, key, value, false);
+    valmap_set(valmap, key, value, is_const, false);
 }
 
 void valmap_free(struct valmap *valmap, bool free_values)

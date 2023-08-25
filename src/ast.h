@@ -45,7 +45,7 @@ typedef struct ast_identifier {
 } ast_identifier_t;
 
 typedef struct ast_assignment_expr {
-    ast_identifier_t *identifier;
+    struct ast_node *assignee;
     struct ast_node *value;
 } ast_assignment_expr_t;
 

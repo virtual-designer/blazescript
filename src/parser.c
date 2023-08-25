@@ -116,6 +116,7 @@ static ast_node_t parser_parse_stmt(struct parser *parser)
     switch (parser_at(parser).type)
     {
         case T_VAR:
+        case T_CONST:
             stmt = parser_parse_var_decl(parser);
             break;
 
@@ -186,10 +187,18 @@ static ast_node_t parser_parse_assignment_expr(struct parser *parser)
             .line_start = start_token.line_start,
             .column_start = start_token.column_start,
         };
-        node.assignment_expr->identifier = xcalloc(1, sizeof (ast_identifier_t));
-        node.assignment_expr->identifier->symbol = identifier;
+        node.assignment_expr->assignee = xcalloc(1, sizeof (ast_node_t));
+        node.assignment_expr->assignee->type = NODE_IDENTIFIER;
+        node.assignment_expr->assignee->line_start = start_token.line_start;
+        node.assignment_expr->assignee->line_end = start_token.line_end;
+        node.assignment_expr->assignee->column_start = start_token.column_start;
+        node.assignment_expr->assignee->column_end = start_token.column_end;
+        node.assignment_expr->assignee->identifier = xcalloc(1, sizeof (ast_identifier_t));
+        node.assignment_expr->assignee->identifier->symbol = identifier;
         node.assignment_expr->value = xcalloc(1, sizeof (ast_node_t));
         memcpy(node.assignment_expr->value, &value, sizeof value);
+        node.line_end = parser_at(parser).line_end;
+        node.column_end = parser_at(parser).column_end;
         return node;
     }
 
@@ -200,7 +209,11 @@ static ast_node_t parser_parse_binexp_inner(struct parser *parser, const char op
 {
     ast_node_t binexpr = {
         .type = NODE_BINARY_EXPR,
-        .binexpr = xcalloc(1, sizeof (ast_binexpr_t))
+        .binexpr = xcalloc(1, sizeof (ast_binexpr_t)),
+        .line_start = left.line_start,
+        .column_start = left.column_start,
+        .line_end = right.line_end,
+        .column_end = right.column_end,
     };
 
     binexpr.binexpr->operator = (unsigned char) operator;
@@ -256,7 +269,11 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
 
             ast_node_t identifier = {
                 .type = NODE_IDENTIFIER,
-                .identifier = xcalloc(1, sizeof(ast_identifier_t))
+                .identifier = xcalloc(1, sizeof(ast_identifier_t)),
+                .line_start = token.line_start,
+                .line_end = token.line_end,
+                .column_start = token.column_start,
+                .column_end = token.column_end,
             };
 
             identifier.identifier->symbol = strdup(token.value);
@@ -270,7 +287,11 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
 
             ast_node_t intlit = {
                 .type = NODE_INT_LIT,
-                .integer = xcalloc(1, sizeof (ast_intlit_t))
+                .integer = xcalloc(1, sizeof (ast_intlit_t)),
+                .line_start = token.line_start,
+                .line_end = token.line_end,
+                .column_start = token.column_start,
+                .column_end = token.column_end,
             };
 
             intlit.integer->intval = atoll(token.value);
@@ -283,7 +304,11 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
 
             ast_node_t string = {
                 .type = NODE_STRING,
-                .string = xcalloc(1, sizeof (ast_string_t))
+                .string = xcalloc(1, sizeof (ast_string_t)),
+                .line_start = token.line_start,
+                .line_end = token.line_end,
+                .column_start = token.column_start,
+                .column_end = token.column_end,
             };
 
             string.string->strval = strdup(token.value);
@@ -355,8 +380,7 @@ static void parser_ast_free_inner(ast_node_t *node)
             break;
 
         case NODE_ASSIGNMENT:
-            free(node->assignment_expr->identifier->symbol);
-            free(node->assignment_expr->identifier);
+            parser_ast_free(node->assignment_expr->assignee);
             parser_ast_free(node->assignment_expr->value);
             free(node->assignment_expr);
             break;
@@ -445,7 +469,7 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
             break;
 
         case NODE_ASSIGNMENT:
-            blaze_debug__print_ast_indent_string(inner_indent_level, "identifier: \"%s\",\n", node->assignment_expr->identifier->symbol);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "identifier: \"%s\",\n", node->assignment_expr->assignee->identifier->symbol);
             blaze_debug__print_ast_indent_string(inner_indent_level, "right: ");
             blaze_debug__print_ast_internal(node->assignment_expr->value, inner_indent_level, true, false);
             break;

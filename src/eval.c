@@ -168,10 +168,17 @@ static val_t *val_copy(val_t *value)
 val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
 {
     val_t *val = eval(scope, node->assignment_expr->value);
+    enum valmap_set_status status = scope_assign_identifier(scope, node->assignment_expr->assignee->identifier->symbol, val);
 
-    if (!scope_assign_identifier(scope, node->assignment_expr->identifier->symbol, val))
+    if (status == VAL_SET_NOT_FOUND)
     {
-        RUNTIME_ERROR(filebuf_current_file, 1, 1, "use of undeclared identifier '%s'", node->assignment_expr->identifier->symbol);
+        RUNTIME_ERROR(filebuf_current_file, node->assignment_expr->assignee->line_start,
+            node->assignment_expr->assignee->column_start, "use of undeclared identifier '%s'", node->assignment_expr->assignee->identifier->symbol);
+    }
+    else if (status == VAL_SET_IS_CONST)
+    {
+        RUNTIME_ERROR(filebuf_current_file, node->assignment_expr->assignee->line_start,
+            node->assignment_expr->assignee->column_start, "cannot assign to constant '%s'", node->assignment_expr->assignee->identifier->symbol);
     }
 
     return val;
@@ -182,7 +189,7 @@ val_t *eval_identifier(scope_t *scope, const ast_node_t *node)
     val_t *val = scope_resolve_identifier(scope, node->identifier->symbol);
 
     if (val == NULL)
-        RUNTIME_ERROR(filebuf_current_file, 1, 1, "use of undeclared identifier '%s'", node->identifier->symbol);
+        RUNTIME_ERROR(filebuf_current_file, node->line_start, node->column_start, "use of undeclared identifier '%s'", node->identifier->symbol);
 
     return val;
 }
@@ -250,7 +257,11 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
 val_t *eval_var_decl(scope_t *scope, const ast_node_t *node)
 {
     val_t *val = node->var_decl->value == NULL ? scope->null : eval(scope, node->var_decl->value);
-    scope_declare_identifier(scope, node->var_decl->name, val);
+    enum valmap_set_status status = scope_declare_identifier(scope, node->var_decl->name, val, node->var_decl->is_const);
+
+    if (status == VAL_SET_EXISTS)
+        RUNTIME_ERROR(filebuf_current_file, node->line_start, node->column_start, "cannot redeclare identifier '%s'", node->identifier->symbol);
+
     return scope->null;
 }
 
