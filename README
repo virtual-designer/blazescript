@@ -1,6 +1,6 @@
 BlazeScript is an interpreted scripting language. It is inspired by a few modern languages like JavaScript, TypeScript, Rust etc.
 
-** Downloads
+** Download Precompiled Binaries
 
 + GNU/Linux (x86_64): https://github.com/virtual-designer/blazescript/blob/workflow/blaze-linux-latest
 + macOS (x86_64): https://github.com/virtual-designer/blazescript/blob/workflow/blaze-darwin-latest
