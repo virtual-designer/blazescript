@@ -16,5 +16,8 @@ const char *val_type_to_str(val_type_t type);
 val_t *val_create(val_type_t type);
 void val_free_global();
 void val_free_force(val_t *val);
+void print_val_internal(val_t *val, bool quote_strings);
+
+extern char *eval_fn_error;
 
 #endif /* BLAZESCRIPT_EVAL_H */

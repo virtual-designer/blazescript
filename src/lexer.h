@@ -18,7 +18,8 @@ enum lex_token_type
     T_PAREN_CLOSE,
     T_VAR,
     T_CONST,
-    T_ASSIGNMENT
+    T_ASSIGNMENT,
+    T_COMMA
 };
 
 struct lex_token

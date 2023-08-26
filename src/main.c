@@ -64,8 +64,8 @@ static void process_file(const char *name)
     blaze_debug__print_ast(node);
 #endif
     scope_t *scope = scope_create_global();
-    val_t *val = eval(scope, node);
-    print_val(val);
+    eval(scope, node);
+//    print_val(val);
     scope_free(scope);
     val_free_global();
     parser_ast_free(node);

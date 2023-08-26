@@ -157,6 +157,49 @@ static ast_node_t *parser_parse_stmt(struct parser *parser)
     return stmt;
 }
 
+static ast_node_t *parser_parse_call_expr(struct parser *parser)
+{
+    if (parser->token_count > (parser->index + 2) &&
+        parser->tokens[parser->index].type == T_IDENTIFIER &&
+        parser->tokens[parser->index + 1].type == T_PAREN_OPEN)
+    {
+        ast_node_t *node = create_node();
+
+        node->type = NODE_EXPR_CALL;
+        node->fn_call = xcalloc(1, sizeof (ast_call_t));
+        node->fn_call->identifier = xcalloc(1, sizeof (ast_identifier_t));
+        node->fn_call->argc = 0;
+        node->fn_call->args = NULL;
+        node->line_start = parser_at(parser).line_start;
+        node->column_start = parser_at(parser).column_start;
+
+        struct lex_token *identifier = parser_expect(parser, T_IDENTIFIER);
+        NULL_EXIT(identifier);
+        node->fn_call->identifier->symbol = strdup(identifier->value);
+        NULL_EXIT(parser_expect(parser, T_PAREN_OPEN));
+
+        while (!parser_is_eof(parser) && parser_at(parser).type != T_PAREN_CLOSE)
+        {
+            ast_node_t *param = parser_parse_expr(parser);
+            NULL_EXIT(param);
+            node->fn_call->args = xrealloc(node->fn_call->args, sizeof (ast_node_t *) * (++node->fn_call->argc));
+            node->fn_call->args[node->fn_call->argc - 1] = param;
+
+            if (parser_at(parser).type == T_COMMA)
+                NULL_EXIT(parser_expect(parser, T_COMMA));
+        }
+
+        NULL_EXIT(parser_expect(parser, T_PAREN_CLOSE));
+
+        node->line_end = parser_at(parser).line_end;
+        node->column_end = parser_at(parser).column_end;
+
+        return node;
+    }
+
+    return parser_parse_primary_expr(parser);
+}
+
 static ast_node_t *parser_parse_var_decl(struct parser *parser)
 {
     assert(parser_at(parser).type == T_VAR || parser_at(parser).type == T_CONST);
@@ -261,7 +304,7 @@ static ast_node_t *parser_parse_binexp_inner(struct parser *parser, const char o
 
 static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser)
 {
-    ast_node_t *left = parser_parse_primary_expr(parser);
+    ast_node_t *left = parser_parse_call_expr(parser);
     NULL_EXIT(left);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
@@ -269,7 +312,7 @@ static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser)
             parser_at(parser).value[0] == OP_MODULUS))
     {
         const char operator = parser_ret_forward(parser).value[0];
-        ast_node_t *right = parser_parse_primary_expr(parser);
+        ast_node_t *right = parser_parse_call_expr(parser);
         NULL_EXIT(right);
         left = parser_parse_binexp_inner(parser, operator, left, right);
         NULL_EXIT(left);
@@ -380,6 +423,7 @@ const char *ast_type_to_str(enum ast_node_type type)
         [NODE_STRING] = "STRING",
         [NODE_VAR_DECL] = "VAR_DECL",
         [NODE_ASSIGNMENT] = "ASSIGNMENT",
+        [NODE_EXPR_CALL] = "CALL_EXPR",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -428,6 +472,16 @@ static void parser_ast_free_inner(ast_node_t *node)
             parser_ast_free(node->assignment_expr->assignee);
             parser_ast_free(node->assignment_expr->value);
             free(node->assignment_expr);
+            break;
+
+        case NODE_EXPR_CALL:
+            for (size_t i = 0; i < node->fn_call->argc; i++)
+                parser_ast_free(node->fn_call->args[i]);
+
+            free(node->fn_call->args);
+            free(node->fn_call->identifier->symbol);
+            free(node->fn_call->identifier);
+            free(node->fn_call);
             break;
 
         case NODE_VAR_DECL:
@@ -517,6 +571,24 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
             blaze_debug__print_ast_indent_string(inner_indent_level, "identifier: \"%s\",\n", node->assignment_expr->assignee->identifier->symbol);
             blaze_debug__print_ast_indent_string(inner_indent_level, "right: ");
             blaze_debug__print_ast_internal(node->assignment_expr->value, inner_indent_level, true, false);
+            break;
+
+        case NODE_EXPR_CALL:
+            blaze_debug__print_ast_indent_string(inner_indent_level, "identifier: \"%s\",\n", node->fn_call->identifier->symbol);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "argc: %lu,\n", node->fn_call->argc);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "args: [\n");
+
+            for (size_t i = 0; i < node->fn_call->argc; i++)
+            {
+                blaze_debug__print_ast_internal(node->fn_call->args[i], inner_indent_level + 1, false, true);
+
+                if (i < node->fn_call->argc - 1)
+                    printf(",");
+
+                printf("\n");
+            }
+
+            blaze_debug__print_ast_indent_string(inner_indent_level, "]\n");
             break;
 
         case NODE_VAR_DECL:

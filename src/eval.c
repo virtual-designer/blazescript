@@ -6,9 +6,10 @@
 #include "alloca.h"
 #include "ast.h"
 #include "datatype.h"
+#include "file.h"
+#include "lib.h"
 #include "log.h"
 #include "scope.h"
-#include "file.h"
 #include "utils.h"
 #include <assert.h>
 #include <stdio.h>
@@ -23,6 +24,9 @@ val_t *eval_binexp(scope_t *scope, const ast_node_t *node);
 val_t *eval_var_decl(scope_t *scope, const ast_node_t *node);
 val_t *eval_identifier(scope_t *scope, const ast_node_t *node);
 val_t *eval_assignment(scope_t *scope, const ast_node_t *node);
+val_t *eval_expr_call(scope_t *scope, const ast_node_t *node);
+
+char *eval_fn_error = NULL;
 
 static val_t **values = NULL;
 static size_t values_count = 0;
@@ -107,6 +111,9 @@ void val_free_force(val_t *val)
             free(val->boolval);
             break;
 
+        case VAL_FUNCTION:
+            free(val->fnval);
+
         case VAL_NULL:
             break;
 
@@ -150,6 +157,9 @@ val_t *eval(scope_t *scope, const ast_node_t *node)
         case NODE_ASSIGNMENT:
             return eval_assignment(scope, node);
 
+        case NODE_EXPR_CALL:
+            return eval_expr_call(scope, node);
+
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
             return NULL;
@@ -169,6 +179,52 @@ static val_t *val_copy(val_t *value)
 #define VAL_CHECK_EXIT(val) \
     if (val == NULL) \
         return NULL;
+
+val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
+{
+    char *identifier = node->fn_call->identifier->symbol;
+
+    for (size_t i = 0; i < (sizeof builtin_functions) / (sizeof builtin_functions[0]); i++)
+    {
+        if (strcmp(builtin_functions[i].name, identifier) == 0)
+        {
+            val_t **args = NULL;
+
+            for (size_t argc = 0; argc < node->fn_call->argc; argc++)
+            {
+                val_t *val = eval(scope, node->fn_call->args[argc]);
+                VAL_CHECK_EXIT(val);
+                args = xrealloc(args, sizeof (val_t *) * (argc + 1));
+                args[argc] = val;
+            }
+
+            val_t *ret = builtin_functions[i].callback(scope, node->fn_call->argc, args);
+            free(args);
+            VAL_CHECK_EXIT(ret);
+
+            if (eval_fn_error != NULL)
+            {
+                RUNTIME_ERROR(filebuf_current_file,
+                              node->line_start,
+                              node->column_start,
+                              "%s",
+                              eval_fn_error);
+                free(eval_fn_error);
+                eval_fn_error = NULL;
+                return NULL;
+            }
+
+            return ret;
+        }
+    }
+
+    RUNTIME_ERROR(filebuf_current_file,
+                  node->line_start,
+                  node->column_start,
+                  "undefined function '%s'",
+                  identifier);
+    return NULL;
+}
 
 val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
 {
@@ -349,35 +405,43 @@ const char *val_type_to_str(val_type_t type)
     return translate[type];
 }
 
-void print_val(val_t *val)
+void print_val_internal(val_t *val, bool quote_strings)
 {
-    printf("Value { type: %s(%d)", val_type_to_str(val->type), val->type);
+    if (val == NULL)
+    {
+        puts("[NULL]");
+        return;
+    }
 
     switch (val->type)
     {
-        case VAL_INTEGER:
-            printf(", value: \033[1;33m%lld\033[0m", val->intval->value);
-            break;
+    case VAL_INTEGER:
+        printf("\033[1;33m%lld\033[0m", val->intval->value);
+        break;
 
-        case VAL_FLOAT:
-            printf(", value: \033[1;33m%Lf\033[0m", val->floatval->value);
-            break;
+    case VAL_FLOAT:
+        printf("\033[1;33m%Lf\033[0m", val->floatval->value);
+        break;
 
-        case VAL_STRING:
-            printf(", value: \033[32m\"%s\"\033[0m", val->strval->value);
-            break;
+    case VAL_STRING:
+        printf("\033[32m%s%s%s\033[0m", quote_strings ? "\"" : "", val->strval->value, quote_strings ? "\"" : "");
+        break;
 
-        case VAL_BOOLEAN:
-            printf(", value: \033[36m%s\033[0m", val->boolval->value == true ? "true" : "false");
-            break;
+    case VAL_BOOLEAN:
+        printf("\033[36m%s\033[0m", val->boolval->value == true ? "true" : "false");
+        break;
 
-        case VAL_NULL:
-            printf(", value: \033[2mnull\033[0m");
-            break;
+    case VAL_NULL:
+        printf("\033[2mnull\033[0m");
+        break;
 
-        default:
-            fatal_error("unrecognized value type: %d", val->type);
+    default:
+        fatal_error("unrecognized value type: %d", val->type);
     }
+}
 
-    printf(" }\n");
+void print_val(val_t *val)
+{
+    print_val_internal(val, true);
+    printf("\n");
 }

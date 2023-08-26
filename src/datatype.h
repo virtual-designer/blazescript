@@ -7,6 +7,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "ast.h"
 
 typedef enum {
     VAL_INTEGER,
