@@ -1,0 +1,113 @@
+# [2.2.0](https://github.com/virtual-designer/blazescript/compare/v2.1.1...v2.2.0) (2023-08-25)
+
+
+### Features
+
+* **scope:** global scopes now have true, false and null defined ([ba40cf1](https://github.com/virtual-designer/blazescript/commit/ba40cf1c785e527d211bb7898d43afee5f4b43e9))
+
+
+
+## [2.1.1](https://github.com/virtual-designer/blazescript/compare/v2.1.0...v2.1.1) (2023-08-25)
+
+
+### Bug Fixes
+
+* update authors file ([2b369e4](https://github.com/virtual-designer/blazescript/commit/2b369e4703bc28b73f830ebe8a596a00228cb337))
+
+
+
+# [2.1.0](https://github.com/virtual-designer/blazescript/compare/9a268e24c9daf46c34d045d13cc6033bc036f294...v2.1.0) (2023-08-25)
+
+
+### Bug Fixes
+
+* add attribute noreturn to supress gcc warnings ([0d613c7](https://github.com/virtual-designer/blazescript/commit/0d613c7cdfce68d1b0c0556564eda26535a9c37d))
+* add support of comments ([022b8e3](https://github.com/virtual-designer/blazescript/commit/022b8e33d880692a52688e30b2ee7f2ba7a48dcc))
+* add support of comments ([11d463e](https://github.com/virtual-designer/blazescript/commit/11d463eef9ed7d67b22ba1bc7b609d6ea2db575f))
+* better memory management ([6d55605](https://github.com/virtual-designer/blazescript/commit/6d5560517c15640ba3133dcae8501c68e7d37983))
+* **blazeas:** output file does not executable permission ([1320213](https://github.com/virtual-designer/blazescript/commit/132021397cdd53d73a50fe592c01514291a19cd4))
+* **blazec:** output file does not have execution permission set ([6a7630b](https://github.com/virtual-designer/blazescript/commit/6a7630bf797d50fa0d782abd7184c7cca78302b7))
+* **blaze:** println() function will now separate values with a space ([58a65fa](https://github.com/virtual-designer/blazescript/commit/58a65fa52812f079c8b14ffa4667f73d16d6e042))
+* **blazevm.c:** build error in macos ([7be4351](https://github.com/virtual-designer/blazescript/commit/7be43511f10b3a28a03cc248fa951f2604c8f08b))
+* build failing due to use of md2.h ([85913c7](https://github.com/virtual-designer/blazescript/commit/85913c71c7735d7382690676521db2717a005158))
+* codefactor issues ([6e01eaf](https://github.com/virtual-designer/blazescript/commit/6e01eafc5de7275481564938c78defb3447894a9))
+* computed property access issues ([a5a583a](https://github.com/virtual-designer/blazescript/commit/a5a583a9612932f28f1b73fbf46b52918c7c258f))
+* **darwin:** build errors ([5cd4a2a](https://github.com/virtual-designer/blazescript/commit/5cd4a2a668a9f19c394484ed6631ce21588ed0c2))
+* division by 0 checking ([4efd668](https://github.com/virtual-designer/blazescript/commit/4efd668bc6a287d99ad12b9df1774d4d2ec081ff))
+* error messages are updated ([0c5f213](https://github.com/virtual-designer/blazescript/commit/0c5f2135a984cc224298f58a8de809ede1ff9299))
+* error messages are updated ([ba0d250](https://github.com/virtual-designer/blazescript/commit/ba0d250bf7697a374074131ab7170947393613f3))
+* **eval.c:** assignment instead of comparison ([e08b6ff](https://github.com/virtual-designer/blazescript/commit/e08b6ff5a0b0349c3a8df276220ee92cd45e2d30))
+* gcc warnings ([1d8e89c](https://github.com/virtual-designer/blazescript/commit/1d8e89c6c5eb512ed74c7ef4ece37eea8c37f3b2))
+* gcc warnings ([7bc156a](https://github.com/virtual-designer/blazescript/commit/7bc156a0aaa9ae31bf5f3244d7e545754a151957))
+* line numbers ([706e6aa](https://github.com/virtual-designer/blazescript/commit/706e6aad97ea64b3b0dadcc9f6c16bae53e7b6cb))
+* loop statement crash ([af916ed](https://github.com/virtual-designer/blazescript/commit/af916ede799044b2414ffa58af7a777d624ed791))
+* macos build errors ([e4b098e](https://github.com/virtual-designer/blazescript/commit/e4b098e2b4cf71acba965c4da3de921c2b731e2a))
+* malloc.h not found error in macos ([0cafad4](https://github.com/virtual-designer/blazescript/commit/0cafad483b54a31f2d3b42dd3eef396a91e4b064))
+* memory issues ([a88e083](https://github.com/virtual-designer/blazescript/commit/a88e083fe4b9bdbb9377c8145a632573a82493c5))
+* memory issues ([c0a6a37](https://github.com/virtual-designer/blazescript/commit/c0a6a379f1539938f6199900b5f805dbb17e56fc))
+* string quote escaping ([2c6378d](https://github.com/virtual-designer/blazescript/commit/2c6378d6d6d0af0b3e31ba54fed151da4a46898d))
+* typeof (1.1) returning int ([8646b65](https://github.com/virtual-designer/blazescript/commit/8646b65e4de8db239d777ee2f5bdbb317a63c22d))
+* update blaze.c ([ab47a0c](https://github.com/virtual-designer/blazescript/commit/ab47a0cb4f85b687ddaa28bba9f9647a2ff7b18e))
+* update blaze.h ([e051af1](https://github.com/virtual-designer/blazescript/commit/e051af165df578573ad258ee49f74eb322bc3832))
+* update blaze.h ([58a1aa4](https://github.com/virtual-designer/blazescript/commit/58a1aa4921a18d673c20d3e61a7e81e9422cddde))
+* update functions.c ([df4371a](https://github.com/virtual-designer/blazescript/commit/df4371a96e4afd026be1d8bf025425ab74463ee9))
+* update functions.c ([1142260](https://github.com/virtual-designer/blazescript/commit/114226079f65b34b01238f5e30309e40c80c0823))
+* update functions.c ([b7b4d2f](https://github.com/virtual-designer/blazescript/commit/b7b4d2f165d359c65c9bc3270a9de04b56cd328e))
+* update lexer.c ([cdf6488](https://github.com/virtual-designer/blazescript/commit/cdf6488c75509190e1d91e896c0764dc96d57c93))
+* **windows:** open files in binary mode ([c226dc7](https://github.com/virtual-designer/blazescript/commit/c226dc70a08d3eb1e27189e0f81881c09022403c))
+* wrong line numbers ([ab03b47](https://github.com/virtual-designer/blazescript/commit/ab03b47be03ba475b5bb9506ea9780ec5f571054))
+
+
+### Features
+
+* add a map implementation in pure C ([89638d0](https://github.com/virtual-designer/blazescript/commit/89638d05f529e77354c92a51f1450f2b0b3111df))
+* add blaze assembler program ([d88da7c](https://github.com/virtual-designer/blazescript/commit/d88da7cc76d14de65b539ea8c4bd99a3ea9f464d))
+* add blazec (the blazescript compiler) ([38f0a47](https://github.com/virtual-designer/blazescript/commit/38f0a4793ba3beee11d0ddff2d8116f978d76905))
+* add blazevm ([12bebf1](https://github.com/virtual-designer/blazescript/commit/12bebf17efacde845fe031cad61304c7b9e6ba45))
+* add logical operators (and, or, not) ([d694eb3](https://github.com/virtual-designer/blazescript/commit/d694eb30f0b4b3ce48e9815868e9d990a48882ba))
+* add object access support ([1aadb15](https://github.com/virtual-designer/blazescript/commit/1aadb159dd06bd23f903a7284138feb5c176578d))
+* add string support ([b0db882](https://github.com/virtual-designer/blazescript/commit/b0db882b69b285029c1faf7fd74b63a329b587da))
+* add support of assignment expressions ([a067d86](https://github.com/virtual-designer/blazescript/commit/a067d86e7de6454ee271d2a7ddd5fcc7062ef267))
+* add support of user defined functions ([dda81a1](https://github.com/virtual-designer/blazescript/commit/dda81a133058f0b4922da274825f757cffd40439))
+* add unary expression support ([b198832](https://github.com/virtual-designer/blazescript/commit/b1988324cdcd4fdd74c70d3df5fb5ce988fbdb4f))
+* add variable and constant declaration support ([16c3654](https://github.com/virtual-designer/blazescript/commit/16c3654a209d83c63c2b303b9d35e45306cd092b))
+* add vector_t type for arrays with dynamic length ([bccdaae](https://github.com/virtual-designer/blazescript/commit/bccdaaeeda3ddd57bfc5d88606ce239aabe2c0ae))
+* added a bytecode compiler blazec and a bytecode VM blazevm ([166f7ba](https://github.com/virtual-designer/blazescript/commit/166f7baf70cad2b2f57a53fa60b26e8fe305e8f7))
+* **ast:** blocks and if conditions with a single statement ([eee6790](https://github.com/virtual-designer/blazescript/commit/eee679095abcedd5b964770368a52bb1cc1b0ea6))
+* **ast:** while loops ([d09f0c4](https://github.com/virtual-designer/blazescript/commit/d09f0c49d8e502af680d18eef51dd2c89be1f73d))
+* better error messages ([1956799](https://github.com/virtual-designer/blazescript/commit/19567990fef1724b584833113500f7ca566beedc))
+* **blaze:** add `loop` statement support ([95a461b](https://github.com/virtual-designer/blazescript/commit/95a461b974b4738052c8f7c8cda0b173109ed512))
+* **blaze:** add for loop support ([7c62569](https://github.com/virtual-designer/blazescript/commit/7c6256916f9f7f0a0f2cf3bdabb8330aa683d5eb))
+* **blaze:** add support of breaking and continuing in while loops ([a88351f](https://github.com/virtual-designer/blazescript/commit/a88351f44a643e22d4962f4e8f4bfaaf8c9c71cf))
+* **blaze:** add support of continue and break fully in loop statements ([aab7d1b](https://github.com/virtual-designer/blazescript/commit/aab7d1b708a73cd193bbf188776342c50f9c3a6d))
+* **blazeas:** assembler instructions ([4bcbd84](https://github.com/virtual-designer/blazescript/commit/4bcbd848e79ee1e33605b7963ee44f76420d67a9))
+* **blaze:** concat strings with numbers ([93fc54c](https://github.com/virtual-designer/blazescript/commit/93fc54c792eb18df5cb5a3172974681b1af40cc8))
+* **blazec:** support of floats and strings ([a04e6be](https://github.com/virtual-designer/blazescript/commit/a04e6bebb565dc84a000c3c0c55e228e2d2cbfb1))
+* **blaze:** custom named identifiers in `loop` statements ([2f045af](https://github.com/virtual-designer/blazescript/commit/2f045af3c2bdd6f13cca8715c200b1eb7b4dce5c))
+* **blaze:** implement the strict equality comparison operator ([f2152c1](https://github.com/virtual-designer/blazescript/commit/f2152c1e26ab594954c1cf90ea2c1441cbe626ea))
+* **blazevm.c:** declaration of variables ([38ec7e3](https://github.com/virtual-designer/blazescript/commit/38ec7e3232c01217aa59eef5583f71842d35f62d))
+* **blazevm:** add `OP_PRINT` and `OP_PUSH_VARVAL` instructions ([6009274](https://github.com/virtual-designer/blazescript/commit/60092742db8bc1b7930701d1e66dce74cadf7cb4))
+* constants ([afb37e7](https://github.com/virtual-designer/blazescript/commit/afb37e786cc4b3057f0f96ddbd647a1c1ab970ce))
+* evaluation of AST ([118e23c](https://github.com/virtual-designer/blazescript/commit/118e23caecfd5af7853de9e7f89cf46a2338f596))
+* hashmaps ([3d97324](https://github.com/virtual-designer/blazescript/commit/3d97324e63e7f9a5d0a1ddf2bc59deed1d946a13))
+* initial commit ([9a268e2](https://github.com/virtual-designer/blazescript/commit/9a268e24c9daf46c34d045d13cc6033bc036f294))
+* initial commit of v2 ([c81d15c](https://github.com/virtual-designer/blazescript/commit/c81d15c0e9523c887cb86d7aaed712ad58e57e94))
+* object creation support ([8f5d5a4](https://github.com/virtual-designer/blazescript/commit/8f5d5a44540b66f3c326a04f9965de395671941a))
+* **parser:** basic allocation ([3217c69](https://github.com/virtual-designer/blazescript/commit/3217c69fceb090cfaf03cf537aaa31cbbd6b49fd))
+* **parser:** parse additive expressions ([63d910a](https://github.com/virtual-designer/blazescript/commit/63d910a4fd8b0a41beec2daf22801133961d1314))
+* **parser:** parse multiplicative expressions ([63776d0](https://github.com/virtual-designer/blazescript/commit/63776d0e028728d4e951044ae3129a03dc493a0e))
+* **parser:** support double (floating-point) values ([bdb37a8](https://github.com/virtual-designer/blazescript/commit/bdb37a8db547f71ddb3e559a6ba45c3aa16a4dd1))
+* string lexing ([201f3df](https://github.com/virtual-designer/blazescript/commit/201f3df766bd5f19b778d1e18076b540c459891d))
+* support if conditions ([c4366d6](https://github.com/virtual-designer/blazescript/commit/c4366d6cefe0c11af5c2ac0ead6eb544176b83fb))
+* support parenthesises ([2f44aaa](https://github.com/virtual-designer/blazescript/commit/2f44aaa87f9c87a639355ede7a3670f253589f66))
+* support return statements ([6015eb0](https://github.com/virtual-designer/blazescript/commit/6015eb0b2349f87d632227fc42ec8786e86dc348))
+* support variables and booleans ([8807ac2](https://github.com/virtual-designer/blazescript/commit/8807ac28f270658917e6737ca6e75b53eac3843a))
+* variable declaration ([4339439](https://github.com/virtual-designer/blazescript/commit/4339439ee021a57c8e12fcf7c2532823836b551e))
+
+
+### Performance Improvements
+
+* free unused memory (eval result) ([6d2b165](https://github.com/virtual-designer/blazescript/commit/6d2b165ec2a3d131e1b0c64b5d85e3e97b40000e))
+
+
+
