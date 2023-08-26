@@ -57,7 +57,7 @@ typedef struct ast_var_decl {
 
 typedef struct ast_root {
     size_t size;
-    struct ast_node *nodes;
+    struct ast_node **nodes;
 } ast_root_t;
 
 typedef struct ast_node

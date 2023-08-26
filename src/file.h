@@ -18,6 +18,7 @@ struct filebuf
 struct filebuf filebuf_init(const char *filename);
 void filebuf_read(struct filebuf *buf);
 void filebuf_free(struct filebuf *buf);
+void filebuf_set_current_file(char *filename);
 
 extern char *filebuf_current_file;
 

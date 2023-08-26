@@ -5,6 +5,8 @@
 #ifndef BLAZESCRIPT_ALLOCA_H
 #define BLAZESCRIPT_ALLOCA_H
 
+#include <stddef.h>
+
 void *xmalloc(size_t size);
 void *xrealloc(void *old_ptr, size_t new_size);
 void *xcalloc(size_t n, size_t size);

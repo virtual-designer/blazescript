@@ -28,13 +28,13 @@ struct parser
     char *filename;
 };
 
-static ast_node_t parser_parse_stmt(struct parser *parser);
-static ast_node_t parser_parse_expr(struct parser *parser);
-static ast_node_t parser_parse_primary_expr(struct parser *parser);
-static ast_node_t parser_parse_binexp_additive(struct parser *parser);
-static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser);
-static ast_node_t parser_parse_var_decl(struct parser *parser);
-static ast_node_t parser_parse_assignment_expr(struct parser *parser);
+static ast_node_t *parser_parse_stmt(struct parser *parser);
+static ast_node_t *parser_parse_expr(struct parser *parser);
+static ast_node_t *parser_parse_primary_expr(struct parser *parser);
+static ast_node_t *parser_parse_binexp_additive(struct parser *parser);
+static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser);
+static ast_node_t *parser_parse_var_decl(struct parser *parser);
+static ast_node_t *parser_parse_assignment_expr(struct parser *parser);
 
 struct parser *parser_init()
 {
@@ -55,6 +55,17 @@ struct parser *parser_init_from_lex(struct lex *lex)
     return parser;
 }
 
+void parser_set_tokens(struct parser *parser, struct lex_token *tokens, size_t count)
+{
+    parser->token_count = count;
+    parser->tokens = tokens;
+}
+
+void parser_set_filename(struct parser *parser, const char *filename)
+{
+    parser->filename = strdup(filename);
+}
+
 static inline struct lex_token parser_at(struct parser *parser)
 {
     assert(parser->index < parser->token_count && "No more token to return");
@@ -72,16 +83,28 @@ static inline bool parser_is_eof(struct parser *parser)
     return parser->index >= parser->token_count || parser_at(parser).type == T_EOF;
 }
 
-static inline struct lex_token parser_expect(struct parser *parser, enum lex_token_type type)
+static inline struct lex_token *parser_expect(struct parser *parser, enum lex_token_type type)
 {
     if (parser_is_eof(parser))
+    {
         PARSER_ERROR_ARGS(parser, "unexpected end of file, expecting %s", lex_token_to_str(type));
+        return NULL;
+    }
     else if (parser_at(parser).type != type)
-        PARSER_ERROR_ARGS(parser, "unexpected token '%s' (%s), expecting %s", parser_at(parser).value,
-                     lex_token_to_str(parser_at(parser).type), lex_token_to_str(type));
+    {
+        PARSER_ERROR_ARGS(parser, "unexpected token '%s' (%s), expecting %s",
+                          parser_at(parser).value,
+                          lex_token_to_str(parser_at(parser).type),
+                          lex_token_to_str(type));
+        return NULL;
+    }
 
-    return parser->tokens[parser->index++];
+    return &parser->tokens[parser->index++];
 }
+
+#define NULL_EXIT(ast) \
+    if (ast == NULL)   \
+        return NULL
 
 ast_node_t *parser_create_ast_node(struct parser *parser)
 {
@@ -91,8 +114,9 @@ ast_node_t *parser_create_ast_node(struct parser *parser)
     root->nodes = NULL;
 
     while (!parser_is_eof(parser)) {
-        root->nodes = xrealloc(root->nodes, (++root->size) * sizeof (ast_node_t));
+        root->nodes = xrealloc(root->nodes, (++root->size) * sizeof (ast_node_t *));
         root->nodes[root->size - 1] = parser_parse_stmt(parser);
+        NULL_EXIT(root->nodes[root->size - 1]);
     }
 
     ast_node_t *node = xcalloc(1, sizeof (ast_node_t));
@@ -109,9 +133,14 @@ void parser_free(struct parser *parser)
     free(parser);
 }
 
-static ast_node_t parser_parse_stmt(struct parser *parser)
+static ast_node_t *create_node()
 {
-    ast_node_t stmt;
+    return xcalloc(1, sizeof (ast_node_t));
+}
+
+static ast_node_t *parser_parse_stmt(struct parser *parser)
+{
+    ast_node_t *stmt = NULL;
 
     switch (parser_at(parser).type)
     {
@@ -124,140 +153,150 @@ static ast_node_t parser_parse_stmt(struct parser *parser)
             stmt = parser_parse_expr(parser);
     }
 
-    parser_expect(parser, T_SEMICOLON);
+    NULL_EXIT(parser_expect(parser, T_SEMICOLON));
     return stmt;
 }
 
-static ast_node_t parser_parse_var_decl(struct parser *parser)
+static ast_node_t *parser_parse_var_decl(struct parser *parser)
 {
     assert(parser_at(parser).type == T_VAR || parser_at(parser).type == T_CONST);
     struct lex_token start_token = parser_ret_forward(parser);
     bool is_const = start_token.type == T_CONST;
-    struct lex_token identifier = parser_expect(parser, T_IDENTIFIER);
+    struct lex_token *identifier = parser_expect(parser, T_IDENTIFIER);
+    NULL_EXIT(identifier);
 
-    ast_node_t node = {
-        .type = NODE_VAR_DECL,
-        .var_decl = xcalloc(1, sizeof (ast_var_decl_t)),
-        .line_start = start_token.line_start,
-        .column_start = start_token.column_start
-    };
+    ast_node_t *node = create_node();
+    node->type = NODE_VAR_DECL;
+    node->var_decl = xcalloc(1, sizeof (ast_var_decl_t));
+    node->line_start = start_token.line_start;
+    node->column_start = start_token.column_start;
 
-    node.var_decl->name = strdup(identifier.value);
-    node.var_decl->is_const = is_const;
+    node->var_decl->name = strdup(identifier->value);
+    node->var_decl->is_const = is_const;
 
     if (parser_at(parser).type == T_SEMICOLON)
     {
-        node.line_end = parser_at(parser).line_end;
-        node.column_end = parser_at(parser).column_end;
+        node->line_end = parser_at(parser).line_end;
+        node->column_end = parser_at(parser).column_end;
 
         if (is_const)
-            PARSER_ERROR_ARGS(parser, "constant '%s' must have a value assigned to it when declaring", node.var_decl->name);
+        {
+            PARSER_ERROR_ARGS(
+                parser,
+                "constant '%s' must have a value assigned to it when declaring",
+                node->var_decl->name);
+            return NULL;
+        }
 
         return node;
     }
 
-    parser_expect(parser, T_ASSIGNMENT);
-    ast_node_t expr = parser_parse_expr(parser);
-    ast_node_t *expr_copy = xmalloc(sizeof expr);
-    memcpy(expr_copy, &expr, sizeof expr);
-    node.var_decl->value = expr_copy;
-    node.line_end = parser_at(parser).line_end;
-    node.column_end = parser_at(parser).column_end;
+    NULL_EXIT(parser_expect(parser, T_ASSIGNMENT));
+    ast_node_t *expr = parser_parse_expr(parser);
+    NULL_EXIT(expr);
+    node->var_decl->value = expr;
+    node->line_end = parser_at(parser).line_end;
+    node->column_end = parser_at(parser).column_end;
 
     return node;
 }
 
-static ast_node_t parser_parse_expr(struct parser *parser)
+static ast_node_t *parser_parse_expr(struct parser *parser)
 {
     return parser_parse_assignment_expr(parser);
 }
 
-static ast_node_t parser_parse_assignment_expr(struct parser *parser)
+static ast_node_t *parser_parse_assignment_expr(struct parser *parser)
 {
     if (!parser_is_eof(parser) && (parser->index + 1) < parser->token_count &&
         parser->tokens[parser->index + 1].type == T_ASSIGNMENT)
     {
-        struct lex_token start_token = parser_expect(parser, T_IDENTIFIER);
-        char *identifier = strdup(start_token.value);
+        struct lex_token *start_token = parser_expect(parser, T_IDENTIFIER);
+        NULL_EXIT(start_token);
+        char *identifier = strdup(start_token->value);
         parser_expect(parser, T_ASSIGNMENT);
-        ast_node_t value = parser_parse_expr(parser);
-        ast_node_t node = {
-            .type = NODE_ASSIGNMENT,
-            .assignment_expr = xcalloc(1, sizeof (ast_assignment_expr_t)),
-            .line_start = start_token.line_start,
-            .column_start = start_token.column_start,
-        };
-        node.assignment_expr->assignee = xcalloc(1, sizeof (ast_node_t));
-        node.assignment_expr->assignee->type = NODE_IDENTIFIER;
-        node.assignment_expr->assignee->line_start = start_token.line_start;
-        node.assignment_expr->assignee->line_end = start_token.line_end;
-        node.assignment_expr->assignee->column_start = start_token.column_start;
-        node.assignment_expr->assignee->column_end = start_token.column_end;
-        node.assignment_expr->assignee->identifier = xcalloc(1, sizeof (ast_identifier_t));
-        node.assignment_expr->assignee->identifier->symbol = identifier;
-        node.assignment_expr->value = xcalloc(1, sizeof (ast_node_t));
-        memcpy(node.assignment_expr->value, &value, sizeof value);
-        node.line_end = parser_at(parser).line_end;
-        node.column_end = parser_at(parser).column_end;
+        ast_node_t *value = parser_parse_expr(parser);
+        NULL_EXIT(value);
+        ast_node_t *node = create_node();
+
+        node->type = NODE_ASSIGNMENT;
+        node->assignment_expr = xcalloc(1, sizeof (ast_assignment_expr_t));
+        node->line_start = start_token->line_start;
+        node->column_start = start_token->column_start;
+
+        node->assignment_expr->assignee = xcalloc(1, sizeof (ast_node_t));
+        node->assignment_expr->assignee->type = NODE_IDENTIFIER;
+        node->assignment_expr->assignee->line_start = start_token->line_start;
+        node->assignment_expr->assignee->line_end = start_token->line_end;
+        node->assignment_expr->assignee->column_start = start_token->column_start;
+        node->assignment_expr->assignee->column_end = start_token->column_end;
+        node->assignment_expr->assignee->identifier = xcalloc(1, sizeof (ast_identifier_t));
+        node->assignment_expr->assignee->identifier->symbol = identifier;
+        node->assignment_expr->value = value;
+        node->line_end = parser_at(parser).line_end;
+        node->column_end = parser_at(parser).column_end;
         return node;
     }
 
     return parser_parse_binexp_additive(parser);
 }
 
-static ast_node_t parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t left, ast_node_t right)
+static ast_node_t *parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t *left, ast_node_t *right)
 {
-    ast_node_t binexpr = {
-        .type = NODE_BINARY_EXPR,
-        .binexpr = xcalloc(1, sizeof (ast_binexpr_t)),
-        .line_start = left.line_start,
-        .column_start = left.column_start,
-        .line_end = right.line_end,
-        .column_end = right.column_end,
-    };
+    ast_node_t *binexpr = create_node();
 
-    binexpr.binexpr->operator = (unsigned char) operator;
+    binexpr->type = NODE_BINARY_EXPR;
+    binexpr->binexpr = xcalloc(1, sizeof (ast_binexpr_t));
+    binexpr->line_start = left->line_start;
+    binexpr->column_start = left->column_start;
+    binexpr->line_end = right->line_end;
+    binexpr->column_end = right->column_end;
 
-    binexpr.binexpr->left = xcalloc(1, sizeof left);
-    memcpy(binexpr.binexpr->left, &left, sizeof left);
+    binexpr->binexpr->operator = (unsigned char) operator;
+    binexpr->binexpr->left = left;
+    binexpr->binexpr->right = right;
 
-    binexpr.binexpr->right = xcalloc(1, sizeof right);
-    memcpy(binexpr.binexpr->right, &right, sizeof right);
     return binexpr;
 }
 
-static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
+static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser)
 {
-    ast_node_t left = parser_parse_primary_expr(parser);
+    ast_node_t *left = parser_parse_primary_expr(parser);
+    NULL_EXIT(left);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
            (parser_at(parser).value[0] == OP_TIMES || parser_at(parser).value[0] == OP_DIVIDE ||
             parser_at(parser).value[0] == OP_MODULUS))
     {
         const char operator = parser_ret_forward(parser).value[0];
-        ast_node_t right = parser_parse_primary_expr(parser);
+        ast_node_t *right = parser_parse_primary_expr(parser);
+        NULL_EXIT(right);
         left = parser_parse_binexp_inner(parser, operator, left, right);
+        NULL_EXIT(left);
     }
 
     return left;
 }
 
-static ast_node_t parser_parse_binexp_additive(struct parser *parser)
+static ast_node_t *parser_parse_binexp_additive(struct parser *parser)
 {
-    ast_node_t left = parser_parse_binexp_multiplicative(parser);
+    ast_node_t *left = parser_parse_binexp_multiplicative(parser);
+    NULL_EXIT(left);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
            (parser_at(parser).value[0] == OP_PLUS || parser_at(parser).value[0] == OP_MINUS))
     {
         const char operator = parser_ret_forward(parser).value[0];
-        ast_node_t right = parser_parse_binexp_multiplicative(parser);
+        ast_node_t *right = parser_parse_binexp_multiplicative(parser);
+        NULL_EXIT(right);
         left = parser_parse_binexp_inner(parser, operator, left, right);
+        NULL_EXIT(left);
     }
 
     return left;
 }
 
-static ast_node_t parser_parse_primary_expr(struct parser *parser)
+static ast_node_t *parser_parse_primary_expr(struct parser *parser)
 {
     struct lex_token token = parser_at(parser);
 
@@ -267,16 +306,16 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
         {
             parser_ret_forward(parser);
 
-            ast_node_t identifier = {
-                .type = NODE_IDENTIFIER,
-                .identifier = xcalloc(1, sizeof(ast_identifier_t)),
-                .line_start = token.line_start,
-                .line_end = token.line_end,
-                .column_start = token.column_start,
-                .column_end = token.column_end,
-            };
+            ast_node_t *identifier = create_node();
 
-            identifier.identifier->symbol = strdup(token.value);
+            identifier->type = NODE_IDENTIFIER;
+            identifier->identifier = xcalloc(1, sizeof(ast_identifier_t));
+            identifier->line_start = token.line_start;
+            identifier->line_end = token.line_end;
+            identifier->column_start = token.column_start;
+            identifier->column_end = token.column_end;
+
+            identifier->identifier->symbol = strdup(token.value);
             return identifier;
         }
 
@@ -285,16 +324,16 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
             parser_ret_forward(parser);
             assert(strspn(token.value, "0123456789") == strlen(token.value) && "Invalid integer");
 
-            ast_node_t intlit = {
-                .type = NODE_INT_LIT,
-                .integer = xcalloc(1, sizeof (ast_intlit_t)),
-                .line_start = token.line_start,
-                .line_end = token.line_end,
-                .column_start = token.column_start,
-                .column_end = token.column_end,
-            };
+            ast_node_t *intlit = create_node();
 
-            intlit.integer->intval = atoll(token.value);
+            intlit->type = NODE_INT_LIT;
+            intlit->integer = xcalloc(1, sizeof (ast_intlit_t));
+            intlit->line_start = token.line_start;
+            intlit->line_end = token.line_end;
+            intlit->column_start = token.column_start;
+            intlit->column_end = token.column_end;
+
+            intlit->integer->intval = atoll(token.value);
             return intlit;
         }
 
@@ -302,29 +341,32 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
         {
             parser_ret_forward(parser);
 
-            ast_node_t string = {
-                .type = NODE_STRING,
-                .string = xcalloc(1, sizeof (ast_string_t)),
-                .line_start = token.line_start,
-                .line_end = token.line_end,
-                .column_start = token.column_start,
-                .column_end = token.column_end,
-            };
+            ast_node_t *string = create_node();
 
-            string.string->strval = strdup(token.value);
+            string->type = NODE_STRING;
+            string->string = xcalloc(1, sizeof (ast_string_t));
+            string->line_start = token.line_start;
+            string->line_end = token.line_end;
+            string->column_start = token.column_start;
+            string->column_end = token.column_end;
+
+            string->string->strval = strdup(token.value);
+
             return string;
         }
 
         case T_PAREN_OPEN:
         {
             parser_ret_forward(parser);
-            ast_node_t node = parser_parse_expr(parser);
-            parser_expect(parser, T_PAREN_CLOSE);
+            ast_node_t *node = parser_parse_expr(parser);
+            NULL_EXIT(node);
+            NULL_EXIT(parser_expect(parser, T_PAREN_CLOSE));
             return node;
         }
 
         default:
             PARSER_ERROR_ARGS(parser, "unexpected token '%s' (%s)", token.value, lex_token_to_str(token.type));
+            return NULL;
     }
 }
 
@@ -353,7 +395,10 @@ static void parser_ast_free_inner(ast_node_t *node)
     switch (node->type) {
         case NODE_ROOT:
             for (size_t i = 0; i < node->root->size; i++)
-                parser_ast_free_inner(&node->root->nodes[i]);
+            {
+                parser_ast_free_inner(node->root->nodes[i]);
+                free(node->root->nodes[i]);
+            }
 
             free(node->root->nodes);
             free(node->root);
@@ -436,7 +481,7 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
 
             for (size_t i = 0; i < node->root->size; i++)
             {
-                blaze_debug__print_ast_internal(&node->root->nodes[i], inner_indent_level + 1, false, true);
+                blaze_debug__print_ast_internal(node->root->nodes[i], inner_indent_level + 1, false, true);
 
                 if (i < node->root->size - 1)
                     printf(",");
@@ -498,6 +543,12 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
 
 void blaze_debug__print_ast(ast_node_t *node)
 {
+    if (node == NULL)
+    {
+        printf("[NULL AST]\n");
+        return;
+    }
+
     blaze_debug__print_ast_internal(node, 0, true, true);
 }
 #endif

@@ -73,6 +73,12 @@ struct lex *lex_init(char *filename, char *buf)
     return lex;
 }
 
+void lex_set_contents(struct lex *lex, const char *new_buf)
+{
+    free(lex->buf);
+    lex->buf = strdup(new_buf);
+}
+
 void lex_free(struct lex *lex)
 {
     for (size_t i = 0; i < lex->token_count; i++)
@@ -154,7 +160,7 @@ static inline char lex_char(struct lex *lex)
     return lex->buf[lex->index];
 }
 
-static void lex_string(struct lex *lex)
+static bool lex_string(struct lex *lex)
 {
     size_t column_start = lex->current_column;
     char *strbuf = NULL;
@@ -168,7 +174,10 @@ static void lex_string(struct lex *lex)
     }
 
     if (!lex_has_value(lex) || lex_char(lex) != quote)
+    {
         LEX_ERROR_ARGS(lex, "unterminated string: expected '%c'", quote);
+        return false;
+    }
 
     lex_char_forward(lex);
 
@@ -183,6 +192,8 @@ static void lex_string(struct lex *lex)
         .column_start = column_start,
         .column_end = lex->current_column,
     });
+
+    return true;
 }
 
 static void lex_number(struct lex *lex)
@@ -261,7 +272,7 @@ static void lex_push_char_token(struct lex *lex, enum lex_token_type type)
     });
 }
 
-void lex_analyze(struct lex *lex)
+bool lex_analyze(struct lex *lex)
 {
     while (lex_has_value(lex))
     {
@@ -289,13 +300,17 @@ void lex_analyze(struct lex *lex)
         else if (isalpha(c))
             lex_identifier_or_keyword(lex);
         else
+        {
             syntax_error("unknown token '%c'", lex_char(lex));
+            return false;
+        }
 
         loop_end:
             NULL;
     }
 
     lex_token_push_default(lex, T_EOF, strdup("[EOF]"));
+    return true;
 }
 
 struct lex_token *lex_get_tokens(struct lex *lex)

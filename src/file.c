@@ -44,6 +44,11 @@ struct filebuf filebuf_init(const char *filename)
     return buf;
 }
 
+void filebuf_set_current_file(char *filename)
+{
+    filebuf_current_file = filename;
+}
+
 void filebuf_read(struct filebuf *buf)
 {
     assert(buf != NULL);

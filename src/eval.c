@@ -119,7 +119,7 @@ void val_free_force(val_t *val)
 
 void val_free(val_t *val)
 {
-    if (val == NULL || (val->type == VAL_NULL && val->nofree))
+    if (val == NULL || val->nofree)
         return;
 
     val_free_force(val);
@@ -152,6 +152,7 @@ val_t *eval(scope_t *scope, const ast_node_t *node)
 
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
+            return NULL;
     }
 }
 
@@ -165,20 +166,35 @@ static val_t *val_copy(val_t *value)
     return copy;
 }
 
+#define VAL_CHECK_EXIT(val) \
+    if (val == NULL) \
+        return NULL;
+
 val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
 {
     val_t *val = eval(scope, node->assignment_expr->value);
+
+    VAL_CHECK_EXIT(val);
+
     enum valmap_set_status status = scope_assign_identifier(scope, node->assignment_expr->assignee->identifier->symbol, val);
 
     if (status == VAL_SET_NOT_FOUND)
     {
-        RUNTIME_ERROR(filebuf_current_file, node->assignment_expr->assignee->line_start,
-            node->assignment_expr->assignee->column_start, "use of undeclared identifier '%s'", node->assignment_expr->assignee->identifier->symbol);
+        RUNTIME_ERROR(filebuf_current_file,
+                      node->assignment_expr->assignee->line_start,
+                      node->assignment_expr->assignee->column_start,
+                      "use of undeclared identifier '%s'",
+                      node->assignment_expr->assignee->identifier->symbol);
+        return NULL;
     }
     else if (status == VAL_SET_IS_CONST)
     {
-        RUNTIME_ERROR(filebuf_current_file, node->assignment_expr->assignee->line_start,
-            node->assignment_expr->assignee->column_start, "cannot assign to constant '%s'", node->assignment_expr->assignee->identifier->symbol);
+        RUNTIME_ERROR(filebuf_current_file,
+                      node->assignment_expr->assignee->line_start,
+                      node->assignment_expr->assignee->column_start,
+                      "cannot assign to constant '%s'",
+                      node->assignment_expr->assignee->identifier->symbol);
+        return NULL;
     }
 
     return val;
@@ -189,7 +205,12 @@ val_t *eval_identifier(scope_t *scope, const ast_node_t *node)
     val_t *val = scope_resolve_identifier(scope, node->identifier->symbol);
 
     if (val == NULL)
-        RUNTIME_ERROR(filebuf_current_file, node->line_start, node->column_start, "use of undeclared identifier '%s'", node->identifier->symbol);
+    {
+        RUNTIME_ERROR(filebuf_current_file, node->line_start,
+                      node->column_start, "use of undeclared identifier '%s'",
+                      node->identifier->symbol);
+        return NULL;
+    }
 
     return val;
 }
@@ -248,7 +269,10 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
             break;
 
         default:
+        {
             fatal_error("unsupported operator '%c' (%d)", operator, operator);
+            return NULL;
+        }
     }
 
     return val;
@@ -257,10 +281,19 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
 val_t *eval_var_decl(scope_t *scope, const ast_node_t *node)
 {
     val_t *val = node->var_decl->value == NULL ? scope->null : eval(scope, node->var_decl->value);
+
+    VAL_CHECK_EXIT(val);
+
     enum valmap_set_status status = scope_declare_identifier(scope, node->var_decl->name, val, node->var_decl->is_const);
 
     if (status == VAL_SET_EXISTS)
-        RUNTIME_ERROR(filebuf_current_file, node->line_start, node->column_start, "cannot redeclare identifier '%s'", node->identifier->symbol);
+    {
+        RUNTIME_ERROR(
+            filebuf_current_file, node->line_start, node->column_start,
+            "cannot redeclare identifier '%s'", node->identifier->symbol);
+
+        return NULL;
+    }
 
     return scope->null;
 }
@@ -268,11 +301,15 @@ val_t *eval_var_decl(scope_t *scope, const ast_node_t *node)
 val_t *eval_binexp(scope_t *scope, const ast_node_t *node)
 {
     val_t *left = eval(scope, node->binexpr->left);
+    VAL_CHECK_EXIT(left);
     val_t *right = eval(scope, node->binexpr->right);
-    val_t *ret;
+    VAL_CHECK_EXIT(right);
+    val_t *ret = NULL;
 
     if (left->type == VAL_INTEGER && right->type == VAL_INTEGER)
+    {
         ret = eval_binexp_int(node->binexpr->operator, left, right);
+    }
     else
         fatal_error("unsupported binary operation (lhs: %s(%d), rhs: %s(%d))",
                     val_type_to_str(left->type), left->type,
@@ -287,7 +324,8 @@ val_t *eval_root(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < node->root->size; i++)
     {
-        value = eval(scope, &node->root->nodes[i]);
+        value = eval(scope, node->root->nodes[i]);
+        VAL_CHECK_EXIT(value);
     }
 
     return value;

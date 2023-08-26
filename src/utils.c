@@ -2,12 +2,26 @@
  * Created by rakinar2 on 8/22/23.
  */
 
+#include "utils.h"
+#include "alloca.h"
+#include "log.h"
+#include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include "utils.h"
-#include "log.h"
-#include "alloca.h"
+
+bool is_repl = false;
+
+void set_repl_mode(bool value)
+{
+    is_repl = value;
+}
+
+void blaze_error_exit()
+{
+    if (!is_repl)
+        exit(EXIT_FAILURE);
+}
 
 void fatal_error(const char *fmt, ...)
 {
@@ -15,7 +29,7 @@ void fatal_error(const char *fmt, ...)
     va_start(args, fmt);
     log_error_va_list(fmt, args);
     va_end(args);
-    exit(EXIT_FAILURE);
+    blaze_error_exit();
 }
 
 void syntax_error(const char *fmt, ...)
@@ -26,7 +40,7 @@ void syntax_error(const char *fmt, ...)
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
     va_end(args);
-    exit(EXIT_FAILURE);
+    blaze_error_exit();
 }
 
 char *ctos(char c)
