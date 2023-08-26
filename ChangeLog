@@ -1,3 +1,12 @@
+# [2.4.0](https://github.com/virtual-designer/blazescript/compare/v2.3.2...v2.4.0) (2023-08-26)
+
+
+### Features
+
+* **datatypes:** add function data structure ([0e8da83](https://github.com/virtual-designer/blazescript/commit/0e8da83c91acb25189fafc37e0461a72a9ffa171))
+
+
+
 ## [2.3.2](https://github.com/virtual-designer/blazescript/compare/v2.3.1...v2.3.2) (2023-08-26)
 
 
@@ -31,15 +40,6 @@
 ### Features
 
 * **scope:** global scopes now have true, false and null defined ([ba40cf1](https://github.com/virtual-designer/blazescript/commit/ba40cf1c785e527d211bb7898d43afee5f4b43e9))
-
-
-
-## [2.1.1](https://github.com/virtual-designer/blazescript/compare/v2.1.0...v2.1.1) (2023-08-25)
-
-
-### Bug Fixes
-
-* update authors file ([2b369e4](https://github.com/virtual-designer/blazescript/commit/2b369e4703bc28b73f830ebe8a596a00228cb337))
 
 
 
