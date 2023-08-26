@@ -27,6 +27,26 @@ static struct parser *parser = NULL;
 static ast_node_t *root_node = NULL;
 static scope_t *global_scope = NULL;
 
+#if !defined(getline)
+ssize_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream)
+{
+    *lineptr = NULL;
+    *n = 0;
+    int c;
+
+    while (!feof(stream) && (c = fgetc(stream)) != '\n')
+    {
+        *lineptr = xrealloc(*lineptr, ++(*n));
+        (*lineptr)[(*n) - 1] = (char) c;
+    }
+
+    *lineptr = xrealloc(*lineptr, (*n) + 2);
+    (*lineptr)[(*n)++] = '\n';
+    (*lineptr)[(*n)++] = 0;
+    return (ssize_t) (*n);
+}
+#endif
+
 static void process_file(const char *name)
 {
     struct filebuf buf;
