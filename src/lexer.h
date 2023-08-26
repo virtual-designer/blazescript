@@ -19,7 +19,10 @@ enum lex_token_type
     T_VAR,
     T_CONST,
     T_ASSIGNMENT,
-    T_COMMA
+    T_COMMA,
+    T_FUNCTION,
+    T_BLOCK_BRACE_OPEN,
+    T_BLOCK_BRACE_CLOSE,
 };
 
 struct lex_token

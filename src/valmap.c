@@ -227,6 +227,26 @@ void valmap_free(struct valmap *valmap, bool free_values)
     free(valmap);
 }
 
+void valmap_free_builtin_fns(struct valmap *valmap)
+{
+    for (size_t i = 0; i < valmap->capacity; i++)
+    {
+        if (valmap->array[i].value != NULL &&
+            valmap->array[i].value->type == VAL_FUNCTION &&
+            valmap->array[i].value->fnval->type == FN_BUILT_IN)
+        {
+            if (valmap->array[i].key != NULL)
+            {
+                free(valmap->array[i].key);
+                valmap->array[i].key = NULL;
+            }
+
+            val_free_force(valmap->array[i].value);
+            valmap->array[i].value = NULL;
+        }
+    }
+}
+
 size_t valmap_get_capacity(struct valmap *valmap)
 {
     return valmap->capacity;

@@ -51,11 +51,14 @@ static const struct char_to_token_map chartokens[] = {
     { '%', T_BINARY_OPERATOR },
     { '=', T_ASSIGNMENT },
     { ',', T_COMMA },
+    { '{', T_BLOCK_BRACE_OPEN },
+    { '}', T_BLOCK_BRACE_CLOSE },
 };
 
 static const struct keyword keywords[] = {
     { "var", T_VAR },
     { "const", T_CONST },
+    { "function", T_FUNCTION },
 };
 
 struct lex *lex_init(char *filename, char *buf)
@@ -345,6 +348,9 @@ const char *lex_token_to_str(enum lex_token_type type)
         [T_VAR] = "T_VAR",
         [T_CONST] = "T_CONST",
         [T_COMMA] = "T_COMMA",
+        [T_FUNCTION] = "T_FUNCTION",
+        [T_BLOCK_BRACE_OPEN] = "T_BLOCK_BRACE_OPEN",
+        [T_BLOCK_BRACE_CLOSE] = "T_BLOCK_BRACE_CLOSE",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);

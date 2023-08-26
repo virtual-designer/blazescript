@@ -16,7 +16,8 @@ typedef enum ast_node_type {
     NODE_STRING,
     NODE_VAR_DECL,
     NODE_ASSIGNMENT,
-    NODE_EXPR_CALL
+    NODE_EXPR_CALL,
+    NODE_FN_DECL
 } ast_type_t;
 
 typedef enum ast_bin_operator {
@@ -67,6 +68,14 @@ typedef struct ast_fn_call {
     ast_identifier_t *identifier;
 } ast_call_t;
 
+typedef struct ast_fn_decl {
+    size_t param_count;
+    char **param_names;
+    ast_identifier_t *identifier;
+    struct ast_node **body;
+    size_t size;
+} ast_fn_decl_t;
+
 typedef struct ast_node
 {
     ast_type_t type;
@@ -82,6 +91,7 @@ typedef struct ast_node
         ast_var_decl_t *var_decl;
         ast_assignment_expr_t *assignment_expr;
         ast_call_t *fn_call;
+        ast_fn_decl_t *fn_decl;
     };
 } ast_node_t;
 

@@ -8,6 +8,7 @@
 #include "eval.h"
 #include "scope.h"
 #include "valmap.h"
+#include "lib.h"
 
 static val_t *true_val = NULL,
              *false_val = NULL;
@@ -53,25 +54,44 @@ struct scope *scope_create_global()
     scope_declare_identifier(scope, "false", false_val, true);
     scope_declare_identifier(scope, "null", scope->null, true);
 
+    for (size_t i = 0; i < (sizeof builtin_functions) / (sizeof builtin_functions[0]); i++)
+    {
+        val_t *fn_val = val_create(VAL_FUNCTION);
+        fn_val->fnval->type = FN_BUILT_IN;
+        fn_val->fnval->built_in_callback = builtin_functions[i].callback;
+        scope_declare_identifier(scope, builtin_functions[i].name, fn_val, true);
+    }
+
     return scope;
 }
 
 void scope_free(struct scope *scope)
 {
+    if (scope->parent == NULL)
+        valmap_free_builtin_fns(scope->valmap);
+
     valmap_free(scope->valmap, true);
 
     if (scope->parent == NULL)
+    {
         val_free_force(scope->null);
-
-    val_free_force(true_val);
-    val_free_force(false_val);
+        val_free_force(true_val);
+        val_free_force(false_val);
+    }
 
     free(scope);
 }
 
 enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *name, val_t *val)
 {
-    return valmap_set_no_create(scope->valmap, name, val, false, true);
+    enum valmap_set_status status = valmap_set_no_create(scope->valmap, name, val, false, true);
+
+    if (status == VAL_SET_NOT_FOUND && scope->parent != NULL)
+    {
+        return scope_assign_identifier(scope->parent, name, val);
+    }
+
+    return status;
 }
 
 enum valmap_set_status scope_declare_identifier(struct scope *scope, const char *name, val_t *val, bool is_const)
@@ -81,5 +101,10 @@ enum valmap_set_status scope_declare_identifier(struct scope *scope, const char 
 
 val_t *scope_resolve_identifier(struct scope *scope, const char *name)
 {
-    return valmap_get(scope->valmap, name);
+    val_t *val = valmap_get(scope->valmap, name);
+
+    if (val == NULL && scope->parent != NULL)
+        return scope_resolve_identifier(scope->parent, name);
+
+    return val;
 }

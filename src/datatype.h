@@ -5,9 +5,11 @@
 #ifndef BLAZESCRIPT_DATATYPE_H
 #define BLAZESCRIPT_DATATYPE_H
 
+#include "ast.h"
 #include <stdbool.h>
 #include <stddef.h>
-#include "ast.h"
+
+struct scope;
 
 typedef enum {
     VAL_INTEGER,
@@ -41,8 +43,13 @@ typedef struct {
         FN_USER_CUSTOM
     } type;
     union {
-        struct value *(*built_in_callback)(struct value **args, size_t argc);
-        ast_node_t *custom_body;
+        struct value *(*built_in_callback)(struct scope *scope, size_t argc, struct value **args);
+        struct {
+            ast_node_t **custom_body;
+            size_t size;
+            size_t param_count;
+            char **param_names;
+        };
     };
 } val_function_t;
 

@@ -35,6 +35,7 @@ static ast_node_t *parser_parse_binexp_additive(struct parser *parser);
 static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser);
 static ast_node_t *parser_parse_var_decl(struct parser *parser);
 static ast_node_t *parser_parse_assignment_expr(struct parser *parser);
+static ast_node_t *parser_parse_fn_decl(struct parser *parser);
 
 struct parser *parser_init()
 {
@@ -141,6 +142,7 @@ static ast_node_t *create_node()
 static ast_node_t *parser_parse_stmt(struct parser *parser)
 {
     ast_node_t *stmt = NULL;
+    bool semicolon_is_expected = true;
 
     switch (parser_at(parser).type)
     {
@@ -149,12 +151,75 @@ static ast_node_t *parser_parse_stmt(struct parser *parser)
             stmt = parser_parse_var_decl(parser);
             break;
 
+        case T_FUNCTION:
+            stmt = parser_parse_fn_decl(parser);
+            semicolon_is_expected = false;
+            break;
+
         default:
             stmt = parser_parse_expr(parser);
     }
 
-    NULL_EXIT(parser_expect(parser, T_SEMICOLON));
+    if (semicolon_is_expected)
+        NULL_EXIT(parser_expect(parser, T_SEMICOLON));
+
+    while (parser_at(parser).type == T_SEMICOLON)
+        parser_ret_forward(parser);
+
     return stmt;
+}
+
+static ast_node_t *parser_parse_fn_decl(struct parser *parser)
+{
+    struct lex_token *first_token = parser_expect(parser, T_FUNCTION);
+    NULL_EXIT(first_token);
+    struct lex_token *fn_name_token = parser_expect(parser, T_IDENTIFIER);
+    NULL_EXIT(fn_name_token);
+    NULL_EXIT(parser_expect(parser, T_PAREN_OPEN));
+
+    ast_node_t *node = create_node();
+
+    node->type = NODE_FN_DECL;
+    node->fn_decl = xcalloc(1, sizeof (ast_fn_decl_t));
+    node->fn_decl->identifier = xcalloc(1, sizeof (ast_identifier_t));
+    node->fn_decl->identifier->symbol = strdup(fn_name_token->value);
+    node->fn_decl->param_names = NULL;
+    node->fn_decl->param_count = 0;
+    node->fn_decl->body = NULL;
+    node->fn_decl->size = 0;
+    node->line_start = first_token->line_start;
+    node->column_start = first_token->column_start;
+
+    while (!parser_is_eof(parser) && parser_at(parser).type != T_PAREN_CLOSE)
+    {
+        struct lex_token *identifier = parser_expect(parser, T_IDENTIFIER);
+        NULL_EXIT(identifier);
+        node->fn_decl->param_names = xrealloc(node->fn_decl->param_names, sizeof (char *) * (++node->fn_decl->param_count));
+        node->fn_decl->param_names[node->fn_decl->param_count - 1] = strdup(identifier->value);
+
+        if (parser_at(parser).type == T_PAREN_CLOSE)
+            break;
+
+        NULL_EXIT(parser_expect(parser, T_COMMA));
+    }
+
+    NULL_EXIT(parser_expect(parser, T_PAREN_CLOSE));
+    NULL_EXIT(parser_expect(parser, T_BLOCK_BRACE_OPEN));
+
+    while (!parser_is_eof(parser) && parser_at(parser).type != T_BLOCK_BRACE_CLOSE)
+    {
+        ast_node_t *stmt = parser_parse_stmt(parser);
+        NULL_EXIT(stmt);
+        node->fn_decl->body = xrealloc(node->fn_decl->body, sizeof (ast_node_t *) * (++node->fn_decl->size));
+        node->fn_decl->body[node->fn_decl->size - 1] = stmt;
+    }
+
+    struct lex_token *last_token = parser_expect(parser, T_BLOCK_BRACE_CLOSE);
+    NULL_EXIT(last_token);
+    node->line_end = last_token->line_end;
+    node->column_end = last_token->column_end;
+
+    return node;
 }
 
 static ast_node_t *parser_parse_call_expr(struct parser *parser)
@@ -176,6 +241,7 @@ static ast_node_t *parser_parse_call_expr(struct parser *parser)
         struct lex_token *identifier = parser_expect(parser, T_IDENTIFIER);
         NULL_EXIT(identifier);
         node->fn_call->identifier->symbol = strdup(identifier->value);
+
         NULL_EXIT(parser_expect(parser, T_PAREN_OPEN));
 
         while (!parser_is_eof(parser) && parser_at(parser).type != T_PAREN_CLOSE)
@@ -424,6 +490,7 @@ const char *ast_type_to_str(enum ast_node_type type)
         [NODE_VAR_DECL] = "VAR_DECL",
         [NODE_ASSIGNMENT] = "ASSIGNMENT",
         [NODE_EXPR_CALL] = "CALL_EXPR",
+        [NODE_FN_DECL] = "FN_DECL",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -490,6 +557,22 @@ static void parser_ast_free_inner(ast_node_t *node)
 
             free(node->var_decl->name);
             free(node->var_decl);
+            break;
+
+        case NODE_FN_DECL:
+            free(node->fn_decl->identifier->symbol);
+            free(node->fn_decl->identifier);
+
+            for (size_t i = 0; i < node->fn_decl->param_count; i++)
+                free(node->fn_decl->param_names[i]);
+
+            free(node->fn_decl->param_names);
+
+            for (size_t i = 0; i < node->fn_decl->size; i++)
+                parser_ast_free(node->fn_decl->body[i]);
+
+            free(node->fn_decl->body);
+            free(node->fn_decl);
             break;
 
         default:
@@ -583,6 +666,39 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
                 blaze_debug__print_ast_internal(node->fn_call->args[i], inner_indent_level + 1, false, true);
 
                 if (i < node->fn_call->argc - 1)
+                    printf(",");
+
+                printf("\n");
+            }
+
+            blaze_debug__print_ast_indent_string(inner_indent_level, "]\n");
+            break;
+
+        case NODE_FN_DECL:
+            blaze_debug__print_ast_indent_string(inner_indent_level, "identifier: \"%s\",\n", node->fn_decl->identifier->symbol);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "param_count: %lu,\n", node->fn_decl->param_count);
+
+            blaze_debug__print_ast_indent_string(inner_indent_level, "param_names: [\n");
+
+            for (size_t i = 0; i < node->fn_decl->param_count; i++)
+            {
+                blaze_debug__print_ast_indent_string(inner_indent_level + 1, "%s", node->fn_decl->param_names[i]);
+
+                if (i < node->fn_decl->param_count - 1)
+                    printf(",");
+
+                printf("\n");
+            }
+
+            blaze_debug__print_ast_indent_string(inner_indent_level, "],\n");
+            blaze_debug__print_ast_indent_string(inner_indent_level, "size: %lu,\n", node->fn_decl->size);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "body: [\n");
+
+            for (size_t i = 0; i < node->fn_decl->size; i++)
+            {
+                blaze_debug__print_ast_internal(node->fn_decl->body[i], inner_indent_level + 1, false, true);
+
+                if (i < node->fn_decl->size - 1)
                     printf(",");
 
                 printf("\n");

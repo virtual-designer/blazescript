@@ -9,6 +9,7 @@
 #include "file.h"
 #include "lib.h"
 #include "log.h"
+#include "parser.h"
 #include "scope.h"
 #include "utils.h"
 #include <assert.h>
@@ -25,6 +26,7 @@ val_t *eval_var_decl(scope_t *scope, const ast_node_t *node);
 val_t *eval_identifier(scope_t *scope, const ast_node_t *node);
 val_t *eval_assignment(scope_t *scope, const ast_node_t *node);
 val_t *eval_expr_call(scope_t *scope, const ast_node_t *node);
+val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node);
 
 char *eval_fn_error = NULL;
 
@@ -77,6 +79,50 @@ val_t *val_create(val_type_t type)
             val->boolval = xmalloc(sizeof *(val->boolval));
             break;
 
+        case VAL_FUNCTION:
+            val->fnval = xmalloc(sizeof *(val->fnval));
+            break;
+
+        case VAL_NULL:
+            break;
+
+        default:
+            log_warn("unrecognized value type: %d", val->type);
+    }
+
+    return val;
+}
+
+val_t *val_copy_deep(val_t *orig)
+{
+    if (orig->type == VAL_NULL)
+        return orig;
+
+    val_t *val = val_create(orig->type);
+
+    switch (orig->type)
+    {
+        case VAL_INTEGER:
+            val->intval->value = orig->intval->value;
+            break;
+
+        case VAL_FLOAT:
+            val->floatval->value = orig->floatval->value;
+            break;
+
+        case VAL_STRING:
+            val->strval->value = orig->strval->value;
+            break;
+
+        case VAL_BOOLEAN:
+            val->boolval->value = orig->boolval->value;
+            break;
+
+        case VAL_FUNCTION:
+            // FIXME: Shallow copy
+            memcpy(val->fnval, orig->fnval, sizeof (*val->fnval));
+            break;
+
         case VAL_NULL:
             break;
 
@@ -113,6 +159,7 @@ void val_free_force(val_t *val)
 
         case VAL_FUNCTION:
             free(val->fnval);
+            break;
 
         case VAL_NULL:
             break;
@@ -126,7 +173,7 @@ void val_free_force(val_t *val)
 
 void val_free(val_t *val)
 {
-    if (val == NULL || val->nofree)
+    if (val == NULL || val->nofree || (val->type == VAL_FUNCTION && val->fnval->type == FN_BUILT_IN))
         return;
 
     val_free_force(val);
@@ -160,6 +207,9 @@ val_t *eval(scope_t *scope, const ast_node_t *node)
         case NODE_EXPR_CALL:
             return eval_expr_call(scope, node);
 
+        case NODE_FN_DECL:
+            return eval_fn_decl(scope, node);
+
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
             return NULL;
@@ -180,50 +230,131 @@ static val_t *val_copy(val_t *value)
     if (val == NULL) \
         return NULL;
 
+val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
+{
+    val_t *fn = val_create(VAL_FUNCTION);
+
+    fn->fnval->type = FN_USER_CUSTOM;
+    fn->fnval->custom_body = node->fn_decl->body;
+    fn->fnval->param_count = node->fn_decl->param_count;
+    fn->fnval->param_names = node->fn_decl->param_names;
+    fn->fnval->size = node->fn_decl->size;
+
+    enum valmap_set_status status = scope_declare_identifier(scope, node->fn_decl->identifier->symbol, fn, true);
+
+    if (status == VAL_SET_EXISTS)
+    {
+        RUNTIME_ERROR(filebuf_current_file,
+                      node->line_start,
+                      node->column_start,
+                      "'%s' is already defined",
+                      node->fn_decl->identifier->symbol);
+
+        return NULL;
+    }
+
+    return scope->null;
+}
+
 val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 {
     char *identifier = node->fn_call->identifier->symbol;
 
-    for (size_t i = 0; i < (sizeof builtin_functions) / (sizeof builtin_functions[0]); i++)
+    val_t *val = scope_resolve_identifier(scope, identifier);
+
+    if (val == NULL)
     {
-        if (strcmp(builtin_functions[i].name, identifier) == 0)
+        RUNTIME_ERROR(filebuf_current_file,
+                      node->line_start,
+                      node->column_start,
+                      "undefined function '%s'",
+                      identifier);
+        return NULL;
+    }
+
+    if (val->type != VAL_FUNCTION)
+    {
+        RUNTIME_ERROR(filebuf_current_file,
+                      node->line_start,
+                      node->column_start,
+                      "'%s' is not a function",
+                      identifier);
+        return NULL;
+    }
+
+    val_t **args = NULL;
+
+    for (size_t i = 0; i < node->fn_call->argc; i++)
+    {
+        val_t *arg = eval(scope, node->fn_call->args[i]);
+        VAL_CHECK_EXIT(arg);
+        args = xrealloc(args, sizeof (val_t *) * (i + 1));
+        args[i] = arg;
+    }
+
+    if (val->fnval->type == FN_BUILT_IN)
+    {
+        val_t *ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
+        free(args);
+        VAL_CHECK_EXIT(ret);
+
+        if (eval_fn_error != NULL)
         {
-            val_t **args = NULL;
+            RUNTIME_ERROR(filebuf_current_file,
+                          node->line_start,
+                          node->column_start,
+                          "%s",
+                          eval_fn_error);
 
-            for (size_t argc = 0; argc < node->fn_call->argc; argc++)
-            {
-                val_t *val = eval(scope, node->fn_call->args[argc]);
-                VAL_CHECK_EXIT(val);
-                args = xrealloc(args, sizeof (val_t *) * (argc + 1));
-                args[argc] = val;
-            }
+            free(eval_fn_error);
+            eval_fn_error = NULL;
+            return NULL;
+        }
 
-            val_t *ret = builtin_functions[i].callback(scope, node->fn_call->argc, args);
-            free(args);
-            VAL_CHECK_EXIT(ret);
+        return ret;
+    }
 
-            if (eval_fn_error != NULL)
-            {
-                RUNTIME_ERROR(filebuf_current_file,
-                              node->line_start,
-                              node->column_start,
-                              "%s",
-                              eval_fn_error);
-                free(eval_fn_error);
-                eval_fn_error = NULL;
-                return NULL;
-            }
+    if (val->fnval->param_count != node->fn_call->argc)
+    {
+        RUNTIME_ERROR(filebuf_current_file,
+                      node->line_start,
+                      node->column_start,
+                      "function '%s' requires %lu arguments, but %lu were passed",
+                      identifier, val->fnval->param_count, node->fn_call->argc);
+        return NULL;
+    }
 
-            return ret;
+    scope_t *new_scope = scope_init(scope);
+
+    for (size_t i = 0; i < node->fn_call->argc; i++)
+    {
+        val_t *arg = args[i];
+        enum valmap_set_status status = scope_declare_identifier(new_scope, val->fnval->param_names[i], arg, true);
+
+        if (status == VAL_SET_EXISTS)
+        {
+            RUNTIME_ERROR(filebuf_current_file,
+                          node->line_start,
+                          node->column_start,
+                          "cannot redefine '%s' as a function parameter",
+                          node->fn_decl->identifier->symbol);
+
+            return NULL;
         }
     }
 
-    RUNTIME_ERROR(filebuf_current_file,
-                  node->line_start,
-                  node->column_start,
-                  "undefined function '%s'",
-                  identifier);
-    return NULL;
+    val_t *ret;
+
+    for (size_t i = 0; i < val->fnval->size; i++)
+    {
+        ret = eval(new_scope, val->fnval->custom_body[i]);
+        VAL_CHECK_EXIT(ret);
+    }
+
+    val_t *copy = val_copy_deep(ret);
+    free(args);
+    scope_free(new_scope);
+    return copy;
 }
 
 val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
@@ -415,28 +546,32 @@ void print_val_internal(val_t *val, bool quote_strings)
 
     switch (val->type)
     {
-    case VAL_INTEGER:
-        printf("\033[1;33m%lld\033[0m", val->intval->value);
-        break;
+        case VAL_INTEGER:
+            printf("\033[1;33m%lld\033[0m", val->intval->value);
+            break;
 
-    case VAL_FLOAT:
-        printf("\033[1;33m%Lf\033[0m", val->floatval->value);
-        break;
+        case VAL_FLOAT:
+            printf("\033[1;33m%Lf\033[0m", val->floatval->value);
+            break;
 
-    case VAL_STRING:
-        printf("\033[32m%s%s%s\033[0m", quote_strings ? "\"" : "", val->strval->value, quote_strings ? "\"" : "");
-        break;
+        case VAL_STRING:
+            printf("\033[32m%s%s%s\033[0m", quote_strings ? "\"" : "", val->strval->value, quote_strings ? "\"" : "");
+            break;
 
-    case VAL_BOOLEAN:
-        printf("\033[36m%s\033[0m", val->boolval->value == true ? "true" : "false");
-        break;
+        case VAL_BOOLEAN:
+            printf("\033[36m%s\033[0m", val->boolval->value == true ? "true" : "false");
+            break;
 
-    case VAL_NULL:
-        printf("\033[2mnull\033[0m");
-        break;
+        case VAL_NULL:
+            printf("\033[2mnull\033[0m");
+            break;
 
-    default:
-        fatal_error("unrecognized value type: %d", val->type);
+        case VAL_FUNCTION:
+            printf("\033[2m[Function%s]\033[0m", val->fnval->type == FN_USER_CUSTOM ? "" : " Built-in");
+            break;
+
+        default:
+            fatal_error("unrecognized value type: %d", val->type);
     }
 }
 
