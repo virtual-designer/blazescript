@@ -15,7 +15,7 @@ typedef enum {
     VAL_FUNCTION,
     VAL_OBJECT,
     VAL_NULL,
-    VAL_BOOLEAN
+    VAL_BOOLEAN,
 } val_type_t;
 
 typedef struct {
@@ -34,6 +34,17 @@ typedef struct {
     bool value;
 } val_boolean_t;
 
+typedef struct {
+    enum {
+        FN_BUILT_IN,
+        FN_USER_CUSTOM
+    } type;
+    union {
+        struct value *(*built_in_callback)(struct value **args, size_t argc);
+        ast_node_t *custom_body;
+    };
+} val_function_t;
+
 typedef struct value {
     val_type_t type;
     size_t index;
@@ -44,6 +55,7 @@ typedef struct value {
         val_float_t *floatval;
         val_string_t *strval;
         val_boolean_t *boolval;
+        val_function_t *fnval;
     };
 } val_t;
 
