@@ -1,3 +1,12 @@
+# [2.5.0](https://github.com/virtual-designer/blazescript/compare/v2.4.0...v2.5.0) (2023-08-26)
+
+
+### Features
+
+* built-in function calls ([6546be5](https://github.com/virtual-designer/blazescript/commit/6546be5d38cbb80ff392195a150495bb774aa820))
+
+
+
 # [2.4.0](https://github.com/virtual-designer/blazescript/compare/v2.3.2...v2.4.0) (2023-08-26)
 
 
@@ -31,15 +40,6 @@
 ### Features
 
 * read-eval-print-loop ([997ec45](https://github.com/virtual-designer/blazescript/commit/997ec451533cb5e6959d150899a643c6fae1a57b))
-
-
-
-# [2.2.0](https://github.com/virtual-designer/blazescript/compare/v2.1.1...v2.2.0) (2023-08-25)
-
-
-### Features
-
-* **scope:** global scopes now have true, false and null defined ([ba40cf1](https://github.com/virtual-designer/blazescript/commit/ba40cf1c785e527d211bb7898d43afee5f4b43e9))
 
 
 
