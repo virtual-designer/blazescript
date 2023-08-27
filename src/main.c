@@ -66,7 +66,7 @@ static void process_file(const char *name)
     scope_t *scope = scope_create_global();
     eval(scope, node);
 //    print_val(val);
-    scope_free(scope);
+    scope_destroy_all();
     val_free_global();
     parser_ast_free(node);
     parser_free(parser);
@@ -133,6 +133,7 @@ static void handle_exit()
     if (global_scope != NULL)
         scope_free(global_scope);
 
+    scope_destroy_all();
     val_free_global();
 }
 

@@ -49,6 +49,7 @@ typedef struct {
             size_t size;
             size_t param_count;
             char **param_names;
+            struct scope *scope;
         };
     };
 } val_function_t;

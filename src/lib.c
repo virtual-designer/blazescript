@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+/* FIXME: this is for testing/debugging */
 BUILTIN_FN(test) {
     for (unsigned i = 0; i < 10; i++)
         printf("%u\n", i);
@@ -28,7 +29,7 @@ BUILTIN_FN(println)
         else
             print_val_internal(args[i], false);
 
-        if (argc > 1)
+        if (i != (argc - 1))
             printf(" ");
     }
 
@@ -36,4 +37,3 @@ BUILTIN_FN(println)
 
     return scope->null;
 }
-
