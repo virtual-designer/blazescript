@@ -22,7 +22,7 @@ BUILTIN_FN(println)
         else
             print_val_internal(args[i], false);
 
-        if (argc > 1)
+        if (i != (argc - 1))
             printf(" ");
     }
 
