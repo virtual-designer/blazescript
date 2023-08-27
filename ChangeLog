@@ -1,3 +1,12 @@
+# [2.7.0](https://github.com/virtual-designer/blazescript/compare/v2.6.0...v2.7.0) (2023-08-27)
+
+
+### Features
+
+* nested functions ([4136252](https://github.com/virtual-designer/blazescript/commit/4136252e2d6bbc8e851c0ccbde3091d9cc4a7b8f))
+
+
+
 # [2.6.0](https://github.com/virtual-designer/blazescript/compare/v2.5.0...v2.6.0) (2023-08-26)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * add custom implementation for getline() in case if the host system does not have it ([8aec6e9](https://github.com/virtual-designer/blazescript/commit/8aec6e9571dd47acc7323c4c419e2fb0cf6d0152))
-
-
-
-## [2.3.1](https://github.com/virtual-designer/blazescript/compare/v2.3.0...v2.3.1) (2023-08-26)
-
-
-### Bug Fixes
-
-* define _GNU_SOURCE ([0f0c4a7](https://github.com/virtual-designer/blazescript/commit/0f0c4a7fd7caf445b8b4ddc80ac5e62799139471))
 
 
 
