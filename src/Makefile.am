@@ -18,3 +18,4 @@ blaze_SOURCES = alloca.c \
                 lib.c
 blaze_CFLAGS = $(__CFLAGS)
 blaze_CPPFLAGS = -std=gnu11
+blaze_LDADD = -lcurl

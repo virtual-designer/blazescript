@@ -157,6 +157,8 @@ _Noreturn static void start_repl()
 
 int main(int argc, char **argv)
 {
+    curl_global_init(CURL_GLOBAL_ALL);
+
     if (argc < 2)
     {
         set_repl_mode(true);

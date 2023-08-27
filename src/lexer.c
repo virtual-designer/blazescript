@@ -53,6 +53,7 @@ static const struct char_to_token_map chartokens[] = {
     { ',', T_COMMA },
     { '{', T_BLOCK_BRACE_OPEN },
     { '}', T_BLOCK_BRACE_CLOSE },
+    { '.', T_PERIOD }
 };
 
 static const struct keyword keywords[] = {
@@ -351,6 +352,7 @@ const char *lex_token_to_str(enum lex_token_type type)
         [T_FUNCTION] = "T_FUNCTION",
         [T_BLOCK_BRACE_OPEN] = "T_BLOCK_BRACE_OPEN",
         [T_BLOCK_BRACE_CLOSE] = "T_BLOCK_BRACE_CLOSE",
+        [T_PERIOD] = "T_PERIOD"
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);

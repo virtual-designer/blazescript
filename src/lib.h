@@ -12,6 +12,7 @@
 #define BUILTIN_FN(name) val_t *blaze_builin_fn__##name(scope_t *scope, size_t argc, val_t **args)
 
 BUILTIN_FN(println);
+BUILTIN_FN(test);
 
 struct builtin_function
 {
@@ -20,7 +21,8 @@ struct builtin_function
 };
 
 static struct builtin_function const builtin_functions[] = {
-    { "println", BUILTIN_FN_REF(println) }
+    { "println", BUILTIN_FN_REF(println) },
+    { "test", BUILTIN_FN_REF(test) },
 };
 
 #endif /* BLAZESCRIPT_LIB_H */

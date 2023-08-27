@@ -7,6 +7,12 @@
 #include <stdio.h>
 #include <string.h>
 
+BUILTIN_FN(test) {
+    for (unsigned i = 0; i < 10; i++)
+        printf("%u\n", i);
+    return scope->null;
+}
+
 BUILTIN_FN(println)
 {
     if (argc == 0)
@@ -30,3 +36,4 @@ BUILTIN_FN(println)
 
     return scope->null;
 }
+

@@ -23,6 +23,7 @@ enum lex_token_type
     T_FUNCTION,
     T_BLOCK_BRACE_OPEN,
     T_BLOCK_BRACE_CLOSE,
+    T_PERIOD
 };
 
 struct lex_token
