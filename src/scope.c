@@ -13,6 +13,9 @@
 static val_t *true_val = NULL,
              *false_val = NULL;
 
+static struct scope **allocated_scopes = NULL;
+static size_t scope_count = 0;
+
 struct scope *scope_init(struct scope *parent)
 {
     struct scope *scope = xcalloc(1, sizeof (struct scope));
@@ -35,6 +38,9 @@ struct scope *scope_init(struct scope *parent)
 
         scope->null = tmp_scope->null;
     }
+
+    allocated_scopes = xrealloc(allocated_scopes, (sizeof (struct scope *)) * (++scope_count));
+    allocated_scopes[scope_count - 1] = scope;
 
     return scope;
 }
@@ -67,6 +73,25 @@ struct scope *scope_create_global()
 
 void scope_free(struct scope *scope)
 {
+    if (scope == NULL)
+        return;
+
+    bool found = false;
+
+    for (size_t i = 0; i < scope_count; i++)
+    {
+        if (allocated_scopes[i] == scope)
+        {
+            found = true;
+            allocated_scopes[i] = NULL;
+        }
+    }
+
+    if (!found)
+    {
+        return;
+    }
+
     if (scope->parent == NULL)
         valmap_free_builtin_fns(scope->valmap);
 
@@ -107,4 +132,16 @@ val_t *scope_resolve_identifier(struct scope *scope, const char *name)
         return scope_resolve_identifier(scope->parent, name);
 
     return val;
+}
+
+void scope_destroy_all()
+{
+    for (size_t i = 0; i < scope_count; i++)
+    {
+        scope_free(allocated_scopes[i]);
+    }
+
+    free(allocated_scopes);
+    allocated_scopes = NULL;
+    scope_count = 0;
 }

@@ -14,6 +14,7 @@ ast_node_t *parser_create_ast_node(struct parser *parser);
 void parser_ast_free(ast_node_t *node);
 void parser_set_tokens(struct parser *parser, struct lex_token *tokens, size_t count);
 void parser_set_filename(struct parser *parser, const char *filename);
+ast_node_t *parser_ast_deep_copy(ast_node_t *node);
 
 #ifndef NDEBUG
 void blaze_debug__print_ast(ast_node_t *node);

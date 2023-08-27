@@ -128,6 +128,109 @@ ast_node_t *parser_create_ast_node(struct parser *parser)
     return node;
 }
 
+ast_node_t *parser_ast_deep_copy(ast_node_t *node)
+{
+    ast_node_t *copy = xcalloc(1, sizeof (ast_node_t));
+    memcpy(copy, node, sizeof (ast_node_t));
+
+    switch (node->type) {
+        case NODE_ROOT:
+            copy->root = xcalloc(1, sizeof (ast_root_t));
+            copy->root->size = 0;
+            copy->root->nodes = NULL;
+
+            for (size_t i = 0; i < node->root->size; i++)
+            {
+                copy->root->nodes = xrealloc(copy->root->nodes, sizeof (ast_node_t *) * (++copy->root->size));
+                copy->root->nodes[copy->root->size - 1] = parser_ast_deep_copy(node->root->nodes[i]);
+            }
+
+            break;
+
+        case NODE_IDENTIFIER:
+            copy->identifier = xcalloc(1, sizeof (ast_identifier_t));
+            copy->identifier->symbol = strdup(node->identifier->symbol);
+            break;
+
+        case NODE_STRING:
+            copy->string = xcalloc(1, sizeof (ast_string_t));
+            copy->string->strval = strdup(node->string->strval);
+            break;
+
+        case NODE_INT_LIT:
+            copy->integer = xcalloc(1, sizeof (ast_intlit_t));
+            copy->integer->intval = node->integer->intval;
+            break;
+
+        case NODE_BINARY_EXPR:
+            copy->binexpr = xcalloc(1, sizeof (ast_binexpr_t));
+            copy->binexpr->left = parser_ast_deep_copy(node->binexpr->left);
+            copy->binexpr->right = parser_ast_deep_copy(node->binexpr->right);
+            copy->binexpr->operator = node->binexpr->operator;
+            break;
+
+        case NODE_ASSIGNMENT:
+            copy->assignment_expr = xcalloc(1, sizeof (ast_assignment_expr_t));
+            copy->assignment_expr->assignee = parser_ast_deep_copy(node->assignment_expr->assignee);
+            copy->assignment_expr->value = parser_ast_deep_copy(node->assignment_expr->value);
+            break;
+
+        case NODE_EXPR_CALL:
+            copy->fn_call = xcalloc(1, sizeof (ast_call_t));
+            copy->fn_call->argc = 0;
+            copy->fn_call->args = NULL;
+
+            for (size_t i = 0; i < node->fn_call->argc; i++)
+            {
+                copy->fn_call->args = xrealloc(copy->fn_call->args, sizeof (ast_node_t *) * (++copy->fn_call->argc));
+                copy->fn_call->args[copy->fn_call->argc - 1] = parser_ast_deep_copy(node->fn_call->args[i]);
+            }
+
+            copy->fn_call->identifier = xcalloc(1, sizeof (ast_identifier_t));
+            copy->fn_call->identifier->symbol = strdup(node->fn_call->identifier->symbol);
+            break;
+
+        case NODE_VAR_DECL:
+            copy->var_decl = xcalloc(1, sizeof (ast_var_decl_t));
+            copy->var_decl->name = strdup(node->var_decl->name);
+
+            if (node->var_decl->value != NULL)
+                copy->var_decl->value = parser_ast_deep_copy(node->var_decl->value);
+            else
+                copy->var_decl->value = NULL;
+            break;
+
+        case NODE_FN_DECL:
+            copy->fn_decl = xcalloc(1, sizeof (ast_fn_decl_t));
+            copy->fn_decl->body = NULL;
+            copy->fn_decl->size = 0;
+
+            for (size_t i = 0; i < node->fn_decl->size; i++)
+            {
+                copy->fn_decl->body = xrealloc(copy->fn_decl->body, sizeof (ast_node_t *) * (++copy->fn_decl->size));
+                copy->fn_decl->body[copy->fn_decl->size - 1] = parser_ast_deep_copy(node->fn_decl->body[i]);
+            }
+
+            copy->fn_decl->param_names = NULL;
+            copy->fn_decl->param_count = 0;
+
+            for (size_t i = 0; i < node->fn_decl->param_count; i++)
+            {
+                copy->fn_decl->param_names = xrealloc(copy->fn_decl->param_names, sizeof (char *) * (++copy->fn_decl->param_count));
+                copy->fn_decl->param_names[copy->fn_decl->param_count - 1] = strdup(node->fn_decl->param_names[i]);
+            }
+
+            copy->fn_decl->identifier = xcalloc(1, sizeof (ast_identifier_t));
+            copy->fn_decl->identifier->symbol = strdup(node->fn_decl->identifier->symbol);
+            break;
+
+        default:
+            fatal_error("%s(): AST type not recognized: (%d)", __func__, node->type);
+    }
+
+    return copy;
+}
+
 void parser_free(struct parser *parser)
 {
     free(parser->filename);
