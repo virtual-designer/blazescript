@@ -80,7 +80,8 @@ val_t *val_create(val_type_t type)
             break;
 
         case VAL_FUNCTION:
-            val->fnval = xmalloc(sizeof *(val->fnval));
+            val->fnval = xcalloc(1, sizeof *(val->fnval));
+            val->fnval->scope = NULL;
             break;
 
         case VAL_NULL:
@@ -119,8 +120,31 @@ val_t *val_copy_deep(val_t *orig)
             break;
 
         case VAL_FUNCTION:
-            // FIXME: Shallow copy
             memcpy(val->fnval, orig->fnval, sizeof (*val->fnval));
+
+            if (val->fnval->type == FN_USER_CUSTOM)
+            {
+                val->fnval->custom_body = NULL;
+                val->fnval->size = 0;
+
+                for (size_t i = 0; i < orig->fnval->size; i++)
+                {
+                    val->fnval->custom_body = xrealloc(val->fnval->custom_body, sizeof (ast_node_t *) * (++val->fnval->size));
+                    val->fnval->custom_body[val->fnval->size - 1] = parser_ast_deep_copy(orig->fnval->custom_body[i]);
+                }
+
+                val->fnval->param_count = 0;
+                val->fnval->param_names = NULL;
+
+                for (size_t i = 0; i < orig->fnval->param_count; i++)
+                {
+                    val->fnval->param_names = xrealloc(val->fnval->param_names, sizeof (char *) * (++val->fnval->param_count));
+                    val->fnval->param_names[val->fnval->param_count - 1] = strdup(orig->fnval->param_names[i]);
+                }
+
+                val->fnval->scope = scope_init(orig->fnval->scope);
+            }
+
             break;
 
         case VAL_NULL:
@@ -158,6 +182,21 @@ void val_free_force(val_t *val)
             break;
 
         case VAL_FUNCTION:
+            if (val->fnval->type == FN_USER_CUSTOM)
+            {
+                for (size_t i = 0; i < val->fnval->size; i++)
+                    parser_ast_free(val->fnval->custom_body[i]);
+
+                free(val->fnval->custom_body);
+
+                for (size_t i = 0; i < val->fnval->param_count; i++)
+                    free(val->fnval->param_names[i]);
+
+                free(val->fnval->param_names);
+                scope_free(val->fnval->scope);
+                val->fnval->scope = NULL;
+            }
+
             free(val->fnval);
             break;
 
@@ -235,10 +274,25 @@ val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
     val_t *fn = val_create(VAL_FUNCTION);
 
     fn->fnval->type = FN_USER_CUSTOM;
-    fn->fnval->custom_body = node->fn_decl->body;
-    fn->fnval->param_count = node->fn_decl->param_count;
-    fn->fnval->param_names = node->fn_decl->param_names;
-    fn->fnval->size = node->fn_decl->size;
+    fn->fnval->custom_body = NULL;
+    fn->fnval->size = 0;
+
+    for (size_t i = 0; i < node->fn_decl->size; i++)
+    {
+        fn->fnval->custom_body = xrealloc(fn->fnval->custom_body, sizeof (ast_node_t *) * (++fn->fnval->size));
+        fn->fnval->custom_body[fn->fnval->size - 1] = parser_ast_deep_copy(node->fn_decl->body[i]);
+    }
+
+    fn->fnval->param_count = 0;
+    fn->fnval->param_names = NULL;
+
+    for (size_t i = 0; i < node->fn_decl->param_count; i++)
+    {
+        fn->fnval->param_names = xrealloc(fn->fnval->param_names, sizeof (char *) * (++fn->fnval->param_count));
+        fn->fnval->param_names[fn->fnval->param_count - 1] = strdup(node->fn_decl->param_names[i]);
+    }
+
+    fn->fnval->scope = scope_init(scope);
 
     enum valmap_set_status status = scope_declare_identifier(scope, node->fn_decl->identifier->symbol, fn, true);
 
@@ -324,12 +378,10 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
         return NULL;
     }
 
-    scope_t *new_scope = scope_init(scope);
-
     for (size_t i = 0; i < node->fn_call->argc; i++)
     {
         val_t *arg = args[i];
-        enum valmap_set_status status = scope_declare_identifier(new_scope, val->fnval->param_names[i], arg, true);
+        enum valmap_set_status status = scope_declare_identifier(val->fnval->scope, val->fnval->param_names[i], arg, true);
 
         if (status == VAL_SET_EXISTS)
         {
@@ -347,13 +399,13 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < val->fnval->size; i++)
     {
-        ret = eval(new_scope, val->fnval->custom_body[i]);
+        ret = eval(val->fnval->scope, val->fnval->custom_body[i]);
         VAL_CHECK_EXIT(ret);
     }
 
     val_t *copy = val_copy_deep(ret);
     free(args);
-    scope_free(new_scope);
+    val->fnval->scope = scope_init(scope);
     return copy;
 }
 
