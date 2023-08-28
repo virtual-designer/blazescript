@@ -282,6 +282,47 @@ bool lex_analyze(struct lex *lex)
     {
         char c = lex_char(lex);
 
+        if ((lex->index + 1) < lex->len &&
+            lex->buf[lex->index] == '/' &&
+            lex->buf[lex->index + 1] == '/')
+        {
+            while (lex->index < lex->len &&
+                   lex->buf[lex->index] != '\n')
+            {
+                lex_char_forward(lex);
+            }
+
+            goto loop_end;
+        }
+
+        if ((lex->index + 1) < lex->len &&
+            lex->buf[lex->index] == '/' &&
+            lex->buf[lex->index + 1] == '*')
+        {
+            lex_char_forward(lex);
+            lex_char_forward(lex);
+
+            while ((lex->index + 1) < lex->len &&
+                   (lex->buf[lex->index] != '*' ||
+                   lex->buf[lex->index + 1] != '/'))
+            {
+                lex_char_forward(lex);
+            }
+
+            if ((lex->index + 1) < lex->len &&
+                lex->buf[lex->index] != '*' &&
+                lex->buf[lex->index + 1] != '/')
+            {
+                syntax_error("unterminated comment");
+                return false;
+            }
+
+            lex_char_forward(lex);
+            lex_char_forward(lex);
+
+            goto loop_end;
+        }
+
         if (isspace(c))
         {
             lex_char_forward(lex);
