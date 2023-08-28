@@ -17,6 +17,7 @@ val_t *val_create(val_type_t type);
 void val_free_global();
 void val_free_force(val_t *val);
 void print_val_internal(val_t *val, bool quote_strings);
+val_t *val_copy_deep(val_t *orig);
 
 extern char *eval_fn_error;
 

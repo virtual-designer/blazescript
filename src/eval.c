@@ -84,6 +84,11 @@ val_t *val_create(val_type_t type)
             val->fnval->scope = NULL;
             break;
 
+        case VAL_ARRAY:
+            val->arrval = xcalloc(1, sizeof *(val->arrval));
+            val->arrval->array = array_init();
+            break;
+
         case VAL_NULL:
             break;
 
@@ -179,6 +184,11 @@ void val_free_force(val_t *val)
 
         case VAL_BOOLEAN:
             free(val->boolval);
+            break;
+
+        case VAL_ARRAY:
+            array_free(val->arrval->array);
+            free(val->arrval);
             break;
 
         case VAL_FUNCTION:
@@ -579,7 +589,8 @@ const char *val_type_to_str(val_type_t type)
         [VAL_FLOAT] = "FLOAT",
         [VAL_FUNCTION] = "FUNCTION",
         [VAL_NULL] = "NULL",
-        [VAL_OBJECT] = "OBJECT"
+        [VAL_OBJECT] = "OBJECT",
+        [VAL_ARRAY] = "ARRAY"
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -616,6 +627,20 @@ void print_val_internal(val_t *val, bool quote_strings)
 
         case VAL_NULL:
             printf("\033[2mnull\033[0m");
+            break;
+
+        case VAL_ARRAY:
+            printf("\033[34mArray\033[0m [");
+
+            for (size_t i = 0; i < val->arrval->array->length; i++)
+            {
+                print_val_internal((val_t *) val->arrval->array->elements[i], true);
+
+                if (i != val->arrval->array->length - 1)
+                    printf(", ");
+            }
+
+            printf("]");
             break;
 
         case VAL_FUNCTION:

@@ -15,6 +15,7 @@ blaze_SOURCES = alloca.c \
                 eval.c \
                 scope.c \
                 valmap.c \
-                lib.c
+                lib.c \
+                array.c
 blaze_CFLAGS = $(__CFLAGS)
 blaze_CPPFLAGS = -std=gnu11

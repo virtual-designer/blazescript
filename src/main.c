@@ -5,13 +5,14 @@
 #include <string.h>
 #include <errno.h>
 
+#include "array.h"
 #include "eval.h"
 #include "file.h"
 #include "lexer.h"
+#include "log.h"
 #include "parser.h"
 #include "utils.h"
 #include "valmap.h"
-#include "log.h"
 
 #define REPL_FILENAME "<stdin>"
 
