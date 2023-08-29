@@ -333,7 +333,7 @@ val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
 
     if (status == VAL_SET_EXISTS)
     {
-        RUNTIME_ERROR(filebuf_current_file,
+        RUNTIME_ERROR(node->filename,
                       node->line_start,
                       node->column_start,
                       "'%s' is already defined",
@@ -353,7 +353,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
     if (val == NULL)
     {
-        RUNTIME_ERROR(filebuf_current_file,
+        RUNTIME_ERROR(node->filename,
                       node->line_start,
                       node->column_start,
                       "undefined function '%s'",
@@ -363,7 +363,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
     if (val->type != VAL_FUNCTION)
     {
-        RUNTIME_ERROR(filebuf_current_file,
+        RUNTIME_ERROR(node->filename,
                       node->line_start,
                       node->column_start,
                       "'%s' is not a function",
@@ -388,7 +388,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
         if (eval_fn_error != NULL)
         {
-            RUNTIME_ERROR(filebuf_current_file,
+            RUNTIME_ERROR(node->filename,
                           node->line_start,
                           node->column_start,
                           "%s",
@@ -404,7 +404,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
     if (val->fnval->param_count != node->fn_call->argc)
     {
-        RUNTIME_ERROR(filebuf_current_file,
+        RUNTIME_ERROR(node->filename,
                       node->line_start,
                       node->column_start,
                       "function '%s' requires %lu arguments, but %lu were passed",
@@ -419,7 +419,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
         if (status == VAL_SET_EXISTS)
         {
-            RUNTIME_ERROR(filebuf_current_file,
+            RUNTIME_ERROR(node->filename,
                           node->line_start,
                           node->column_start,
                           "cannot redefine '%s' as a function parameter",
@@ -453,7 +453,7 @@ val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
 
     if (status == VAL_SET_NOT_FOUND)
     {
-        RUNTIME_ERROR(filebuf_current_file,
+        RUNTIME_ERROR(node->filename,
                       node->assignment_expr->assignee->line_start,
                       node->assignment_expr->assignee->column_start,
                       "use of undeclared identifier '%s'",
@@ -462,7 +462,7 @@ val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
     }
     else if (status == VAL_SET_IS_CONST)
     {
-        RUNTIME_ERROR(filebuf_current_file,
+        RUNTIME_ERROR(node->filename,
                       node->assignment_expr->assignee->line_start,
                       node->assignment_expr->assignee->column_start,
                       "cannot assign to constant '%s'",
@@ -479,7 +479,7 @@ val_t *eval_identifier(scope_t *scope, const ast_node_t *node)
 
     if (val == NULL)
     {
-        RUNTIME_ERROR(filebuf_current_file, node->line_start,
+        RUNTIME_ERROR(node->filename, node->line_start,
                       node->column_start, "use of undeclared identifier '%s'",
                       node->identifier->symbol);
         return NULL;
@@ -562,7 +562,7 @@ val_t *eval_var_decl(scope_t *scope, const ast_node_t *node)
     if (status == VAL_SET_EXISTS)
     {
         RUNTIME_ERROR(
-            filebuf_current_file, node->line_start, node->column_start,
+            node->filename, node->line_start, node->column_start,
             "cannot redeclare identifier '%s'", node->identifier->symbol);
 
         return NULL;
@@ -584,9 +584,10 @@ val_t *eval_binexp(scope_t *scope, const ast_node_t *node)
         ret = eval_binexp_int(node->binexpr->operator, left, right);
     }
     else
-        fatal_error("unsupported binary operation (lhs: %s(%d), rhs: %s(%d))",
-                    val_type_to_str(left->type), left->type,
-                    val_type_to_str(right->type), right->type);
+        RUNTIME_ERROR(node->filename, node->line_start, node->column_start,
+                        "unsupported binary operation (lhs: %s(%d), rhs: %s(%d))",
+                        val_type_to_str(left->type), left->type,
+                        val_type_to_str(right->type), right->type);
 
     return ret;
 }

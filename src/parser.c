@@ -326,6 +326,7 @@ static ast_node_t *parser_parse_fn_decl(struct parser *parser)
     ast_node_t *node = create_node();
 
     node->type = NODE_FN_DECL;
+    node->filename = parser->filename;
     node->fn_decl = blaze_calloc(1, sizeof(ast_fn_decl_t));
     node->fn_decl->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
     node->fn_decl->identifier->symbol = blaze_strdup(fn_name_token->value);
@@ -381,6 +382,7 @@ static ast_node_t *parser_parse_call_expr(struct parser *parser)
         ast_node_t *node = create_node();
 
         node->type = NODE_EXPR_CALL;
+        node->filename = parser->filename;
         node->fn_call = blaze_calloc(1, sizeof(ast_call_t));
         node->fn_call->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
         node->fn_call->argc = 0;
@@ -427,6 +429,7 @@ static ast_node_t *parser_parse_var_decl(struct parser *parser)
     NULL_EXIT(identifier);
 
     ast_node_t *node = create_node();
+    node->filename = parser->filename;
     node->type = NODE_VAR_DECL;
     node->var_decl = blaze_calloc(1, sizeof(ast_var_decl_t));
     node->line_start = start_token.line_start;
@@ -479,7 +482,7 @@ static ast_node_t *parser_parse_assignment_expr(struct parser *parser)
         ast_node_t *value = parser_parse_expr(parser);
         NULL_EXIT(value);
         ast_node_t *node = create_node();
-
+        node->filename = parser->filename;
         node->type = NODE_ASSIGNMENT;
         node->assignment_expr = blaze_calloc(1, sizeof(ast_assignment_expr_t));
         node->line_start = start_token->line_start;
@@ -507,6 +510,7 @@ static ast_node_t *parser_parse_binexp_inner(struct parser *parser, const char o
 {
     ast_node_t *binexpr = create_node();
 
+    binexpr->filename = parser->filename;
     binexpr->type = NODE_BINARY_EXPR;
     binexpr->binexpr = blaze_calloc(1, sizeof(ast_binexpr_t));
     binexpr->line_start = left->line_start;
@@ -570,6 +574,7 @@ static ast_node_t *parser_parse_primary_expr(struct parser *parser)
 
             ast_node_t *identifier = create_node();
 
+            identifier->filename = parser->filename;
             identifier->type = NODE_IDENTIFIER;
             identifier->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
             identifier->line_start = token.line_start;
@@ -588,6 +593,7 @@ static ast_node_t *parser_parse_primary_expr(struct parser *parser)
 
             ast_node_t *intlit = create_node();
 
+            intlit->filename = parser->filename;
             intlit->type = NODE_INT_LIT;
             intlit->integer = blaze_calloc(1, sizeof(ast_intlit_t));
             intlit->line_start = token.line_start;
@@ -605,6 +611,7 @@ static ast_node_t *parser_parse_primary_expr(struct parser *parser)
 
             ast_node_t *string = create_node();
 
+            string->filename = parser->filename;
             string->type = NODE_STRING;
             string->string = blaze_calloc(1, sizeof(ast_string_t));
             string->line_start = token.line_start;
@@ -740,9 +747,11 @@ static void parser_ast_free_inner(ast_node_t *node)
             break;
 
         default:
-            log_warn("parser_ast_free_inner(): AST type not recognized: %s (%d)",
+            fatal_error("parser_ast_free_inner(): AST type not recognized: %s (%d)",
                      ast_type_to_str(node->type), node->type);
     }
+
+    blaze_free(node->filename);
 }
 
 void parser_ast_free(ast_node_t *node)

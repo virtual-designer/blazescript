@@ -150,6 +150,5 @@ bool blaze_free(void *ptr)
         }
     }
 
-    log_warn("Pointer not allocated using blaze allocator: %p", ptr);
     return false;
 }

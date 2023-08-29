@@ -53,5 +53,6 @@ AM_CONDITIONAL([DEBUG], [test x"${DEBUG}" != x])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
-                 lib/Makefile])
+                 lib/Makefile
+                 include/Makefile])
 AC_OUTPUT

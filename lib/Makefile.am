@@ -1,3 +1,3 @@
 lib_LIBRARIES = libblazestd.a
 libblazestd_a_SOURCES = lib.c http.c
-libblazestd_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
+libblazestd_a_CPPFLAGS = -I$(srcdir)/../include -I$(srcdir)/../src
