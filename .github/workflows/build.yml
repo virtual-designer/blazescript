@@ -26,7 +26,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: Install tools & autoreconf (Windows)
-      run: C:\msys64\usr\bin\bash .github/windows-build.sh
+      run: C:\msys64\usr\bin\bash .github/windows-autoreconf.sh
       if: matrix.os == 'windows-latest'
 
     - name: Build (Windows)
