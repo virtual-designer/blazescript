@@ -5,8 +5,10 @@
 #include "alloca.h"
 #include "log.h"
 #include "utils.h"
+#include <assert.h>
 #include <errno.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -108,9 +110,11 @@ void *blaze_realloc(void *ptr, size_t new_size)
     void *new_ptr = xrealloc(ptr, new_size);
 
     if (new_ptr != ptr)
+    {
         alloca_tbl_remove_ptr(global_alloca_tbl, ptr);
+        alloca_tbl_push_ptr(global_alloca_tbl, new_ptr);
+    }
 
-    alloca_tbl_push_ptr(global_alloca_tbl, new_ptr);
     return new_ptr;
 }
 
@@ -130,9 +134,14 @@ void *blaze_strdup(const char *str)
 
 bool blaze_free(void *ptr)
 {
+    if (ptr == NULL)
+    {
+        return false;
+    }
+
     for (ssize_t i = 0; i < global_alloca_tbl->count; i++)
     {
-        if (global_alloca_tbl->ptrs[i] == ptr)
+        if (global_alloca_tbl->ptrs[i] != NULL && global_alloca_tbl->ptrs[i] == ptr)
         {
             free(global_alloca_tbl->ptrs[i]);
             global_alloca_tbl->ptrs[i] = NULL;

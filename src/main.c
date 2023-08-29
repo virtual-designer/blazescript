@@ -159,7 +159,7 @@ _Noreturn static void start_repl()
 
 int main(int argc, char **argv)
 {
-    atexit(blaze_alloca_tbl_free);
+    atexit(&blaze_alloca_tbl_free);
     blaze_alloca_tbl_init();
 
     if (argc < 2)

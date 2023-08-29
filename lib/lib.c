@@ -3,6 +3,7 @@
  */
 
 #include "include/lib.h"
+#include "alloca.h"
 #include "eval.h"
 #include <assert.h>
 #include <stdio.h>
@@ -12,7 +13,7 @@ BUILTIN_FN(println)
 {
     if (argc == 0)
     {
-        eval_fn_error = strdup("function println() requires at least 1 argument to be passed");
+        eval_fn_error = blaze_strdup("function println() requires at least 1 argument to be passed");
         return NULL;
     }
 
@@ -69,7 +70,7 @@ BUILTIN_FN(array_filter)
 {
     if (argc != 2)
     {
-        eval_fn_error = strdup("function array_filter() requires exactly 2 arguments (vector, function) to be passed");
+        eval_fn_error = blaze_strdup("function array_filter() requires exactly 2 arguments (vector, function) to be passed");
         return NULL;
     }
 
@@ -78,7 +79,7 @@ BUILTIN_FN(array_filter)
 
     if (callback->fnval->param_count > 1)
     {
-        eval_fn_error = strdup("callback function passed to array_filter() must accept less than 2 arguments");
+        eval_fn_error = blaze_strdup("callback function passed to array_filter() must accept less than 2 arguments");
         return NULL;
     }
 

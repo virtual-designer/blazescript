@@ -101,8 +101,7 @@ void lex_free(struct lex *lex)
 
 static void lex_tokens_array_push(struct lex *lex, struct lex_token token)
 {
-    lex->tokens = blaze_realloc(lex->tokens, (++lex->token_count) *
-                                                 sizeof(struct lex_token));
+    lex->tokens = blaze_realloc(lex->tokens, (++lex->token_count) * sizeof(struct lex_token));
     lex->tokens[lex->token_count - 1] = token;
 }
 
