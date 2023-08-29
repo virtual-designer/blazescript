@@ -29,8 +29,8 @@ jobs:
       run: C:\msys64\usr\bin\bash .github/windows-build.sh
       if: matrix.os == 'windows-latest'
 
-    - name: configure (Windows)
-      run: C:\msys64\usr\bin\bash "./configure" CFLAGS="$(C:/msys64/usr/bin/bash -c 'curl-config --cflags')" LDLAGS="$(C:/msys64/usr/bin/bash -c 'curl-config --ldflags')" --prefix=$(pwd)\build 
+    - name: Build (Windows)
+      run: C:\msys64\usr\bin\bash .github/windows-build.sh
       if: matrix.os == 'windows-latest'
 
     - name: configure
@@ -39,6 +39,8 @@ jobs:
 
     - name: make
       run: make
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: install
       run: make install
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
