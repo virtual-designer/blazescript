@@ -7,7 +7,7 @@
 #include "ast.h"
 #include "datatype.h"
 #include "file.h"
-#include "lib.h"
+#include "include/lib.h"
 #include "log.h"
 #include "parser.h"
 #include "scope.h"

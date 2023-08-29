@@ -12,6 +12,8 @@ AM_INIT_AUTOMAKE([-Wall])
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_RANLIB
+AM_PROG_AR
 
 # Checks for libraries.
 # FIXME: Replace 'main' with a function in '-lm':
@@ -50,5 +52,6 @@ AC_ARG_ENABLE(
 AM_CONDITIONAL([DEBUG], [test x"${DEBUG}" != x])
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+                 src/Makefile
+                 lib/Makefile])
 AC_OUTPUT

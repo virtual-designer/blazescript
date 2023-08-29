@@ -2,7 +2,7 @@
  * Created by rakinar2 on 8/26/23.
  */
 
-#include "lib.h"
+#include "include/lib.h"
 #include "eval.h"
 #include <assert.h>
 #include <stdio.h>
