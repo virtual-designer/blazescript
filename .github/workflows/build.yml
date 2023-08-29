@@ -30,7 +30,7 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: configure (Windows)
-      run: bash "./configure" --prefix=$(pwd)\build
+      run: bash "./configure" CFLAGS="-I/usr/local/include -I/usr/include" --prefix=$(pwd)\build 
       if: matrix.os == 'windows-latest'
 
     - name: configure
