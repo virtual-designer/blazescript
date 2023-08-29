@@ -26,6 +26,7 @@ blazevm
 /Makefile
 /src/Makefile
 /lib/Makefile
+/include/Makefile
 *~
 autom4te.cache
 /build
