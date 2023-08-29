@@ -5,6 +5,7 @@
 #ifndef BLAZESCRIPT_AST_H
 #define BLAZESCRIPT_AST_H
 
+#include "vector.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -17,7 +18,9 @@ typedef enum ast_node_type {
     NODE_VAR_DECL,
     NODE_ASSIGNMENT,
     NODE_EXPR_CALL,
-    NODE_FN_DECL
+    NODE_FN_DECL,
+    NODE_ARRAY_LIT,
+    NODE_IMPORT_STMT
 } ast_type_t;
 
 typedef enum ast_bin_operator {
@@ -76,11 +79,20 @@ typedef struct ast_fn_decl {
     size_t size;
 } ast_fn_decl_t;
 
+typedef struct ast_array_lit {
+    vector_t *elements;
+} ast_array_lit_t;
+
+typedef struct ast_import_stmt {
+    // TODO
+} ast_import_stmt_t;
+
 typedef struct ast_node
 {
     ast_type_t type;
     size_t line_start, line_end;
     size_t column_start, column_end;
+    char* filename;
 
     union {
         ast_intlit_t *integer;
@@ -92,6 +104,8 @@ typedef struct ast_node
         ast_assignment_expr_t *assignment_expr;
         ast_call_t *fn_call;
         ast_fn_decl_t *fn_decl;
+        ast_array_lit_t *array_lit;
+        ast_import_stmt_t *import_stmt;
     };
 } ast_node_t;
 

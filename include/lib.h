@@ -23,7 +23,7 @@ struct builtin_function
 
 static struct builtin_function const builtin_functions[] = {
     { "println", BUILTIN_FN_REF(println) },
-    { "array", BUILTIN_FN_REF(array) },
+    { "vector", BUILTIN_FN_REF(array) },
     { "array_filter", BUILTIN_FN_REF(array_filter) },
 };
 

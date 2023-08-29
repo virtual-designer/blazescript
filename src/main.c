@@ -5,7 +5,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "array.h"
 #include "eval.h"
 #include "file.h"
 #include "lexer.h"
@@ -13,6 +12,7 @@
 #include "parser.h"
 #include "utils.h"
 #include "valmap.h"
+#include "vector.h"
 
 #define REPL_FILENAME "<stdin>"
 

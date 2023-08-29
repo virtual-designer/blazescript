@@ -5,8 +5,8 @@
 #ifndef BLAZESCRIPT_DATATYPE_H
 #define BLAZESCRIPT_DATATYPE_H
 
-#include "array.h"
 #include "ast.h"
+#include "vector.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -57,7 +57,7 @@ typedef struct {
 } val_function_t;
 
 typedef struct {
-    array_t *array;
+    vector_t *array;
 } val_array_t;
 
 typedef struct value {

@@ -38,7 +38,7 @@ BUILTIN_FN(array)
 
     for (size_t i = 0; i < argc; i++)
     {
-        array_push(val->arrval->array, (void *) args[i]);
+        vector_push(val->arrval->array, (void *)args[i]);
     }
 
     return val;
@@ -69,7 +69,7 @@ BUILTIN_FN(array_filter)
 {
     if (argc != 2)
     {
-        eval_fn_error = strdup("function array_filter() requires exactly 2 arguments (array, function) to be passed");
+        eval_fn_error = strdup("function array_filter() requires exactly 2 arguments (vector, function) to be passed");
         return NULL;
     }
 
@@ -86,8 +86,9 @@ BUILTIN_FN(array_filter)
 
     for (size_t i = 0; i < array->arrval->array->length; i++)
     {
-        if (array_filter_call_fn(scope, callback, val_copy_deep(array->arrval->array->elements[i])))
-            array_push(new_array->arrval->array, (void *) (array->arrval->array->elements[i]));
+        if (array_filter_call_fn(scope, callback, val_copy_deep(array->arrval->array->data[i])))
+            vector_push(new_array->arrval->array,
+                        (void *)(array->arrval->array->data[i]));
     }
 
     return new_array;
