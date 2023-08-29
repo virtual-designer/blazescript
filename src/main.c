@@ -37,11 +37,11 @@ ssize_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stre
 
     while (!feof(stream) && (c = fgetc(stream)) != '\n')
     {
-        *lineptr = xrealloc(*lineptr, ++(*n));
+        *lineptr = blaze_realloc(*lineptr, ++(*n));
         (*lineptr)[(*n) - 1] = (char) c;
     }
 
-    *lineptr = xrealloc(*lineptr, (*n) + 2);
+    *lineptr = blaze_realloc(*lineptr, (*n) + 2);
     (*lineptr)[(*n)++] = '\n';
     (*lineptr)[(*n)++] = 0;
     return (ssize_t) (*n);
@@ -153,12 +153,15 @@ _Noreturn static void start_repl()
             exit(EXIT_SUCCESS);
 
         process_input(input);
-        free(input);
+        blaze_free(input);
     }
 }
 
 int main(int argc, char **argv)
 {
+    atexit(blaze_alloca_tbl_free);
+    blaze_alloca_tbl_init();
+
     if (argc < 2)
     {
         set_repl_mode(true);

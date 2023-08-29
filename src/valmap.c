@@ -31,10 +31,10 @@ struct valmap_entry
 
 struct valmap *valmap_init(size_t size)
 {
-    struct valmap *valmap = xcalloc(1, sizeof (struct valmap));
+    struct valmap *valmap = blaze_calloc(1, sizeof(struct valmap));
     valmap->elements = 0;
     valmap->capacity = size;
-    valmap->array = xcalloc(size, sizeof (struct valmap_entry));
+    valmap->array = blaze_calloc(size, sizeof(struct valmap_entry));
     return valmap;
 }
 
@@ -139,7 +139,7 @@ static const char *valmap_set_entry(struct valmap_entry *array,
         return NULL;
     }
 
-    array[index].key = strdup(key);
+    array[index].key = blaze_strdup(key);
     array[index].value = value;
     array[index].is_const = is_const;
 
@@ -154,7 +154,7 @@ static void valmap_realloc(struct valmap *valmap, size_t new_capacity)
     struct valmap_entry *old_array = valmap->array;
     size_t old_capacity = valmap->capacity;
 
-    valmap->array = xcalloc(new_capacity, sizeof (struct valmap_entry));
+    valmap->array = blaze_calloc(new_capacity, sizeof(struct valmap_entry));
     valmap->capacity = new_capacity;
 
     for (size_t i = 0; i < old_capacity; i++)
@@ -163,11 +163,11 @@ static void valmap_realloc(struct valmap *valmap, size_t new_capacity)
         {
             valmap_set_entry(valmap->array, valmap->capacity, old_array[i].key,
                  old_array[i].value, NULL, old_array[i].is_const, false, true, NULL);
-            free(old_array[i].key);
+            blaze_free(old_array[i].key);
         }
     }
 
-    free(old_array);
+    blaze_free(old_array);
 }
 
 static void valmap_check_realloc(struct valmap *valmap)
@@ -214,7 +214,7 @@ void valmap_free(struct valmap *valmap, bool free_values)
     {
         if (valmap->array[i].key != NULL)
         {
-            free(valmap->array[i].key);
+            blaze_free(valmap->array[i].key);
         }
 
         if (free_values && valmap->array[i].value != NULL)
@@ -223,8 +223,8 @@ void valmap_free(struct valmap *valmap, bool free_values)
         }
     }
 
-    free(valmap->array);
-    free(valmap);
+    blaze_free(valmap->array);
+    blaze_free(valmap);
 }
 
 void valmap_free_builtin_fns(struct valmap *valmap)
@@ -237,7 +237,7 @@ void valmap_free_builtin_fns(struct valmap *valmap)
         {
             if (valmap->array[i].key != NULL)
             {
-                free(valmap->array[i].key);
+                blaze_free(valmap->array[i].key);
                 valmap->array[i].key = NULL;
             }
 

@@ -36,10 +36,10 @@ static size_t values_count = 0;
 
 static inline val_t *val_init()
 {
-    val_t *val = xmalloc(sizeof (val_t));
+    val_t *val = blaze_malloc(sizeof(val_t));
     val->nofree = false;
 
-    values = xrealloc(values, sizeof (val_t *) * ++values_count);
+    values = blaze_realloc(values, sizeof(val_t *) * ++values_count);
     values[values_count - 1] = val;
     val->index = values_count - 1;
 
@@ -54,7 +54,7 @@ void val_free_global()
         val_free(values[i]);
     }
 
-    free(values);
+    blaze_free(values);
 }
 
 val_t *val_create(val_type_t type)
@@ -65,28 +65,28 @@ val_t *val_create(val_type_t type)
     switch (val->type)
     {
         case VAL_INTEGER:
-            val->intval = xmalloc(sizeof *(val->intval));
+            val->intval = blaze_malloc(sizeof *(val->intval));
             break;
 
         case VAL_FLOAT:
-            val->floatval = xmalloc(sizeof *(val->floatval));
+            val->floatval = blaze_malloc(sizeof *(val->floatval));
             break;
 
         case VAL_STRING:
-            val->strval = xmalloc(sizeof *(val->strval));
+            val->strval = blaze_malloc(sizeof *(val->strval));
             break;
 
         case VAL_BOOLEAN:
-            val->boolval = xmalloc(sizeof *(val->boolval));
+            val->boolval = blaze_malloc(sizeof *(val->boolval));
             break;
 
         case VAL_FUNCTION:
-            val->fnval = xcalloc(1, sizeof *(val->fnval));
+            val->fnval = blaze_calloc(1, sizeof *(val->fnval));
             val->fnval->scope = NULL;
             break;
 
         case VAL_ARRAY:
-            val->arrval = xcalloc(1, sizeof *(val->arrval));
+            val->arrval = blaze_calloc(1, sizeof *(val->arrval));
             val->arrval->array = vector_init();
             break;
 
@@ -135,7 +135,9 @@ val_t *val_copy_deep(val_t *orig)
 
                 for (size_t i = 0; i < orig->fnval->size; i++)
                 {
-                    val->fnval->custom_body = xrealloc(val->fnval->custom_body, sizeof (ast_node_t *) * (++val->fnval->size));
+                    val->fnval->custom_body = blaze_realloc(
+                        val->fnval->custom_body,
+                        sizeof(ast_node_t *) * (++val->fnval->size));
                     val->fnval->custom_body[val->fnval->size - 1] = parser_ast_deep_copy(orig->fnval->custom_body[i]);
                 }
 
@@ -144,8 +146,10 @@ val_t *val_copy_deep(val_t *orig)
 
                 for (size_t i = 0; i < orig->fnval->param_count; i++)
                 {
-                    val->fnval->param_names = xrealloc(val->fnval->param_names, sizeof (char *) * (++val->fnval->param_count));
-                    val->fnval->param_names[val->fnval->param_count - 1] = strdup(orig->fnval->param_names[i]);
+                    val->fnval->param_names = blaze_realloc(
+                        val->fnval->param_names,
+                        sizeof(char *) * (++val->fnval->param_count));
+                    val->fnval->param_names[val->fnval->param_count - 1] = blaze_strdup(orig->fnval->param_names[i]);
                 }
 
                 val->fnval->scope = scope_init(orig->fnval->scope);
@@ -171,25 +175,25 @@ void val_free_force(val_t *val)
     switch (val->type)
     {
         case VAL_INTEGER:
-            free(val->intval);
+            blaze_free(val->intval);
             break;
 
         case VAL_FLOAT:
-            free(val->floatval);
+            blaze_free(val->floatval);
             break;
 
         case VAL_STRING:
-            free(val->strval->value);
-            free(val->strval);
+            blaze_free(val->strval->value);
+            blaze_free(val->strval);
             break;
 
         case VAL_BOOLEAN:
-            free(val->boolval);
+            blaze_free(val->boolval);
             break;
 
         case VAL_ARRAY:
             vector_free(val->arrval->array);
-            free(val->arrval);
+            blaze_free(val->arrval);
             break;
 
         case VAL_FUNCTION:
@@ -198,17 +202,17 @@ void val_free_force(val_t *val)
                 for (size_t i = 0; i < val->fnval->size; i++)
                     parser_ast_free(val->fnval->custom_body[i]);
 
-                free(val->fnval->custom_body);
+                blaze_free(val->fnval->custom_body);
 
                 for (size_t i = 0; i < val->fnval->param_count; i++)
-                    free(val->fnval->param_names[i]);
+                    blaze_free(val->fnval->param_names[i]);
 
-                free(val->fnval->param_names);
+                blaze_free(val->fnval->param_names);
                 scope_free(val->fnval->scope);
                 val->fnval->scope = NULL;
             }
 
-            free(val->fnval);
+            blaze_free(val->fnval);
             break;
 
         case VAL_NULL:
@@ -218,7 +222,7 @@ void val_free_force(val_t *val)
             log_warn("unrecognized value type: %d", val->type);
     }
 
-    free(val);
+    blaze_free(val);
 }
 
 void val_free(val_t *val)
@@ -271,9 +275,9 @@ val_t *eval(scope_t *scope, const ast_node_t *node)
 
 static val_t *val_copy(val_t *value)
 {
-    val_t *copy = xcalloc(1, sizeof (val_t));
+    val_t *copy = blaze_calloc(1, sizeof(val_t));
     memcpy(copy, value, sizeof (val_t));
-    values = xrealloc(values, sizeof (val_t *) * ++values_count);
+    values = blaze_realloc(values, sizeof(val_t *) * ++values_count);
     values[values_count - 1] = copy;
     copy->index = values_count - 1;
     return copy;
@@ -307,7 +311,8 @@ val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < node->fn_decl->size; i++)
     {
-        fn->fnval->custom_body = xrealloc(fn->fnval->custom_body, sizeof (ast_node_t *) * (++fn->fnval->size));
+        fn->fnval->custom_body = blaze_realloc(
+            fn->fnval->custom_body, sizeof(ast_node_t *) * (++fn->fnval->size));
         fn->fnval->custom_body[fn->fnval->size - 1] = parser_ast_deep_copy(node->fn_decl->body[i]);
     }
 
@@ -316,8 +321,10 @@ val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < node->fn_decl->param_count; i++)
     {
-        fn->fnval->param_names = xrealloc(fn->fnval->param_names, sizeof (char *) * (++fn->fnval->param_count));
-        fn->fnval->param_names[fn->fnval->param_count - 1] = strdup(node->fn_decl->param_names[i]);
+        fn->fnval->param_names =
+            blaze_realloc(fn->fnval->param_names,
+                          sizeof(char *) * (++fn->fnval->param_count));
+        fn->fnval->param_names[fn->fnval->param_count - 1] = blaze_strdup(node->fn_decl->param_names[i]);
     }
 
     fn->fnval->scope = scope_init(scope);
@@ -370,14 +377,14 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
     {
         val_t *arg = eval(scope, node->fn_call->args[i]);
         VAL_CHECK_EXIT(arg);
-        args = xrealloc(args, sizeof (val_t *) * (i + 1));
+        args = blaze_realloc(args, sizeof(val_t *) * (i + 1));
         args[i] = arg;
     }
 
     if (val->fnval->type == FN_BUILT_IN)
     {
         val_t *ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
-        free(args);
+        blaze_free(args);
 
         if (eval_fn_error != NULL)
         {
@@ -387,7 +394,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
                           "%s",
                           eval_fn_error);
 
-            free(eval_fn_error);
+            blaze_free(eval_fn_error);
             eval_fn_error = NULL;
             return NULL;
         }
@@ -431,7 +438,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
     }
 
     val_t *copy = val_copy_deep(ret);
-    free(args);
+    blaze_free(args);
     val->fnval->scope = scope_init(scope);
     return copy;
 }
@@ -491,7 +498,7 @@ val_t *eval_int(scope_t *scope, const ast_node_t *node)
 val_t *eval_string(scope_t *scope, const ast_node_t *node)
 {
     val_t *val = val_create(VAL_STRING);
-    val->strval->value = strdup(node->string->strval);
+    val->strval->value = blaze_strdup(node->string->strval);
     return val;
 }
 
@@ -503,17 +510,17 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
     switch (operator)
     {
         case OP_PLUS:
-            val->intval = xmalloc(sizeof *(val->intval));
+            val->intval = blaze_malloc(sizeof *(val->intval));
             val->intval->value = left->intval->value + right->intval->value;
             break;
 
         case OP_MINUS:
-            val->intval = xmalloc(sizeof *(val->intval));
+            val->intval = blaze_malloc(sizeof *(val->intval));
             val->intval->value = left->intval->value - right->intval->value;
             break;
 
         case OP_TIMES:
-            val->intval = xmalloc(sizeof *(val->intval));
+            val->intval = blaze_malloc(sizeof *(val->intval));
             val->intval->value = left->intval->value * right->intval->value;
             break;
 
@@ -522,7 +529,7 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
                 fatal_error("cannot divide by zero");
 
             val->type = VAL_FLOAT;
-            val->floatval = xmalloc(sizeof *(val->intval));
+            val->floatval = blaze_malloc(sizeof *(val->intval));
             val->floatval->value = (long double) left->intval->value / (long double) right->intval->value;
             break;
 
@@ -530,7 +537,7 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
             if (right->intval->value == 0)
                 fatal_error("cannot divide by zero");
 
-            val->intval = xmalloc(sizeof *(val->intval));
+            val->intval = blaze_malloc(sizeof *(val->intval));
             val->intval->value = left->intval->value % right->intval->value;
             break;
 

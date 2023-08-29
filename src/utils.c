@@ -45,7 +45,7 @@ void syntax_error(const char *fmt, ...)
 
 char *ctos(char c)
 {
-    char *s = xmalloc(2);
+    char *s = blaze_malloc(2);
     s[0] = c;
     s[1] = 0;
     return s;

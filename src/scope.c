@@ -18,7 +18,7 @@ static size_t scope_count = 0;
 
 struct scope *scope_init(struct scope *parent)
 {
-    struct scope *scope = xcalloc(1, sizeof (struct scope));
+    struct scope *scope = blaze_calloc(1, sizeof(struct scope));
     scope->valmap = valmap_init_default();
     scope->parent = parent;
 
@@ -39,7 +39,8 @@ struct scope *scope_init(struct scope *parent)
         scope->null = tmp_scope->null;
     }
 
-    allocated_scopes = xrealloc(allocated_scopes, (sizeof (struct scope *)) * (++scope_count));
+    allocated_scopes = blaze_realloc(
+        allocated_scopes, (sizeof(struct scope *)) * (++scope_count));
     allocated_scopes[scope_count - 1] = scope;
 
     return scope;
@@ -104,7 +105,7 @@ void scope_free(struct scope *scope)
         val_free_force(false_val);
     }
 
-    free(scope);
+    blaze_free(scope);
 }
 
 enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *name, val_t *val)
@@ -141,7 +142,7 @@ void scope_destroy_all()
         scope_free(allocated_scopes[i]);
     }
 
-    free(allocated_scopes);
+    blaze_free(allocated_scopes);
     allocated_scopes = NULL;
     scope_count = 0;
 }
