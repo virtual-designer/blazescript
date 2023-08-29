@@ -18,7 +18,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       
     - name: Install libraries & tools (macOS)
-      run: brew install curl libcurl automake
+      run: brew install curl automake
       if: matrix.os == 'macos-latest'
       
     - name: autoreconf
