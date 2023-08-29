@@ -6,6 +6,7 @@
 #define BLAZESCRIPT_DATATYPE_H
 
 #include "ast.h"
+#include "vector.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -19,6 +20,7 @@ typedef enum {
     VAL_OBJECT,
     VAL_NULL,
     VAL_BOOLEAN,
+    VAL_ARRAY
 } val_type_t;
 
 typedef struct {
@@ -54,6 +56,10 @@ typedef struct {
     };
 } val_function_t;
 
+typedef struct {
+    vector_t *array;
+} val_array_t;
+
 typedef struct value {
     val_type_t type;
     size_t index;
@@ -65,6 +71,7 @@ typedef struct value {
         val_string_t *strval;
         val_boolean_t *boolval;
         val_function_t *fnval;
+        val_array_t *arrval;
     };
 } val_t;
 

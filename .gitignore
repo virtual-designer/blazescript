@@ -25,6 +25,7 @@ blazevm
 *.scan
 /Makefile
 /src/Makefile
+/lib/Makefile
 *~
 autom4te.cache
 /build
@@ -38,3 +39,4 @@ stamp-*
 /configure
 /aclocal.m4
 /build-aux
+*.a

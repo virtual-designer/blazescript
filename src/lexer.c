@@ -28,7 +28,7 @@ struct lex
     size_t index;
 };
 
-struct keyword
+struct multichar_token
 {
     const char *identifier;
     enum lex_token_type token_type;
@@ -53,12 +53,17 @@ static const struct char_to_token_map chartokens[] = {
     { ',', T_COMMA },
     { '{', T_BLOCK_BRACE_OPEN },
     { '}', T_BLOCK_BRACE_CLOSE },
+    { '.', T_PERIOD },
+    { '[', T_SQUARE_BRACE_OPEN },
+    { ']', T_SQUARE_BRACE_CLOSE }
 };
 
-static const struct keyword keywords[] = {
+static const struct multichar_token multichar_tokens[] = {
     { "var", T_VAR },
     { "const", T_CONST },
     { "function", T_FUNCTION },
+    { "array", T_ARRAY },
+    { "import", T_IMPORT },
 };
 
 struct lex *lex_init(char *filename, char *buf)
@@ -225,24 +230,24 @@ static void lex_number(struct lex *lex)
     });
 }
 
-static enum lex_token_type convert_keyword_to_token(const char *keyword)
+static enum lex_token_type convert_str_to_token(const char *keyword)
 {
-    for (size_t i = 0; i < (sizeof (keywords) / sizeof keywords[0]); i++)
+    for (size_t i = 0; i < (sizeof (multichar_tokens) / sizeof multichar_tokens[0]); i++)
     {
-        if (strcmp(keywords[i].identifier, keyword) == 0)
-            return keywords[i].token_type;
+        if (strcmp(multichar_tokens[i].identifier, keyword) == 0)
+            return multichar_tokens[i].token_type;
     }
 
     return T_UNKNOWN;
 }
 
-static void lex_identifier_or_keyword(struct lex *lex)
+static void lex_identifier_or_multichar_token(struct lex *lex)
 {
     size_t column_start = lex->current_column;
     char *identifier = NULL;
     size_t size = 0;
 
-    while (lex_has_value(lex) && isalnum(lex_char(lex)))
+    while (lex_has_value(lex) && (isalnum(lex_char(lex)) || lex_char(lex) == '_'))
     {
         identifier = xrealloc(identifier, ++size);
         identifier[size - 1] = lex_char_forward(lex);
@@ -251,7 +256,7 @@ static void lex_identifier_or_keyword(struct lex *lex)
     identifier = xrealloc(identifier, ++size);
     identifier[size - 1] = 0;
 
-    enum lex_token_type keyword_token_type = convert_keyword_to_token(identifier);
+    enum lex_token_type keyword_token_type = convert_str_to_token(identifier);
 
     lex_tokens_array_push(lex, (struct lex_token) {
         .type = keyword_token_type == T_UNKNOWN ? T_IDENTIFIER : keyword_token_type,
@@ -282,6 +287,47 @@ bool lex_analyze(struct lex *lex)
     {
         char c = lex_char(lex);
 
+        if ((lex->index + 1) < lex->len &&
+            lex->buf[lex->index] == '/' &&
+            lex->buf[lex->index + 1] == '/')
+        {
+            while (lex->index < lex->len &&
+                   lex->buf[lex->index] != '\n')
+            {
+                lex_char_forward(lex);
+            }
+
+            goto loop_end;
+        }
+
+        if ((lex->index + 1) < lex->len &&
+            lex->buf[lex->index] == '/' &&
+            lex->buf[lex->index + 1] == '*')
+        {
+            lex_char_forward(lex);
+            lex_char_forward(lex);
+
+            while ((lex->index + 1) < lex->len &&
+                   (lex->buf[lex->index] != '*' ||
+                   lex->buf[lex->index + 1] != '/'))
+            {
+                lex_char_forward(lex);
+            }
+
+            if ((lex->index + 1) < lex->len &&
+                lex->buf[lex->index] != '*' &&
+                lex->buf[lex->index + 1] != '/')
+            {
+                syntax_error("unterminated comment");
+                return false;
+            }
+
+            lex_char_forward(lex);
+            lex_char_forward(lex);
+
+            goto loop_end;
+        }
+
         if (isspace(c))
         {
             lex_char_forward(lex);
@@ -302,7 +348,7 @@ bool lex_analyze(struct lex *lex)
         else if (isdigit(c))
             lex_number(lex);
         else if (isalpha(c))
-            lex_identifier_or_keyword(lex);
+            lex_identifier_or_multichar_token(lex);
         else
         {
             syntax_error("unknown token '%c'", lex_char(lex));
@@ -351,6 +397,10 @@ const char *lex_token_to_str(enum lex_token_type type)
         [T_FUNCTION] = "T_FUNCTION",
         [T_BLOCK_BRACE_OPEN] = "T_BLOCK_BRACE_OPEN",
         [T_BLOCK_BRACE_CLOSE] = "T_BLOCK_BRACE_CLOSE",
+        [T_ARRAY] = "T_ARRAY",
+        [T_IMPORT] = "T_IMPORT",
+        [T_SQUARE_BRACE_OPEN] = "T_SQUARE_BRACE_OPEN",
+        [T_SQUARE_BRACE_CLOSE] = "T_SQUARE_BRACE_CLOSE",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);

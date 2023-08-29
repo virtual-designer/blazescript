@@ -6,6 +6,7 @@
 #define BLAZESCRIPT_PARSER_H
 
 #include "ast.h"
+#include "lexer.h"
 
 struct parser *parser_init();
 struct parser *parser_init_from_lex(struct lex *lex);

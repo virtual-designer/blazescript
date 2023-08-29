@@ -6,9 +6,9 @@
 
 #include "alloca.h"
 #include "eval.h"
+#include "include/lib.h"
 #include "scope.h"
 #include "valmap.h"
-#include "lib.h"
 
 static val_t *true_val = NULL,
              *false_val = NULL;

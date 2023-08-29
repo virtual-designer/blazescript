@@ -7,7 +7,7 @@
 #include "ast.h"
 #include "datatype.h"
 #include "file.h"
-#include "lib.h"
+#include "include/lib.h"
 #include "log.h"
 #include "parser.h"
 #include "scope.h"
@@ -27,6 +27,7 @@ val_t *eval_identifier(scope_t *scope, const ast_node_t *node);
 val_t *eval_assignment(scope_t *scope, const ast_node_t *node);
 val_t *eval_expr_call(scope_t *scope, const ast_node_t *node);
 val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node);
+val_t *eval_array_lit(scope_t *scope, const ast_node_t *node);
 
 char *eval_fn_error = NULL;
 
@@ -82,6 +83,11 @@ val_t *val_create(val_type_t type)
         case VAL_FUNCTION:
             val->fnval = xcalloc(1, sizeof *(val->fnval));
             val->fnval->scope = NULL;
+            break;
+
+        case VAL_ARRAY:
+            val->arrval = xcalloc(1, sizeof *(val->arrval));
+            val->arrval->array = vector_init();
             break;
 
         case VAL_NULL:
@@ -181,6 +187,11 @@ void val_free_force(val_t *val)
             free(val->boolval);
             break;
 
+        case VAL_ARRAY:
+            vector_free(val->arrval->array);
+            free(val->arrval);
+            break;
+
         case VAL_FUNCTION:
             if (val->fnval->type == FN_USER_CUSTOM)
             {
@@ -249,6 +260,9 @@ val_t *eval(scope_t *scope, const ast_node_t *node)
         case NODE_FN_DECL:
             return eval_fn_decl(scope, node);
 
+        case NODE_ARRAY_LIT:
+            return eval_array_lit(scope, node);
+
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
             return NULL;
@@ -268,6 +282,20 @@ static val_t *val_copy(val_t *value)
 #define VAL_CHECK_EXIT(val) \
     if (val == NULL) \
         return NULL;
+
+val_t *eval_array_lit(scope_t *scope, const ast_node_t *node)
+{
+    val_t *arr = val_create(VAL_ARRAY);
+
+    VECTOR_FOREACH(node->array_lit->elements)
+    {
+        val_t *val = eval(scope, ((ast_node_t **) node->array_lit->elements->data)[i]);
+        VAL_CHECK_EXIT(val);
+        vector_push(arr->arrval->array, val);
+    }
+
+    return arr;
+}
 
 val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
 {
@@ -350,7 +378,6 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
     {
         val_t *ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
         free(args);
-        VAL_CHECK_EXIT(ret);
 
         if (eval_fn_error != NULL)
         {
@@ -579,7 +606,8 @@ const char *val_type_to_str(val_type_t type)
         [VAL_FLOAT] = "FLOAT",
         [VAL_FUNCTION] = "FUNCTION",
         [VAL_NULL] = "NULL",
-        [VAL_OBJECT] = "OBJECT"
+        [VAL_OBJECT] = "OBJECT",
+        [VAL_ARRAY] = "ARRAY"
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -616,6 +644,20 @@ void print_val_internal(val_t *val, bool quote_strings)
 
         case VAL_NULL:
             printf("\033[2mnull\033[0m");
+            break;
+
+        case VAL_ARRAY:
+            printf("\033[34mArray\033[0m [");
+
+            for (size_t i = 0; i < val->arrval->array->length; i++)
+            {
+                print_val_internal((val_t *) val->arrval->array->data[i], true);
+
+                if (i != val->arrval->array->length - 1)
+                    printf(", ");
+            }
+
+            printf("]");
             break;
 
         case VAL_FUNCTION:

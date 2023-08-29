@@ -36,6 +36,7 @@ static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser);
 static ast_node_t *parser_parse_var_decl(struct parser *parser);
 static ast_node_t *parser_parse_assignment_expr(struct parser *parser);
 static ast_node_t *parser_parse_fn_decl(struct parser *parser);
+static ast_node_t *parser_parse_array_lit(struct parser *parser);
 
 struct parser *parser_init()
 {
@@ -240,6 +241,36 @@ void parser_free(struct parser *parser)
 static ast_node_t *create_node()
 {
     return xcalloc(1, sizeof (ast_node_t));
+}
+
+static ast_node_t *parser_parse_array_lit(struct parser *parser)
+{
+    if (parser_at(parser).type != T_ARRAY)
+        return parser_parse_binexp_additive(parser);
+
+    NULL_EXIT(parser_expect(parser, T_ARRAY));
+    NULL_EXIT(parser_expect(parser, T_SQUARE_BRACE_OPEN));
+
+    ast_node_t *node = create_node();
+    node->type = NODE_ARRAY_LIT;
+    node->array_lit = xcalloc(1, sizeof (*node->array_lit));
+    node->array_lit->elements = vector_init();
+
+    while (!parser_is_eof(parser) &&
+           parser_at(parser).type != T_SQUARE_BRACE_CLOSE)
+    {
+        ast_node_t *expr = parser_parse_expr(parser);
+        NULL_EXIT(expr);
+        vector_push(node->array_lit->elements, expr);
+
+        if (parser_at(parser).type == T_SQUARE_BRACE_CLOSE)
+            break;
+
+        NULL_EXIT(parser_expect(parser, T_COMMA));
+    }
+
+    NULL_EXIT(parser_expect(parser, T_SQUARE_BRACE_CLOSE));
+    return node;
 }
 
 static ast_node_t *parser_parse_stmt(struct parser *parser)
@@ -450,7 +481,7 @@ static ast_node_t *parser_parse_assignment_expr(struct parser *parser)
         return node;
     }
 
-    return parser_parse_binexp_additive(parser);
+    return parser_parse_array_lit(parser);
 }
 
 static ast_node_t *parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t *left, ast_node_t *right)
@@ -594,6 +625,7 @@ const char *ast_type_to_str(enum ast_node_type type)
         [NODE_ASSIGNMENT] = "ASSIGNMENT",
         [NODE_EXPR_CALL] = "CALL_EXPR",
         [NODE_FN_DECL] = "FN_DECL",
+        [NODE_ARRAY_LIT] = "ARRAY_LIT",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -662,6 +694,16 @@ static void parser_ast_free_inner(ast_node_t *node)
             free(node->var_decl);
             break;
 
+        case NODE_ARRAY_LIT:
+            VECTOR_FOREACH(node->array_lit->elements)
+            {
+                parser_ast_free(((ast_node_t **) node->array_lit->elements->data)[i]);
+            }
+
+            vector_free(node->array_lit->elements);
+            free(node->array_lit);
+            break;
+
         case NODE_FN_DECL:
             free(node->fn_decl->identifier->symbol);
             free(node->fn_decl->identifier);
@@ -724,6 +766,23 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
                 blaze_debug__print_ast_internal(node->root->nodes[i], inner_indent_level + 1, false, true);
 
                 if (i < node->root->size - 1)
+                    printf(",");
+
+                printf("\n");
+            }
+
+            blaze_debug__print_ast_indent_string(inner_indent_level, "]\n");
+            break;
+
+        case NODE_ARRAY_LIT:
+            blaze_debug__print_ast_indent_string(inner_indent_level, "length: %lu,\n", node->array_lit->elements->length);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "children: [\n");
+
+            VECTOR_FOREACH(node->array_lit->elements)
+            {
+                blaze_debug__print_ast_internal(((ast_node_t **) node->array_lit->elements->data)[i], inner_indent_level + 1, false, true);
+
+                if (i < node->array_lit->elements->length - 1)
                     printf(",");
 
                 printf("\n");
