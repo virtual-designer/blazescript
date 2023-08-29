@@ -1,3 +1,17 @@
+# [2.9.0](https://github.com/virtual-designer/blazescript/compare/v2.8.0...v2.9.0) (2023-08-29)
+
+
+### Bug Fixes
+
+* allocation errors ([243717d](https://github.com/virtual-designer/blazescript/commit/243717d0e522b5fd1ee4e7ab555b4d21fc2f202b))
+
+
+### Features
+
+* better memory management ([ce39266](https://github.com/virtual-designer/blazescript/commit/ce39266b6cba9cac2a54bd6387637a957cb9ffe2))
+
+
+
 # [2.8.0](https://github.com/virtual-designer/blazescript/compare/v2.7.1...v2.8.0) (2023-08-29)
 
 
@@ -39,15 +53,6 @@
 ### Features
 
 * user defined functions ([5cda5d3](https://github.com/virtual-designer/blazescript/commit/5cda5d38585b6188a7a4e7fac74823915e2aae09))
-
-
-
-# [2.5.0](https://github.com/virtual-designer/blazescript/compare/v2.4.0...v2.5.0) (2023-08-26)
-
-
-### Features
-
-* built-in function calls ([6546be5](https://github.com/virtual-designer/blazescript/commit/6546be5d38cbb80ff392195a150495bb774aa820))
 
 
 
