@@ -3,6 +3,6 @@ export LDFLAGS="-L/c/msys64/usr/lib ${LDFLAGS}"
 export PATH="/c/msys64/usr/bin/:${PATH}"
 export PKG_CONFIG_PATH="/c/msys64/usr/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-pacman -S --noconfirm --needed autotools autoconf automake autoconf-wrapper libtool automake-wrapper curl libcurl libcurl-devel
+pacman -S --noconfirm --needed autotools autoconf automake autoconf-wrapper libtool automake-wrapper curl libcurl libcurl-devel mingw-w64-x86_64-curl
 
 autoreconf -fvi
