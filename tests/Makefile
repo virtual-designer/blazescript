@@ -1,9 +1,9 @@
 TEST_SCRIPTS = $(wildcard *.sh)
-BLAZE = $(realpath ../blaze)
+BLAZE = $(realpath ../src/blaze)
 
 all:
 	@export BLAZE="$(BLAZE)"; \
-	export FILE=$$(pwd)/tmp.bl; \
+	export FILE="$$(pwd)/tmp.bl"; \
 	for test in $(TEST_SCRIPTS); do \
 		if test "$$test" = "setup.sh"; then \
 			continue; \
