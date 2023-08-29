@@ -54,6 +54,7 @@ static void process_file(const char *name)
 
     buf = filebuf_init(name);
     filebuf_read(&buf);
+    filebuf_close(&buf);
     lex = lex_init((char *) name, buf.content);
     lex_analyze(lex);
 #ifndef NDEBUG

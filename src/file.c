@@ -49,6 +49,12 @@ void filebuf_set_current_file(char *filename)
     filebuf_current_file = filename;
 }
 
+void filebuf_close(struct filebuf *buf)
+{
+    assert(buf->file != NULL);
+    fclose(buf->file);
+}
+
 void filebuf_read(struct filebuf *buf)
 {
     assert(buf != NULL);

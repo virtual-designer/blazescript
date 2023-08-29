@@ -47,7 +47,7 @@ void *xrealloc(void *old_ptr, size_t new_size)
 
 struct alloca_tbl_t *alloca_tbl_init()
 {
-    struct alloca_tbl_t *tbl = xcalloc(1, sizeof(struct alloca_tbl_t));
+    struct alloca_tbl_t *tbl = xmalloc(sizeof(struct alloca_tbl_t));
     tbl->count = 0;
     tbl->ptrs = NULL;
     return tbl;
@@ -56,6 +56,7 @@ struct alloca_tbl_t *alloca_tbl_init()
 void alloca_tbl_free(struct alloca_tbl_t *tbl)
 {
     free(tbl->ptrs);
+    free(tbl);
 }
 
 size_t alloca_tbl_push_ptr(struct alloca_tbl_t *tbl, void *ptr)
