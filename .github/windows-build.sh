@@ -1,8 +1,2 @@
-export CPPFLAGS="-I/c/msys64/usr/include ${CPPFLAGS}"
-export LDFLAGS="-L/c/msys64/usr/lib ${LDFLAGS}"
-export PATH="/c/msys64/usr/bin/:${PATH}"
-export PKG_CONFIG_PATH="/c/msys64/usr/lib/pkgconfig:${PKG_CONFIG_PATH}"
-
-pacman -S --noconfirm --needed autotools autoconf automake autoconf-wrapper libtool automake-wrapper curl libcurl libcurl-devel
-
-autoreconf -fvi
+./configure CFLAGS="-I/usr/include -I/usr/local/include -I/mingw32/include" LDLAGS="=-L/usr/lib -L/usr/local/lib -L/mingw32/lib" --prefix="$(pwd)/build"
+make
