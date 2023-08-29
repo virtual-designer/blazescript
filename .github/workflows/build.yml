@@ -13,10 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Installation (MacOS)
-      run: brew install automake
+    - name: Install libraries & tools (Linux)
+      run: sudo apt update && sudo apt install curl libcurl libcurl-dev
+      if: matrix.os == 'ubuntu-latest'
+      
+    - name: Install libraries & tools (macOS)
+      run: brew install curl libcurl libcurl-dev automake
       if: matrix.os == 'macos-latest'
-
+      
     - name: autoreconf
       run: autoreconf -i
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
