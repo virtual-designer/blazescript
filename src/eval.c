@@ -502,7 +502,7 @@ val_t *eval_string(scope_t *scope, const ast_node_t *node)
     return val;
 }
 
-static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *right)
+static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)
 {
     val_t *val = val_init();
     val->type = VAL_INTEGER;
@@ -526,7 +526,10 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
 
         case OP_DIVIDE:
             if (right->intval->value == 0)
-                fatal_error("cannot divide by zero");
+                RUNTIME_ERROR(node->binexpr->right->filename,
+                          node->binexpr->right->line_start,
+                          node->binexpr->right->column_start,
+                          "cannot divide %lli by zero", left->intval->value);
 
             val->type = VAL_FLOAT;
             val->floatval = blaze_malloc(sizeof *(val->intval));
@@ -535,7 +538,10 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
 
         case OP_MODULUS:
             if (right->intval->value == 0)
-                fatal_error("cannot divide by zero");
+                RUNTIME_ERROR(node->binexpr->right->filename,
+                              node->binexpr->right->line_start,
+                              node->binexpr->right->column_start,
+                              "cannot divide %lli by zero", left->intval->value);
 
             val->intval = blaze_malloc(sizeof *(val->intval));
             val->intval->value = left->intval->value % right->intval->value;
@@ -581,7 +587,7 @@ val_t *eval_binexp(scope_t *scope, const ast_node_t *node)
 
     if (left->type == VAL_INTEGER && right->type == VAL_INTEGER)
     {
-        ret = eval_binexp_int(node->binexpr->operator, left, right);
+        ret = eval_binexp_int(node->binexpr->operator, left, right, node);
     }
     else
         RUNTIME_ERROR(node->filename, node->line_start, node->column_start,

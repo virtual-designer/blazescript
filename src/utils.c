@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 bool is_repl = false;
 
@@ -27,6 +28,7 @@ void fatal_error(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
+    fprintf(stderr, "\033[1;31mfatal\033[0m ");
     log_error_va_list(fmt, args);
     va_end(args);
     blaze_error_exit();
