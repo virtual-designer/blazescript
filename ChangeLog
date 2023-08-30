@@ -1,3 +1,13 @@
+## [2.9.4](https://github.com/virtual-designer/blazescript/compare/v2.9.3...v2.9.4) (2023-08-30)
+
+
+### Performance Improvements
+
+* reduce pointer usage ([278b87c](https://github.com/virtual-designer/blazescript/commit/278b87ca4811159133704c4e27a61e5482545170))
+* **speed:** reduce usage of pointers ([01d6185](https://github.com/virtual-designer/blazescript/commit/01d6185e9b251b12e38fcc221401f2f737326761))
+
+
+
 ## [2.9.3](https://github.com/virtual-designer/blazescript/compare/v2.9.2...v2.9.3) (2023-08-29)
 
 
@@ -36,23 +46,6 @@
 ### Features
 
 * better memory management ([ce39266](https://github.com/virtual-designer/blazescript/commit/ce39266b6cba9cac2a54bd6387637a957cb9ffe2))
-
-
-
-# [2.8.0](https://github.com/virtual-designer/blazescript/compare/v2.7.1...v2.8.0) (2023-08-29)
-
-
-### Bug Fixes
-
-* parser.h not including lexer.h ([870761c](https://github.com/virtual-designer/blazescript/commit/870761c569d6ddbfee4e90b9de954966179aa075))
-
-
-### Features
-
-* add lib and include directories ([7e8163d](https://github.com/virtual-designer/blazescript/commit/7e8163d510161e407565b39e0866530ff21ffd3a))
-* arrays ([54dd589](https://github.com/virtual-designer/blazescript/commit/54dd589668a43487aaffab9a17ee65322d4a0327))
-* arrays (merged from CodeDiseaseDev's branch) ([3e5cfab](https://github.com/virtual-designer/blazescript/commit/3e5cfabd679b9285f3a66f882e2dcdb3d971cac7))
-* comment support ([ef2aa37](https://github.com/virtual-designer/blazescript/commit/ef2aa375898bd8cf9a635fa6095430298c6c1563))
 
 
 
