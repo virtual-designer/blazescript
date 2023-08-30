@@ -62,12 +62,12 @@ typedef struct ast_var_decl {
 
 typedef struct ast_root {
     size_t size;
-    struct ast_node **nodes;
+    struct ast_node *nodes;
 } ast_root_t;
 
 typedef struct ast_fn_call {
     size_t argc;
-    struct ast_node **args;
+    struct ast_node *args;
     ast_identifier_t *identifier;
 } ast_call_t;
 
@@ -75,7 +75,7 @@ typedef struct ast_fn_decl {
     size_t param_count;
     char **param_names;
     ast_identifier_t *identifier;
-    struct ast_node **body;
+    struct ast_node *body;
     size_t size;
 } ast_fn_decl_t;
 

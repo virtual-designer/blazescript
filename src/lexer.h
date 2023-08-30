@@ -62,8 +62,8 @@ const char *lex_token_to_str(enum lex_token_type type);
 char *lex_get_filename(struct lex *lex);
 void lex_set_contents(struct lex *lex, const char *new_buf);
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
 void blaze_debug__lex_print(struct lex *lex);
-#endif
+//#endif
 
 #endif /* BLAZESCRIPT_LEXER_H */

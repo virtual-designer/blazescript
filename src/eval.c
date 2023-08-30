@@ -313,7 +313,7 @@ val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
     {
         fn->fnval->custom_body = blaze_realloc(
             fn->fnval->custom_body, sizeof(ast_node_t *) * (++fn->fnval->size));
-        fn->fnval->custom_body[fn->fnval->size - 1] = parser_ast_deep_copy(node->fn_decl->body[i]);
+        fn->fnval->custom_body[fn->fnval->size - 1] = parser_ast_deep_copy(&node->fn_decl->body[i]);
     }
 
     fn->fnval->param_count = 0;
@@ -375,7 +375,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < node->fn_call->argc; i++)
     {
-        val_t *arg = eval(scope, node->fn_call->args[i]);
+        val_t *arg = eval(scope, &node->fn_call->args[i]);
         VAL_CHECK_EXIT(arg);
         args = blaze_realloc(args, sizeof(val_t *) * (i + 1));
         args[i] = arg;
@@ -598,7 +598,7 @@ val_t *eval_root(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < node->root->size; i++)
     {
-        value = eval(scope, node->root->nodes[i]);
+        value = eval(scope, &node->root->nodes[i]);
         VAL_CHECK_EXIT(value);
     }
 

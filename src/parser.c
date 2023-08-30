@@ -18,17 +18,20 @@
 #include "utils.h"
 
 #define PARSER_ERROR_ARGS(parser, fmt, ...) \
-    SYNTAX_ERROR_LINE_ARGS(parser->filename, parser_at(parser).line_start, parser_at(parser).column_start, fmt, __VA_ARGS__)
+    {                                    \
+        SYNTAX_ERROR_LINE_ARGS(parser->filename, parser_at(parser).line_start, parser_at(parser).column_start, fmt, __VA_ARGS__); \
+        exit(0);                                                \
+    }
 
-static ast_node_t *parser_parse_stmt(struct parser *parser);
-static ast_node_t *parser_parse_expr(struct parser *parser);
-static ast_node_t *parser_parse_primary_expr(struct parser *parser);
-static ast_node_t *parser_parse_binexp_additive(struct parser *parser);
-static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser);
-static ast_node_t *parser_parse_var_decl(struct parser *parser);
-static ast_node_t *parser_parse_assignment_expr(struct parser *parser);
-static ast_node_t *parser_parse_fn_decl(struct parser *parser);
-static ast_node_t *parser_parse_array_lit(struct parser *parser);
+static ast_node_t parser_parse_stmt(struct parser *parser);
+static ast_node_t parser_parse_expr(struct parser *parser);
+static ast_node_t parser_parse_primary_expr(struct parser *parser);
+static ast_node_t parser_parse_binexp_additive(struct parser *parser);
+static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser);
+static ast_node_t parser_parse_var_decl(struct parser *parser);
+static ast_node_t parser_parse_assignment_expr(struct parser *parser);
+static ast_node_t parser_parse_fn_decl(struct parser *parser);
+static ast_node_t parser_parse_array_lit(struct parser *parser);
 
 struct parser parser_init()
 {
@@ -77,30 +80,24 @@ static inline bool parser_is_eof(struct parser *parser)
     return parser->index >= parser->token_count || parser_at(parser).type == T_EOF;
 }
 
-static inline struct lex_token *parser_expect(struct parser *parser, enum lex_token_type type)
+static inline struct lex_token parser_expect(struct parser *parser, enum lex_token_type type)
 {
     if (parser_is_eof(parser))
     {
         PARSER_ERROR_ARGS(parser, "unexpected end of file, expecting %s", lex_token_to_str(type));
-        return NULL;
     }
     else if (parser_at(parser).type != type)
     {
         PARSER_ERROR_ARGS(parser, "unexpected token '%s' (%s), expecting %s",
-                          parser_at(parser).value,
-                          lex_token_to_str(parser_at(parser).type),
-                          lex_token_to_str(type));
-        return NULL;
+              parser_at(parser).value,
+              lex_token_to_str(parser_at(parser).type),
+              lex_token_to_str(type));
     }
 
-    return &parser->tokens[parser->index++];
+    return parser->tokens[parser->index++];
 }
 
-#define NULL_EXIT(ast) \
-    if (ast == NULL)   \
-        return NULL
-
-ast_node_t *parser_create_ast_node(struct parser *parser)
+ast_node_t parser_create_ast_node(struct parser *parser)
 {
     ast_root_t *root = blaze_calloc(1, sizeof(ast_node_t));
 
@@ -109,15 +106,15 @@ ast_node_t *parser_create_ast_node(struct parser *parser)
 
     while (!parser_is_eof(parser)) {
         root->nodes =
-            blaze_realloc(root->nodes, (++root->size) * sizeof(ast_node_t *));
+            blaze_realloc(root->nodes, (++root->size) * sizeof(ast_node_t));
         root->nodes[root->size - 1] = parser_parse_stmt(parser);
-        NULL_EXIT(root->nodes[root->size - 1]);
+        (root->nodes[root->size - 1]);
     }
 
-    ast_node_t *node = blaze_calloc(1, sizeof(ast_node_t));
+    ast_node_t node;
 
-    node->type = NODE_ROOT;
-    node->root = root;
+    node.type = NODE_ROOT;
+    node.root = root;
 
     return node;
 }
@@ -137,8 +134,8 @@ ast_node_t *parser_ast_deep_copy(ast_node_t *node)
             {
                 copy->root->nodes =
                     blaze_realloc(copy->root->nodes,
-                                  sizeof(ast_node_t *) * (++copy->root->size));
-                copy->root->nodes[copy->root->size - 1] = parser_ast_deep_copy(node->root->nodes[i]);
+                                  sizeof(ast_node_t) * (++copy->root->size));
+                copy->root->nodes[copy->root->size - 1] = *parser_ast_deep_copy(&node->root->nodes[i]);
             }
 
             break;
@@ -181,8 +178,8 @@ ast_node_t *parser_ast_deep_copy(ast_node_t *node)
             {
                 copy->fn_call->args = blaze_realloc(
                     copy->fn_call->args,
-                    sizeof(ast_node_t *) * (++copy->fn_call->argc));
-                copy->fn_call->args[copy->fn_call->argc - 1] = parser_ast_deep_copy(node->fn_call->args[i]);
+                    sizeof(ast_node_t) * (++copy->fn_call->argc));
+                copy->fn_call->args[copy->fn_call->argc - 1] = *parser_ast_deep_copy(&node->fn_call->args[i]);
             }
 
             copy->fn_call->identifier =
@@ -209,8 +206,8 @@ ast_node_t *parser_ast_deep_copy(ast_node_t *node)
             {
                 copy->fn_decl->body = blaze_realloc(
                     copy->fn_decl->body,
-                    sizeof(ast_node_t *) * (++copy->fn_decl->size));
-                copy->fn_decl->body[copy->fn_decl->size - 1] = parser_ast_deep_copy(node->fn_decl->body[i]);
+                    sizeof(ast_node_t) * (++copy->fn_decl->size));
+                copy->fn_decl->body[copy->fn_decl->size - 1] = *parser_ast_deep_copy(&node->fn_decl->body[i]);
             }
 
             copy->fn_decl->param_names = NULL;
@@ -246,39 +243,42 @@ static ast_node_t *create_node()
     return blaze_calloc(1, sizeof(ast_node_t));
 }
 
-static ast_node_t *parser_parse_array_lit(struct parser *parser)
+static ast_node_t parser_parse_array_lit(struct parser *parser)
 {
     if (parser_at(parser).type != T_ARRAY)
         return parser_parse_binexp_additive(parser);
 
-    NULL_EXIT(parser_expect(parser, T_ARRAY));
-    NULL_EXIT(parser_expect(parser, T_SQUARE_BRACE_OPEN));
+    (parser_expect(parser, T_ARRAY));
+    (parser_expect(parser, T_SQUARE_BRACE_OPEN));
 
-    ast_node_t *node = create_node();
-    node->type = NODE_ARRAY_LIT;
-    node->array_lit = blaze_calloc(1, sizeof(*node->array_lit));
-    node->array_lit->elements = vector_init();
+    ast_node_t node;
+    node.type = NODE_ARRAY_LIT;
+    node.array_lit = blaze_calloc(1, sizeof(*node.array_lit));
+    node.array_lit->elements = vector_init();
 
     while (!parser_is_eof(parser) &&
            parser_at(parser).type != T_SQUARE_BRACE_CLOSE)
     {
-        ast_node_t *expr = parser_parse_expr(parser);
-        NULL_EXIT(expr);
-        vector_push(node->array_lit->elements, expr);
+        ast_node_t expr_orig = parser_parse_expr(parser);
+        ast_node_t *expr = create_node();
+        memcpy(expr, &expr_orig, sizeof expr_orig);
+
+        (expr);
+        vector_push(node.array_lit->elements, expr);
 
         if (parser_at(parser).type == T_SQUARE_BRACE_CLOSE)
             break;
 
-        NULL_EXIT(parser_expect(parser, T_COMMA));
+        (parser_expect(parser, T_COMMA));
     }
 
-    NULL_EXIT(parser_expect(parser, T_SQUARE_BRACE_CLOSE));
+    (parser_expect(parser, T_SQUARE_BRACE_CLOSE));
     return node;
 }
 
-static ast_node_t *parser_parse_stmt(struct parser *parser)
+static ast_node_t parser_parse_stmt(struct parser *parser)
 {
-    ast_node_t *stmt = NULL;
+    ast_node_t stmt;
     bool semicolon_is_expected = true;
 
     switch (parser_at(parser).type)
@@ -298,7 +298,7 @@ static ast_node_t *parser_parse_stmt(struct parser *parser)
     }
 
     if (semicolon_is_expected)
-        NULL_EXIT(parser_expect(parser, T_SEMICOLON));
+        (parser_expect(parser, T_SEMICOLON));
 
     while (parser_at(parser).type == T_SEMICOLON)
         parser_ret_forward(parser);
@@ -306,104 +306,102 @@ static ast_node_t *parser_parse_stmt(struct parser *parser)
     return stmt;
 }
 
-static ast_node_t *parser_parse_fn_decl(struct parser *parser)
+static ast_node_t parser_parse_fn_decl(struct parser *parser)
 {
-    struct lex_token *first_token = parser_expect(parser, T_FUNCTION);
-    NULL_EXIT(first_token);
-    struct lex_token *fn_name_token = parser_expect(parser, T_IDENTIFIER);
-    NULL_EXIT(fn_name_token);
-    NULL_EXIT(parser_expect(parser, T_PAREN_OPEN));
+    struct lex_token first_token = parser_expect(parser, T_FUNCTION);
+    (first_token);
+    struct lex_token fn_name_token = parser_expect(parser, T_IDENTIFIER);
+    (fn_name_token);
+    (parser_expect(parser, T_PAREN_OPEN));
 
-    ast_node_t *node = create_node();
+    ast_node_t node;
 
-    node->type = NODE_FN_DECL;
-    node->filename = parser->filename;
-    node->fn_decl = blaze_calloc(1, sizeof(ast_fn_decl_t));
-    node->fn_decl->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
-    node->fn_decl->identifier->symbol = blaze_strdup(fn_name_token->value);
-    node->fn_decl->param_names = NULL;
-    node->fn_decl->param_count = 0;
-    node->fn_decl->body = NULL;
-    node->fn_decl->size = 0;
-    node->line_start = first_token->line_start;
-    node->column_start = first_token->column_start;
+    node.type = NODE_FN_DECL;
+    node.filename = parser->filename;
+    node.fn_decl = blaze_calloc(1, sizeof(ast_fn_decl_t));
+    node.fn_decl->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
+    node.fn_decl->identifier->symbol = blaze_strdup(fn_name_token.value);
+    node.fn_decl->param_names = NULL;
+    node.fn_decl->param_count = 0;
+    node.fn_decl->body = NULL;
+    node.fn_decl->size = 0;
+    node.line_start = first_token.line_start;
+    node.column_start = first_token.column_start;
 
     while (!parser_is_eof(parser) && parser_at(parser).type != T_PAREN_CLOSE)
     {
-        struct lex_token *identifier = parser_expect(parser, T_IDENTIFIER);
-        NULL_EXIT(identifier);
-        node->fn_decl->param_names =
-            blaze_realloc(node->fn_decl->param_names,
-                          sizeof(char *) * (++node->fn_decl->param_count));
-        node->fn_decl->param_names[node->fn_decl->param_count - 1] = blaze_strdup(identifier->value);
+        struct lex_token identifier = parser_expect(parser, T_IDENTIFIER);
+        (identifier);
+        node.fn_decl->param_names =
+            blaze_realloc(node.fn_decl->param_names,
+                          sizeof(char *) * (++node.fn_decl->param_count));
+        node.fn_decl->param_names[node.fn_decl->param_count - 1] = blaze_strdup(identifier.value);
 
         if (parser_at(parser).type == T_PAREN_CLOSE)
             break;
 
-        NULL_EXIT(parser_expect(parser, T_COMMA));
+        (parser_expect(parser, T_COMMA));
     }
 
-    NULL_EXIT(parser_expect(parser, T_PAREN_CLOSE));
-    NULL_EXIT(parser_expect(parser, T_BLOCK_BRACE_OPEN));
+    (parser_expect(parser, T_PAREN_CLOSE));
+    (parser_expect(parser, T_BLOCK_BRACE_OPEN));
 
     while (!parser_is_eof(parser) && parser_at(parser).type != T_BLOCK_BRACE_CLOSE)
     {
-        ast_node_t *stmt = parser_parse_stmt(parser);
-        NULL_EXIT(stmt);
-        node->fn_decl->body =
-            blaze_realloc(node->fn_decl->body,
-                          sizeof(ast_node_t *) * (++node->fn_decl->size));
-        node->fn_decl->body[node->fn_decl->size - 1] = stmt;
+        ast_node_t stmt = parser_parse_stmt(parser);
+        (stmt);
+        node.fn_decl->body =
+            blaze_realloc(node.fn_decl->body,
+                          sizeof(ast_node_t) * (++node.fn_decl->size));
+        node.fn_decl->body[node.fn_decl->size - 1] = stmt;
     }
 
-    struct lex_token *last_token = parser_expect(parser, T_BLOCK_BRACE_CLOSE);
-    NULL_EXIT(last_token);
-    node->line_end = last_token->line_end;
-    node->column_end = last_token->column_end;
+    struct lex_token last_token = parser_expect(parser, T_BLOCK_BRACE_CLOSE);
+    (last_token);
+    node.line_end = last_token.line_end;
+    node.column_end = last_token.column_end;
 
     return node;
 }
 
-static ast_node_t *parser_parse_call_expr(struct parser *parser)
+static ast_node_t parser_parse_call_expr(struct parser *parser)
 {
     if (parser->token_count > (parser->index + 2) &&
         parser->tokens[parser->index].type == T_IDENTIFIER &&
         parser->tokens[parser->index + 1].type == T_PAREN_OPEN)
     {
-        ast_node_t *node = create_node();
+        ast_node_t node;
 
-        node->type = NODE_EXPR_CALL;
-        node->filename = parser->filename;
-        node->fn_call = blaze_calloc(1, sizeof(ast_call_t));
-        node->fn_call->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
-        node->fn_call->argc = 0;
-        node->fn_call->args = NULL;
-        node->line_start = parser_at(parser).line_start;
-        node->column_start = parser_at(parser).column_start;
+        node.type = NODE_EXPR_CALL;
+        node.filename = parser->filename;
+        node.fn_call = blaze_calloc(1, sizeof(ast_call_t));
+        node.fn_call->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
+        node.fn_call->argc = 0;
+        node.fn_call->args = NULL;
+        node.line_start = parser_at(parser).line_start;
+        node.column_start = parser_at(parser).column_start;
 
-        struct lex_token *identifier = parser_expect(parser, T_IDENTIFIER);
-        NULL_EXIT(identifier);
-        node->fn_call->identifier->symbol = blaze_strdup(identifier->value);
+        struct lex_token identifier = parser_expect(parser, T_IDENTIFIER);
+        node.fn_call->identifier->symbol = blaze_strdup(identifier.value);
 
-        NULL_EXIT(parser_expect(parser, T_PAREN_OPEN));
+        parser_expect(parser, T_PAREN_OPEN);
 
         while (!parser_is_eof(parser) && parser_at(parser).type != T_PAREN_CLOSE)
         {
-            ast_node_t *param = parser_parse_expr(parser);
-            NULL_EXIT(param);
-            node->fn_call->args =
-                blaze_realloc(node->fn_call->args,
-                              sizeof(ast_node_t *) * (++node->fn_call->argc));
-            node->fn_call->args[node->fn_call->argc - 1] = param;
+            ast_node_t param = parser_parse_expr(parser);
+            node.fn_call->args =
+                blaze_realloc(node.fn_call->args,
+                              sizeof(ast_node_t) * (++node.fn_call->argc));
+            node.fn_call->args[node.fn_call->argc - 1] = param;
 
             if (parser_at(parser).type == T_COMMA)
-                NULL_EXIT(parser_expect(parser, T_COMMA));
+                parser_expect(parser, T_COMMA);
         }
 
-        NULL_EXIT(parser_expect(parser, T_PAREN_CLOSE));
+        parser_expect(parser, T_PAREN_CLOSE);
 
-        node->line_end = parser_at(parser).line_end;
-        node->column_end = parser_at(parser).column_end;
+        node.line_end = parser_at(parser).line_end;
+        node.column_end = parser_at(parser).column_end;
 
         return node;
     }
@@ -411,149 +409,150 @@ static ast_node_t *parser_parse_call_expr(struct parser *parser)
     return parser_parse_primary_expr(parser);
 }
 
-static ast_node_t *parser_parse_var_decl(struct parser *parser)
+static ast_node_t parser_parse_var_decl(struct parser *parser)
 {
     assert(parser_at(parser).type == T_VAR || parser_at(parser).type == T_CONST);
     struct lex_token start_token = parser_ret_forward(parser);
     bool is_const = start_token.type == T_CONST;
-    struct lex_token *identifier = parser_expect(parser, T_IDENTIFIER);
-    NULL_EXIT(identifier);
+    struct lex_token identifier = parser_expect(parser, T_IDENTIFIER);
 
-    ast_node_t *node = create_node();
-    node->filename = parser->filename;
-    node->type = NODE_VAR_DECL;
-    node->var_decl = blaze_calloc(1, sizeof(ast_var_decl_t));
-    node->line_start = start_token.line_start;
-    node->column_start = start_token.column_start;
+    ast_node_t node;
 
-    node->var_decl->name = blaze_strdup(identifier->value);
-    node->var_decl->is_const = is_const;
+    node.filename = parser->filename;
+    node.type = NODE_VAR_DECL;
+    node.var_decl = blaze_calloc(1, sizeof(ast_var_decl_t));
+    node.line_start = start_token.line_start;
+    node.column_start = start_token.column_start;
+
+    node.var_decl->name = blaze_strdup(identifier.value);
+    node.var_decl->is_const = is_const;
 
     if (parser_at(parser).type == T_SEMICOLON)
     {
-        node->line_end = parser_at(parser).line_end;
-        node->column_end = parser_at(parser).column_end;
+        node.line_end = parser_at(parser).line_end;
+        node.column_end = parser_at(parser).column_end;
 
         if (is_const)
         {
             PARSER_ERROR_ARGS(
                 parser,
                 "constant '%s' must have a value assigned to it when declaring",
-                node->var_decl->name);
-            return NULL;
+                node.var_decl->name);
         }
 
         return node;
     }
+    
+    parser_expect(parser, T_ASSIGNMENT);
 
-    NULL_EXIT(parser_expect(parser, T_ASSIGNMENT));
-    ast_node_t *expr = parser_parse_expr(parser);
-    NULL_EXIT(expr);
-    node->var_decl->value = expr;
-    node->line_end = parser_at(parser).line_end;
-    node->column_end = parser_at(parser).column_end;
+    ast_node_t expr_orig = parser_parse_expr(parser);
+    ast_node_t *expr = create_node();
+    memcpy(expr, &expr_orig, sizeof expr_orig);
+    node.var_decl->value = expr;
+    node.line_end = parser_at(parser).line_end;
+    node.column_end = parser_at(parser).column_end;
 
     return node;
 }
 
-static ast_node_t *parser_parse_expr(struct parser *parser)
+static ast_node_t parser_parse_expr(struct parser *parser)
 {
     return parser_parse_assignment_expr(parser);
 }
 
-static ast_node_t *parser_parse_assignment_expr(struct parser *parser)
+static ast_node_t parser_parse_assignment_expr(struct parser *parser)
 {
     if (!parser_is_eof(parser) && (parser->index + 1) < parser->token_count &&
         parser->tokens[parser->index + 1].type == T_ASSIGNMENT)
     {
-        struct lex_token *start_token = parser_expect(parser, T_IDENTIFIER);
-        NULL_EXIT(start_token);
-        char *identifier = blaze_strdup(start_token->value);
+        printf("LMAO\n");
+        struct lex_token start_token = parser_expect(parser, T_IDENTIFIER);
+        char *identifier = blaze_strdup(start_token.value);
         parser_expect(parser, T_ASSIGNMENT);
-        ast_node_t *value = parser_parse_expr(parser);
-        NULL_EXIT(value);
-        ast_node_t *node = create_node();
-        node->filename = parser->filename;
-        node->type = NODE_ASSIGNMENT;
-        node->assignment_expr = blaze_calloc(1, sizeof(ast_assignment_expr_t));
-        node->line_start = start_token->line_start;
-        node->column_start = start_token->column_start;
+        ast_node_t value_orig = parser_parse_expr(parser);
+        ast_node_t *value = create_node();
+        memcpy(value, &value_orig, sizeof (ast_node_t));
+        ast_node_t node;
+        node.filename = parser->filename;
+        node.type = NODE_ASSIGNMENT;
+        node.assignment_expr = blaze_calloc(1, sizeof(ast_assignment_expr_t));
+        node.line_start = start_token.line_start;
+        node.column_start = start_token.column_start;
 
-        node->assignment_expr->assignee = blaze_calloc(1, sizeof(ast_node_t));
-        node->assignment_expr->assignee->type = NODE_IDENTIFIER;
-        node->assignment_expr->assignee->line_start = start_token->line_start;
-        node->assignment_expr->assignee->line_end = start_token->line_end;
-        node->assignment_expr->assignee->column_start = start_token->column_start;
-        node->assignment_expr->assignee->column_end = start_token->column_end;
-        node->assignment_expr->assignee->identifier =
+        node.assignment_expr->assignee = blaze_calloc(1, sizeof(ast_node_t));
+        node.assignment_expr->assignee->type = NODE_IDENTIFIER;
+        node.assignment_expr->assignee->line_start = start_token.line_start;
+        node.assignment_expr->assignee->line_end = start_token.line_end;
+        node.assignment_expr->assignee->column_start = start_token.column_start;
+        node.assignment_expr->assignee->column_end = start_token.column_end;
+        node.assignment_expr->assignee->identifier =
             blaze_calloc(1, sizeof(ast_identifier_t));
-        node->assignment_expr->assignee->identifier->symbol = identifier;
-        node->assignment_expr->value = value;
-        node->line_end = parser_at(parser).line_end;
-        node->column_end = parser_at(parser).column_end;
+        node.assignment_expr->assignee->identifier->symbol = identifier;
+        node.assignment_expr->value = value;
+        node.line_end = parser_at(parser).line_end;
+        node.column_end = parser_at(parser).column_end;
         return node;
     }
 
     return parser_parse_array_lit(parser);
 }
 
-static ast_node_t *parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t *left, ast_node_t *right)
+static ast_node_t parser_parse_binexp_inner(struct parser *parser, const char operator, ast_node_t left, ast_node_t right)
 {
-    ast_node_t *binexpr = create_node();
+    ast_node_t binexpr;
 
-    binexpr->filename = parser->filename;
-    binexpr->type = NODE_BINARY_EXPR;
-    binexpr->binexpr = blaze_calloc(1, sizeof(ast_binexpr_t));
-    binexpr->line_start = left->line_start;
-    binexpr->column_start = left->column_start;
-    binexpr->line_end = right->line_end;
-    binexpr->column_end = right->column_end;
+    binexpr.filename = parser->filename;
+    binexpr.type = NODE_BINARY_EXPR;
+    binexpr.binexpr = blaze_calloc(1, sizeof(ast_binexpr_t));
+    binexpr.line_start = left.line_start;
+    binexpr.column_start = left.column_start;
+    binexpr.line_end = right.line_end;
+    binexpr.column_end = right.column_end;
 
-    binexpr->binexpr->operator = (unsigned char) operator;
-    binexpr->binexpr->left = left;
-    binexpr->binexpr->right = right;
+    binexpr.binexpr->operator = (unsigned char) operator;
+    binexpr.binexpr->left = create_node();
+    memcpy(binexpr.binexpr->left, &left, sizeof left);
+    binexpr.binexpr->right = create_node();
+    memcpy(binexpr.binexpr->right, &right, sizeof right);
 
     return binexpr;
 }
 
-static ast_node_t *parser_parse_binexp_multiplicative(struct parser *parser)
+static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
 {
-    ast_node_t *left = parser_parse_call_expr(parser);
-    NULL_EXIT(left);
+    ast_node_t left = parser_parse_call_expr(parser);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
            (parser_at(parser).value[0] == OP_TIMES || parser_at(parser).value[0] == OP_DIVIDE ||
             parser_at(parser).value[0] == OP_MODULUS))
     {
         const char operator = parser_ret_forward(parser).value[0];
-        ast_node_t *right = parser_parse_call_expr(parser);
-        NULL_EXIT(right);
+        ast_node_t right = parser_parse_call_expr(parser);
         left = parser_parse_binexp_inner(parser, operator, left, right);
-        NULL_EXIT(left);
     }
 
     return left;
 }
 
-static ast_node_t *parser_parse_binexp_additive(struct parser *parser)
+static ast_node_t parser_parse_binexp_additive(struct parser *parser)
 {
-    ast_node_t *left = parser_parse_binexp_multiplicative(parser);
-    NULL_EXIT(left);
+    ast_node_t left = parser_parse_binexp_multiplicative(parser);
+    (left);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
            (parser_at(parser).value[0] == OP_PLUS || parser_at(parser).value[0] == OP_MINUS))
     {
         const char operator = parser_ret_forward(parser).value[0];
-        ast_node_t *right = parser_parse_binexp_multiplicative(parser);
-        NULL_EXIT(right);
+        ast_node_t right = parser_parse_binexp_multiplicative(parser);
+        (right);
         left = parser_parse_binexp_inner(parser, operator, left, right);
-        NULL_EXIT(left);
+        (left);
     }
 
     return left;
 }
 
-static ast_node_t *parser_parse_primary_expr(struct parser *parser)
+static ast_node_t parser_parse_primary_expr(struct parser *parser)
 {
     struct lex_token token = parser_at(parser);
 
@@ -563,17 +562,17 @@ static ast_node_t *parser_parse_primary_expr(struct parser *parser)
         {
             parser_ret_forward(parser);
 
-            ast_node_t *identifier = create_node();
+            ast_node_t identifier;
 
-            identifier->filename = parser->filename;
-            identifier->type = NODE_IDENTIFIER;
-            identifier->identifier = blaze_calloc(1, sizeof(ast_identifier_t));
-            identifier->line_start = token.line_start;
-            identifier->line_end = token.line_end;
-            identifier->column_start = token.column_start;
-            identifier->column_end = token.column_end;
+            identifier.filename = parser->filename;
+            identifier.type = NODE_IDENTIFIER;
+            identifier.identifier = blaze_calloc(1, sizeof(ast_identifier_t));
+            identifier.line_start = token.line_start;
+            identifier.line_end = token.line_end;
+            identifier.column_start = token.column_start;
+            identifier.column_end = token.column_end;
 
-            identifier->identifier->symbol = blaze_strdup(token.value);
+            identifier.identifier->symbol = blaze_strdup(token.value);
             return identifier;
         }
 
@@ -582,17 +581,17 @@ static ast_node_t *parser_parse_primary_expr(struct parser *parser)
             parser_ret_forward(parser);
             assert(strspn(token.value, "0123456789") == strlen(token.value) && "Invalid integer");
 
-            ast_node_t *intlit = create_node();
+            ast_node_t intlit;
 
-            intlit->filename = parser->filename;
-            intlit->type = NODE_INT_LIT;
-            intlit->integer = blaze_calloc(1, sizeof(ast_intlit_t));
-            intlit->line_start = token.line_start;
-            intlit->line_end = token.line_end;
-            intlit->column_start = token.column_start;
-            intlit->column_end = token.column_end;
+            intlit.filename = parser->filename;
+            intlit.type = NODE_INT_LIT;
+            intlit.integer = blaze_calloc(1, sizeof(ast_intlit_t));
+            intlit.line_start = token.line_start;
+            intlit.line_end = token.line_end;
+            intlit.column_start = token.column_start;
+            intlit.column_end = token.column_end;
 
-            intlit->integer->intval = atoll(token.value);
+            intlit.integer->intval = atoll(token.value);
             return intlit;
         }
 
@@ -600,17 +599,17 @@ static ast_node_t *parser_parse_primary_expr(struct parser *parser)
         {
             parser_ret_forward(parser);
 
-            ast_node_t *string = create_node();
+            ast_node_t string;
 
-            string->filename = parser->filename;
-            string->type = NODE_STRING;
-            string->string = blaze_calloc(1, sizeof(ast_string_t));
-            string->line_start = token.line_start;
-            string->line_end = token.line_end;
-            string->column_start = token.column_start;
-            string->column_end = token.column_end;
+            string.filename = parser->filename;
+            string.type = NODE_STRING;
+            string.string = blaze_calloc(1, sizeof(ast_string_t));
+            string.line_start = token.line_start;
+            string.line_end = token.line_end;
+            string.column_start = token.column_start;
+            string.column_end = token.column_end;
 
-            string->string->strval = blaze_strdup(token.value);
+            string.string->strval = blaze_strdup(token.value);
 
             return string;
         }
@@ -618,15 +617,14 @@ static ast_node_t *parser_parse_primary_expr(struct parser *parser)
         case T_PAREN_OPEN:
         {
             parser_ret_forward(parser);
-            ast_node_t *node = parser_parse_expr(parser);
-            NULL_EXIT(node);
-            NULL_EXIT(parser_expect(parser, T_PAREN_CLOSE));
+            ast_node_t node = parser_parse_expr(parser);
+            (node);
+            (parser_expect(parser, T_PAREN_CLOSE));
             return node;
         }
 
         default:
             PARSER_ERROR_ARGS(parser, "unexpected token '%s' (%s)", token.value, lex_token_to_str(token.type));
-            return NULL;
     }
 }
 
@@ -659,8 +657,7 @@ static void parser_ast_free_inner(ast_node_t *node)
         case NODE_ROOT:
             for (size_t i = 0; i < node->root->size; i++)
             {
-                parser_ast_free_inner(node->root->nodes[i]);
-                blaze_free(node->root->nodes[i]);
+                parser_ast_free_inner(&node->root->nodes[i]);
             }
 
             blaze_free(node->root->nodes);
@@ -694,9 +691,6 @@ static void parser_ast_free_inner(ast_node_t *node)
             break;
 
         case NODE_EXPR_CALL:
-            for (size_t i = 0; i < node->fn_call->argc; i++)
-                parser_ast_free(node->fn_call->args[i]);
-
             blaze_free(node->fn_call->args);
             blaze_free(node->fn_call->identifier->symbol);
             blaze_free(node->fn_call->identifier);
@@ -729,10 +723,6 @@ static void parser_ast_free_inner(ast_node_t *node)
                 blaze_free(node->fn_decl->param_names[i]);
 
             blaze_free(node->fn_decl->param_names);
-
-            for (size_t i = 0; i < node->fn_decl->size; i++)
-                parser_ast_free(node->fn_decl->body[i]);
-
             blaze_free(node->fn_decl->body);
             blaze_free(node->fn_decl);
             break;
@@ -748,10 +738,9 @@ static void parser_ast_free_inner(ast_node_t *node)
 void parser_ast_free(ast_node_t *node)
 {
     parser_ast_free_inner(node);
-    blaze_free(node);
 }
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
 static void blaze_debug__print_ast_indent(int indent_level)
 {
     for (int i = 0; i < indent_level; i++)
@@ -782,7 +771,7 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
 
             for (size_t i = 0; i < node->root->size; i++)
             {
-                blaze_debug__print_ast_internal(node->root->nodes[i], inner_indent_level + 1, false, true);
+                blaze_debug__print_ast_internal(&node->root->nodes[i], inner_indent_level + 1, false, true);
 
                 if (i < node->root->size - 1)
                     printf(",");
@@ -844,7 +833,7 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
 
             for (size_t i = 0; i < node->fn_call->argc; i++)
             {
-                blaze_debug__print_ast_internal(node->fn_call->args[i], inner_indent_level + 1, false, true);
+                blaze_debug__print_ast_internal(&node->fn_call->args[i], inner_indent_level + 1, false, true);
 
                 if (i < node->fn_call->argc - 1)
                     printf(",");
@@ -877,7 +866,7 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
 
             for (size_t i = 0; i < node->fn_decl->size; i++)
             {
-                blaze_debug__print_ast_internal(node->fn_decl->body[i], inner_indent_level + 1, false, true);
+                blaze_debug__print_ast_internal(&node->fn_decl->body[i], inner_indent_level + 1, false, true);
 
                 if (i < node->fn_decl->size - 1)
                     printf(",");
@@ -920,4 +909,4 @@ void blaze_debug__print_ast(ast_node_t *node)
 
     blaze_debug__print_ast_internal(node, 0, true, true);
 }
-#endif
+//#endif

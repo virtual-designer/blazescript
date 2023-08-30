@@ -55,117 +55,35 @@ static void process_file(const char *name)
     filebuf_close(&buf);
     lex = lex_init((char *) name, buf.content);
     lex_analyze(&lex);
-#ifndef NDEBUG
-    blaze_debug__lex_print(lex);
-#endif
+//#ifndef NDEBUG
+//    blaze_debug__lex_print(&lex);
+//#endif
     parser = parser_init_from_lex(&lex);
-    ast_node_t *node = parser_create_ast_node(&parser);
-#ifndef NDEBUG
-    blaze_debug__print_ast(node);
-#endif
+    ast_node_t node = parser_create_ast_node(&parser);
+//#ifndef NDEBUG
+//    blaze_debug__print_ast(&node);
+//#endif
     scope_t *scope = scope_create_global();
-    eval(scope, node);
+    eval(scope, &node);
 //    print_val(val);
     scope_destroy_all();
     val_free_global();
-    parser_ast_free(node);
+    parser_ast_free(&node);
     parser_free(&parser);
     lex_free(&lex);
     filebuf_free(&buf);
 }
 
-static char *get_input()
-{
-    char *line = NULL;
-    size_t n = 0;
-
-    printf("> ");
-
-    if (getline(&line, &n, stdin) == -1)
-    {
-        BLAZE_ERROR("failed to read input from stdin: %s", strerror(errno));
-    }
-
-    return line;
-}
-
-static void repl_free()
-{
-    if (root_node != NULL)
-        parser_ast_free(root_node);
-
-    parser_free(&parser);
-    lex_free(&lex);
-
-    root_node = NULL;
-
-    parser.token_count = 0;
-    parser.tokens = NULL;
-    lex.token_count = 0;
-    lex.len = 0;
-}
-
-static void process_input(const char *input)
-{
-    lex = lex_init(REPL_FILENAME, (char *) input);
-
-    if (lex_analyze(&lex))
-    {
-        parser = parser_init_from_lex(&lex);
-        root_node = parser_create_ast_node(&parser);
-
-        if (root_node != NULL)
-        {
-            val_t *val = eval(global_scope, root_node);
-
-            if (val != NULL)
-            {
-                print_val(val);
-            }
-        }
-    }
-
-    repl_free();
-}
-
-static void handle_exit()
-{
-    if (global_scope != NULL)
-        scope_free(global_scope);
-
-    scope_destroy_all();
-    val_free_global();
-}
-
-_Noreturn static void start_repl()
-{
-    atexit(handle_exit);
-
-    filebuf_set_current_file(REPL_FILENAME);
-    global_scope = scope_create_global();
-
-    while (true)
-    {
-        char *input = get_input();
-
-        if (strcmp(input, ".exit\n") == 0)
-            exit(EXIT_SUCCESS);
-
-        process_input(input);
-        blaze_free(input);
-    }
-}
-
 int main(int argc, char **argv)
 {
-    atexit(&blaze_alloca_tbl_free);
-    blaze_alloca_tbl_init();
-
+    /* We've temporarily removed the REPL support. */
     if (argc < 2)
     {
-        set_repl_mode(true);
-        start_repl();
+        fatal_error("No input files");
     }
+
+    atexit(&blaze_alloca_tbl_free);
+    blaze_alloca_tbl_init();
 
     process_file(argv[1]);
     return 0;

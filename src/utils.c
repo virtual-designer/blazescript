@@ -40,7 +40,7 @@ void syntax_error(const char *fmt, ...)
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
     va_end(args);
-    blaze_error_exit();
+    exit(-1);
 }
 
 char *ctos(char c)
