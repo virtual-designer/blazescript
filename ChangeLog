@@ -1,3 +1,17 @@
+# [2.10.0](https://github.com/virtual-designer/blazescript/compare/v2.9.6...v2.10.0) (2023-08-30)
+
+
+### Bug Fixes
+
+* use RUNTIME_ERROR() macro instead of fatal_error() ([d9fe705](https://github.com/virtual-designer/blazescript/commit/d9fe7051b322a601e093b47e6c09fa74c81ad90f))
+
+
+### Features
+
+* blaze vm ([ded3f50](https://github.com/virtual-designer/blazescript/commit/ded3f50ae643b5c76966e43770f4d636f1a9e6b9))
+
+
+
 ## [2.9.6](https://github.com/virtual-designer/blazescript/compare/v2.9.5...v2.9.6) (2023-08-30)
 
 
@@ -32,15 +46,6 @@
 ### Bug Fixes
 
 * add missing include headers ([574ba33](https://github.com/virtual-designer/blazescript/commit/574ba331cb80b13fb78f5444e46201c5d89b44d6))
-
-
-
-## [2.9.2](https://github.com/virtual-designer/blazescript/compare/v2.9.1...v2.9.2) (2023-08-29)
-
-
-### Bug Fixes
-
-* minor improvements ([22bb2dc](https://github.com/virtual-designer/blazescript/commit/22bb2dc0154705c04920742667105ba731b95299))
 
 
 
