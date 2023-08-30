@@ -23,8 +23,8 @@
     }                                                       \
     while (0)
 
-static struct lex *lex = NULL;
-static struct parser *parser = NULL;
+static struct lex lex;
+static struct parser parser;
 static ast_node_t *root_node = NULL;
 static scope_t *global_scope = NULL;
 
@@ -50,18 +50,16 @@ ssize_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stre
 
 static void process_file(const char *name)
 {
-    struct filebuf buf;
-
-    buf = filebuf_init(name);
+    struct filebuf buf = filebuf_init(name);
     filebuf_read(&buf);
     filebuf_close(&buf);
     lex = lex_init((char *) name, buf.content);
-    lex_analyze(lex);
+    lex_analyze(&lex);
 #ifndef NDEBUG
     blaze_debug__lex_print(lex);
 #endif
-    parser = parser_init_from_lex(lex);
-    ast_node_t *node = parser_create_ast_node(parser);
+    parser = parser_init_from_lex(&lex);
+    ast_node_t *node = parser_create_ast_node(&parser);
 #ifndef NDEBUG
     blaze_debug__print_ast(node);
 #endif
@@ -71,8 +69,8 @@ static void process_file(const char *name)
     scope_destroy_all();
     val_free_global();
     parser_ast_free(node);
-    parser_free(parser);
-    lex_free(lex);
+    parser_free(&parser);
+    lex_free(&lex);
     filebuf_free(&buf);
 }
 
@@ -96,25 +94,25 @@ static void repl_free()
     if (root_node != NULL)
         parser_ast_free(root_node);
 
-    if (parser != NULL)
-        parser_free(parser);
-
-    if (lex != NULL)
-        lex_free(lex);
+    parser_free(&parser);
+    lex_free(&lex);
 
     root_node = NULL;
-    parser = NULL;
-    lex = NULL;
+
+    parser.token_count = 0;
+    parser.tokens = NULL;
+    lex.token_count = 0;
+    lex.len = 0;
 }
 
 static void process_input(const char *input)
 {
     lex = lex_init(REPL_FILENAME, (char *) input);
 
-    if (lex_analyze(lex))
+    if (lex_analyze(&lex))
     {
-        parser = parser_init_from_lex(lex);
-        root_node = parser_create_ast_node(parser);
+        parser = parser_init_from_lex(&lex);
+        root_node = parser_create_ast_node(&parser);
 
         if (root_node != NULL)
         {

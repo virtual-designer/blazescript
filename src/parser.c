@@ -20,14 +20,6 @@
 #define PARSER_ERROR_ARGS(parser, fmt, ...) \
     SYNTAX_ERROR_LINE_ARGS(parser->filename, parser_at(parser).line_start, parser_at(parser).column_start, fmt, __VA_ARGS__)
 
-struct parser
-{
-    size_t index;
-    size_t token_count;
-    struct lex_token *tokens;
-    char *filename;
-};
-
 static ast_node_t *parser_parse_stmt(struct parser *parser);
 static ast_node_t *parser_parse_expr(struct parser *parser);
 static ast_node_t *parser_parse_primary_expr(struct parser *parser);
@@ -38,22 +30,22 @@ static ast_node_t *parser_parse_assignment_expr(struct parser *parser);
 static ast_node_t *parser_parse_fn_decl(struct parser *parser);
 static ast_node_t *parser_parse_array_lit(struct parser *parser);
 
-struct parser *parser_init()
+struct parser parser_init()
 {
-    struct parser *parser = blaze_calloc(1, sizeof(struct parser));
-    parser->token_count = 0;
-    parser->index = 0;
-    parser->tokens = NULL;
-    parser->filename = NULL;
+    struct parser parser;
+    parser.token_count = 0;
+    parser.index = 0;
+    parser.tokens = NULL;
+    parser.filename = NULL;
     return parser;
 }
 
-struct parser *parser_init_from_lex(struct lex *lex)
+struct parser parser_init_from_lex(struct lex *lex)
 {
-    struct parser *parser = parser_init();
-    parser->token_count = lex_get_token_count(lex);
-    parser->tokens = lex_get_tokens(lex);
-    parser->filename = blaze_strdup(lex_get_filename(lex));
+    struct parser parser = parser_init();
+    parser.token_count = lex_get_token_count(lex);
+    parser.tokens = lex_get_tokens(lex);
+    parser.filename = blaze_strdup(lex_get_filename(lex));
     return parser;
 }
 
@@ -247,7 +239,6 @@ ast_node_t *parser_ast_deep_copy(ast_node_t *node)
 void parser_free(struct parser *parser)
 {
     blaze_free(parser->filename);
-    blaze_free(parser);
 }
 
 static ast_node_t *create_node()

@@ -16,18 +16,6 @@
 #define LEX_ERROR_ARGS(lex, fmt, ...) \
     SYNTAX_ERROR_LINE_ARGS(lex->filename, lex->current_line, lex->current_column, fmt, __VA_ARGS__)
 
-struct lex
-{
-    size_t len;
-    char *buf;
-    char *filename;
-    struct lex_token *tokens;
-    size_t token_count;
-    size_t current_line;
-    size_t current_column;
-    size_t index;
-};
-
 struct multichar_token
 {
     const char *identifier;
@@ -66,18 +54,18 @@ static const struct multichar_token multichar_tokens[] = {
     { "import", T_IMPORT },
 };
 
-struct lex *lex_init(char *filename, char *buf)
+struct lex lex_init(char *filename, char *buf)
 {
-    struct lex *lex = blaze_malloc(sizeof(struct lex));
+    struct lex lex;
 
-    lex->buf = blaze_strdup(buf);
-    lex->len = strlen(lex->buf);
-    lex->current_line = 1;
-    lex->current_column = 1;
-    lex->token_count = 0;
-    lex->index = 0;
-    lex->tokens = NULL;
-    lex->filename = blaze_strdup(filename);
+    lex.buf = blaze_strdup(buf);
+    lex.len = strlen(lex.buf);
+    lex.current_line = 1;
+    lex.current_column = 1;
+    lex.token_count = 0;
+    lex.index = 0;
+    lex.tokens = NULL;
+    lex.filename = blaze_strdup(filename);
 
     return lex;
 }
@@ -96,7 +84,6 @@ void lex_free(struct lex *lex)
     blaze_free(lex->tokens);
     blaze_free(lex->buf);
     blaze_free(lex->filename);
-    blaze_free(lex);
 }
 
 static void lex_tokens_array_push(struct lex *lex, struct lex_token token)

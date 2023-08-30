@@ -40,7 +40,20 @@ struct lex_token
     size_t column_end;
 };
 
-struct lex *lex_init(char *filename, char *buf);
+
+struct lex
+{
+    size_t len;
+    char *buf;
+    char *filename;
+    struct lex_token *tokens;
+    size_t token_count;
+    size_t current_line;
+    size_t current_column;
+    size_t index;
+};
+
+struct lex lex_init(char *filename, char *buf);
 void lex_free(struct lex *lex);
 bool lex_analyze(struct lex *lex);
 struct lex_token *lex_get_tokens(struct lex *lex);

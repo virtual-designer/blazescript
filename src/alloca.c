@@ -3,16 +3,14 @@
  */
 
 #include "alloca.h"
-#include "log.h"
 #include "utils.h"
-#include <assert.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static struct alloca_tbl_t *global_alloca_tbl = NULL;
+static struct alloca_tbl_t global_alloca_tbl;
 
 void *xmalloc(size_t size)
 {
@@ -45,18 +43,17 @@ void *xrealloc(void *old_ptr, size_t new_size)
     return ptr;
 }
 
-struct alloca_tbl_t *alloca_tbl_init()
+struct alloca_tbl_t alloca_tbl_init()
 {
-    struct alloca_tbl_t *tbl = xmalloc(sizeof(struct alloca_tbl_t));
-    tbl->count = 0;
-    tbl->ptrs = NULL;
+    struct alloca_tbl_t tbl;
+    tbl.count = 0;
+    tbl.ptrs = NULL;
     return tbl;
 }
 
 void alloca_tbl_free(struct alloca_tbl_t *tbl)
 {
     free(tbl->ptrs);
-    free(tbl);
 }
 
 size_t alloca_tbl_push_ptr(struct alloca_tbl_t *tbl, void *ptr)
@@ -87,22 +84,22 @@ void blaze_alloca_tbl_init()
 
 void blaze_alloca_tbl_free()
 {
-    for (size_t i = 0; i < global_alloca_tbl->count; i++)
+    for (size_t i = 0; i < global_alloca_tbl.count; i++)
     {
-        if (global_alloca_tbl->ptrs[i] != NULL)
+        if (global_alloca_tbl.ptrs[i] != NULL)
         {
-            free(global_alloca_tbl->ptrs[i]);
-            global_alloca_tbl->ptrs[i] = NULL;
+            free(global_alloca_tbl.ptrs[i]);
+            global_alloca_tbl.ptrs[i] = NULL;
         }
     }
 
-    alloca_tbl_free(global_alloca_tbl);
+    alloca_tbl_free(&global_alloca_tbl);
 }
 
 void *blaze_malloc(size_t size)
 {
     void *ptr = xmalloc(size);
-    alloca_tbl_push_ptr(global_alloca_tbl, ptr);
+    alloca_tbl_push_ptr(&global_alloca_tbl, ptr);
     return ptr;
 }
 
@@ -112,8 +109,8 @@ void *blaze_realloc(void *ptr, size_t new_size)
 
     if (new_ptr != ptr)
     {
-        alloca_tbl_remove_ptr(global_alloca_tbl, ptr);
-        alloca_tbl_push_ptr(global_alloca_tbl, new_ptr);
+        alloca_tbl_remove_ptr(&global_alloca_tbl, ptr);
+        alloca_tbl_push_ptr(&global_alloca_tbl, new_ptr);
     }
 
     return new_ptr;
@@ -122,14 +119,14 @@ void *blaze_realloc(void *ptr, size_t new_size)
 void *blaze_calloc(size_t n, size_t size)
 {
     void *ptr = xcalloc(n, size);
-    alloca_tbl_push_ptr(global_alloca_tbl, ptr);
+    alloca_tbl_push_ptr(&global_alloca_tbl, ptr);
     return ptr;
 }
 
 void *blaze_strdup(const char *str)
 {
     char *ptr = strdup(str);
-    alloca_tbl_push_ptr(global_alloca_tbl, ptr);
+    alloca_tbl_push_ptr(&global_alloca_tbl, ptr);
     return ptr;
 }
 
@@ -140,12 +137,12 @@ bool blaze_free(void *ptr)
         return false;
     }
 
-    for (ssize_t i = 0; i < global_alloca_tbl->count; i++)
+    for (ssize_t i = 0; i < global_alloca_tbl.count; i++)
     {
-        if (global_alloca_tbl->ptrs[i] != NULL && global_alloca_tbl->ptrs[i] == ptr)
+        if (global_alloca_tbl.ptrs[i] != NULL && global_alloca_tbl.ptrs[i] == ptr)
         {
-            free(global_alloca_tbl->ptrs[i]);
-            global_alloca_tbl->ptrs[i] = NULL;
+            free(global_alloca_tbl.ptrs[i]);
+            global_alloca_tbl.ptrs[i] = NULL;
             return true;
         }
     }
