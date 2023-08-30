@@ -1,3 +1,12 @@
+## [2.9.6](https://github.com/virtual-designer/blazescript/compare/v2.9.5...v2.9.6) (2023-08-30)
+
+
+### Bug Fixes
+
+* NDEBUG macro usages ([f089baa](https://github.com/virtual-designer/blazescript/commit/f089baa8eb6a9279f871ece1038ddd9581c3eb7b))
+
+
+
 ## [2.9.5](https://github.com/virtual-designer/blazescript/compare/v2.9.4...v2.9.5) (2023-08-30)
 
 
@@ -32,15 +41,6 @@
 ### Bug Fixes
 
 * minor improvements ([22bb2dc](https://github.com/virtual-designer/blazescript/commit/22bb2dc0154705c04920742667105ba731b95299))
-
-
-
-## [2.9.1](https://github.com/virtual-designer/blazescript/compare/v2.9.0...v2.9.1) (2023-08-29)
-
-
-### Bug Fixes
-
-* memory leaks ([069e0ee](https://github.com/virtual-designer/blazescript/commit/069e0ee6f4fbd5855229ef8908f01aecede770bb))
 
 
 
