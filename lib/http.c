@@ -39,7 +39,7 @@ struct http_response http_make_request(const char* url)
 
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
-    auto res = curl_easy_perform(curl);
+    int res = curl_easy_perform(curl);
     struct http_response http_res = {};
 
     if (res != CURLE_OK)

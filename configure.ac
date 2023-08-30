@@ -5,10 +5,10 @@ AC_PREREQ([2.71])
 AC_INIT([blazescript], [1.0.0-beta1], [rakinar2@onesoftnet.eu.org])
 AC_CONFIG_SRCDIR([src/ast.h])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
 AM_INIT_AUTOMAKE([-Wall])
+AM_SILENT_RULES([yes])
 
 # Checks for programs.
 AC_PROG_CC
@@ -16,7 +16,6 @@ AC_PROG_RANLIB
 AM_PROG_AR
 
 # Checks for libraries.
-# FIXME: Replace 'main' with a function in '-lm':
 AC_CHECK_LIB([m], [ceill])
 
 # Checks for header files.

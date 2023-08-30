@@ -5,9 +5,9 @@
 #include "include/lib.h"
 #include "alloca.h"
 #include "eval.h"
+#include "datatype.h"
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
 
 BUILTIN_FN(println)
 {
