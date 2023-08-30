@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "alloca.h"
 #include "eval.h"
 #include "file.h"
 #include "lexer.h"

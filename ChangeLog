@@ -1,3 +1,12 @@
+## [2.9.3](https://github.com/virtual-designer/blazescript/compare/v2.9.2...v2.9.3) (2023-08-29)
+
+
+### Bug Fixes
+
+* add missing include headers ([574ba33](https://github.com/virtual-designer/blazescript/commit/574ba331cb80b13fb78f5444e46201c5d89b44d6))
+
+
+
 ## [2.9.2](https://github.com/virtual-designer/blazescript/compare/v2.9.1...v2.9.2) (2023-08-29)
 
 
@@ -44,15 +53,6 @@
 * arrays ([54dd589](https://github.com/virtual-designer/blazescript/commit/54dd589668a43487aaffab9a17ee65322d4a0327))
 * arrays (merged from CodeDiseaseDev's branch) ([3e5cfab](https://github.com/virtual-designer/blazescript/commit/3e5cfabd679b9285f3a66f882e2dcdb3d971cac7))
 * comment support ([ef2aa37](https://github.com/virtual-designer/blazescript/commit/ef2aa375898bd8cf9a635fa6095430298c6c1563))
-
-
-
-## [2.7.1](https://github.com/virtual-designer/blazescript/compare/v2.7.0...v2.7.1) (2023-08-27)
-
-
-### Bug Fixes
-
-* **println:** do not print an extra space before newline ([b8482bb](https://github.com/virtual-designer/blazescript/commit/b8482bb4b35334699e5caf9c3775569680fa4458))
 
 
 
