@@ -740,7 +740,7 @@ void parser_ast_free(ast_node_t *node)
     parser_ast_free_inner(node);
 }
 
-//#ifndef NDEBUG
+#ifndef NDEBUG
 static void blaze_debug__print_ast_indent(int indent_level)
 {
     for (int i = 0; i < indent_level; i++)
@@ -909,4 +909,4 @@ void blaze_debug__print_ast(ast_node_t *node)
 
     blaze_debug__print_ast_internal(node, 0, true, true);
 }
-//#endif
+#endif

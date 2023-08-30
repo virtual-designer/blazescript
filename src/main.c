@@ -56,17 +56,16 @@ static void process_file(const char *name)
     filebuf_close(&buf);
     lex = lex_init((char *) name, buf.content);
     lex_analyze(&lex);
-//#ifndef NDEBUG
-//    blaze_debug__lex_print(&lex);
-//#endif
+#ifndef NDEBUG
+    blaze_debug__lex_print(&lex);
+#endif
     parser = parser_init_from_lex(&lex);
     ast_node_t node = parser_create_ast_node(&parser);
-//#ifndef NDEBUG
-//    blaze_debug__print_ast(&node);
-//#endif
+#ifndef NDEBUG
+    blaze_debug__print_ast(&node);
+#endif
     scope_t *scope = scope_create_global();
     eval(scope, &node);
-//    print_val(val);
     scope_destroy_all();
     val_free_global();
     parser_ast_free(&node);
