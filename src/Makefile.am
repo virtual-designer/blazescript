@@ -1,7 +1,7 @@
 if DEBUG
-__CFLAGS = -fsanitize=address -fsanitize=leak
+__CPPFLAGS = -fsanitize=address -fsanitize=leak
 else
-__CFLAGS = -DNDEBUG
+__CPPFLAGS = -DNDEBUG
 endif
 
 _blaze_HEADERS_ = alloca.h \
@@ -30,7 +30,7 @@ blaze_SOURCES = alloca.c \
                 valmap.c \
                 vector.c \
                 $(_blaze_HEADERS_)
-blaze_CFLAGS = $(__CFLAGS)
-blaze_CPPFLAGS = -std=gnu11 -I$(top_srcdir)/include
-blaze_LDFLAGS = -L$(top_srcdir)/lib
-blaze_LDADD = -lcurl -lblazestd
+
+AM_CPPFLAGS = -std=gnu11 -I$(top_srcdir)/include $(__CPPFLAGS)
+AM_LDFLAGS = -L$(top_srcdir)/lib
+blaze_LDADD = -lblazestd

@@ -1,3 +1,5 @@
+// FIXME: Do not use cURL
+
 #include "http.h"
 #include "alloca.h"
 #include <string.h>
