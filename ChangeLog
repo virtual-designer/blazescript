@@ -1,3 +1,12 @@
+## [2.12.1](https://github.com/virtual-designer/blazescript/compare/v2.12.0...v2.12.1) (2023-09-01)
+
+
+### Bug Fixes
+
+* update Makefile.am ([003a37a](https://github.com/virtual-designer/blazescript/commit/003a37ade3df0fb72611bc5e4d2e608660bf3a42))
+
+
+
 # [2.12.0](https://github.com/virtual-designer/blazescript/compare/v2.11.0...v2.12.0) (2023-09-01)
 
 
@@ -36,15 +45,6 @@
 ### Bug Fixes
 
 * NDEBUG macro usages ([f089baa](https://github.com/virtual-designer/blazescript/commit/f089baa8eb6a9279f871ece1038ddd9581c3eb7b))
-
-
-
-## [2.9.5](https://github.com/virtual-designer/blazescript/compare/v2.9.4...v2.9.5) (2023-08-30)
-
-
-### Performance Improvements
-
-* do not use libcurl ([608fd98](https://github.com/virtual-designer/blazescript/commit/608fd98f309720b01b0d4b34284e081dac077567))
 
 
 
