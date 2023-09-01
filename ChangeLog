@@ -1,3 +1,12 @@
+# [2.11.0](https://github.com/virtual-designer/blazescript/compare/v2.10.0...v2.11.0) (2023-09-01)
+
+
+### Features
+
+* basic VM ([02024de](https://github.com/virtual-designer/blazescript/commit/02024de1f1d5c50bded6b2963e2d8571d36f871e))
+
+
+
 # [2.10.0](https://github.com/virtual-designer/blazescript/compare/v2.9.6...v2.10.0) (2023-08-30)
 
 
@@ -37,15 +46,6 @@
 
 * reduce pointer usage ([278b87c](https://github.com/virtual-designer/blazescript/commit/278b87ca4811159133704c4e27a61e5482545170))
 * **speed:** reduce usage of pointers ([01d6185](https://github.com/virtual-designer/blazescript/commit/01d6185e9b251b12e38fcc221401f2f737326761))
-
-
-
-## [2.9.3](https://github.com/virtual-designer/blazescript/compare/v2.9.2...v2.9.3) (2023-08-29)
-
-
-### Bug Fixes
-
-* add missing include headers ([574ba33](https://github.com/virtual-designer/blazescript/commit/574ba331cb80b13fb78f5444e46201c5d89b44d6))
 
 
 
