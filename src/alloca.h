@@ -21,4 +21,8 @@ void blaze_alloca_tbl_free();
 void blaze_alloca_tbl_init();
 void *blaze_strdup(const char *str);
 
+void *xmalloc(size_t size);
+void *xcalloc(size_t n, size_t size);
+void *xrealloc(void *old_ptr, size_t new_size);
+
 #endif /* BLAZESCRIPT_ALLOCA_H */

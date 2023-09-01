@@ -48,7 +48,8 @@ blazevm_SOURCES = alloca.c \
 				  lexer.c \
                   valmap.c \
                   eval.c \
-				  blazevm.c
+				  blazevm.c \
+				  disassemble.c
 
 AM_CPPFLAGS = -std=gnu11 -I$(top_srcdir)/include $(GLOBAL_CPPFLAGS_)
 AM_LDFLAGS = -L$(top_srcdir)/lib $(GLOBAL_LDFLAGS_)
