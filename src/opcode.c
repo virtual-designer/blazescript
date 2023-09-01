@@ -159,5 +159,24 @@ OPCODE_HANDLER(regdump)
 
 OPCODE_HANDLER(syscall)
 {
+    uint64_t r0 = registers[R0];
+
+    printf("%lu == %d\n", r0, SYS_EXIT);
+
+    switch (r0)
+    {
+        case SYS_EXIT:
+        {
+            uint64_t r1 = registers[R1];
+            bytecode_exit_code = r1;
+            break;
+        }
+
+        default:
+            bytecode_error = xmalloc(30);
+            sprintf(bytecode_error, "Invalid syscall: 0x%02lx", r0);
+            return NULL;
+    }
+
     return NULL;
 }

@@ -25,6 +25,11 @@ typedef enum {
     AM_REGISTER
 } addressing_mode_t;
 
+typedef enum {
+    SYS_EXIT,
+    SYSCALL_COUNT
+} syscall_t;
+
 typedef struct {
     size_t size;
     addressing_mode_t addrmode;

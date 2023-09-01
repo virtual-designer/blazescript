@@ -12,6 +12,7 @@
 #include <string.h>
 
 char *bytecode_error = NULL;
+uint8_t bytecode_exit_code = 0;
 
 struct bytecode bytecode_init()
 {

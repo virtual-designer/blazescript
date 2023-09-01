@@ -35,5 +35,6 @@ uint64_t bytecode_get_qword(struct bytecode *bytecode, size_t addr);
 bool bytecode_exec(struct bytecode *bytecode);
 
 extern char *bytecode_error;
+extern uint8_t bytecode_exit_code;
 
 #endif /* BLAZESCRIPT_BYTECODE_H */
