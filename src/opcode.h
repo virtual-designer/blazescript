@@ -29,7 +29,6 @@ typedef enum {
     SYS_EXIT,
     SYS_REGDUMP,
     SYS_PRINT,
-    SYSCALL_COUNT
 } syscall_t;
 
 typedef struct {

@@ -2,6 +2,7 @@
  * Created by rakinar2 on 8/30/23.
  */
 
+#include "file.h"
 #include "bytecode.h"
 #include "alloca.h"
 #include "opcode.h"
@@ -10,7 +11,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 #include <stdlib.h>
 
 char *bytecode_error = NULL;
@@ -30,6 +30,30 @@ struct bytecode bytecode_init_from_stream(uint8_t *stream, size_t stream_size)
 
     bytecode.bytes = xcalloc(sizeof (uint8_t), stream_size);
     memcpy(bytecode.bytes, stream, stream_size);
+    return bytecode;
+}
+
+struct bytecode bytecode_init_from_filebuf(struct filebuf *filebuf)
+{
+    uint8_t *stream = (uint8_t *) filebuf->content;
+    size_t size = filebuf->size;
+    size_t actual_size = filebuf->size;
+
+    /* Strips the bytecode file shebang, if there's any.  */
+    if (size > 2 && stream[0] == '#' && stream[1] == '!')
+    {
+        for (size_t i = 0; i < size; i++, stream++, actual_size--)
+        {
+            if (*stream == '\n' || *stream == '\r')
+            {
+                actual_size--;
+                stream++;
+                break;
+            }
+        }
+    }
+
+    struct bytecode bytecode = bytecode_init_from_stream(stream, actual_size);
     return bytecode;
 }
 

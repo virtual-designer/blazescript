@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "alloca.h"
+#include "file.h"
 
 #define BYTECODE_INIT { .bytes = xcalloc(10, sizeof (uint8_t)), .size = 0, .cap = 10 };
 
@@ -22,6 +23,8 @@ struct bytecode
 struct bytecode bytecode_init();
 void bytecode_free(struct bytecode *bytecode);
 struct bytecode bytecode_init_from_stream(uint8_t *stream, size_t stream_size);
+struct bytecode bytecode_init_from_filebuf(struct filebuf *filebuf);
+
 void bytecode_push_byte(struct bytecode *bytecode, uint8_t byte);
 void bytecode_push_word(struct bytecode *bytecode, uint16_t word);
 void bytecode_push_dword(struct bytecode *bytecode, uint32_t dword);
