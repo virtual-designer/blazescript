@@ -1,3 +1,12 @@
+# [2.13.0](https://github.com/virtual-designer/blazescript/compare/v2.12.1...v2.13.0) (2023-09-02)
+
+
+### Features
+
+* print syscall ([af6a78f](https://github.com/virtual-designer/blazescript/commit/af6a78ff45acaee4da466392b044a3c02c2df495))
+
+
+
 ## [2.12.1](https://github.com/virtual-designer/blazescript/compare/v2.12.0...v2.12.1) (2023-09-01)
 
 
@@ -36,15 +45,6 @@
 ### Features
 
 * blaze vm ([ded3f50](https://github.com/virtual-designer/blazescript/commit/ded3f50ae643b5c76966e43770f4d636f1a9e6b9))
-
-
-
-## [2.9.6](https://github.com/virtual-designer/blazescript/compare/v2.9.5...v2.9.6) (2023-08-30)
-
-
-### Bug Fixes
-
-* NDEBUG macro usages ([f089baa](https://github.com/virtual-designer/blazescript/commit/f089baa8eb6a9279f871ece1038ddd9581c3eb7b))
 
 
 
