@@ -10,6 +10,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
+#include <stdlib.h>
 
 char *bytecode_error = NULL;
 uint8_t bytecode_exit_code = 0;
@@ -49,21 +51,21 @@ void bytecode_push_byte(struct bytecode *bytecode, uint8_t byte)
 void bytecode_push_word(struct bytecode *bytecode, uint16_t word)
 {
     bytecode_check_realloc(bytecode);
-    ((uint16_t *) bytecode->bytes)[bytecode->size] = word;
+    memcpy((uint8_t *) (bytecode->bytes + bytecode->size), &word, sizeof (word));
     bytecode->size += sizeof (uint16_t);
 }
 
 void bytecode_push_dword(struct bytecode *bytecode, uint32_t dword)
 {
     bytecode_check_realloc(bytecode);
-    ((uint32_t *) bytecode->bytes)[bytecode->size] = dword;
+    memcpy((uint8_t *) (bytecode->bytes + bytecode->size), &dword, sizeof (dword));
     bytecode->size += sizeof (uint32_t);
 }
 
 void bytecode_push_qword(struct bytecode *bytecode, uint64_t qword)
 {
     bytecode_check_realloc(bytecode);
-    ((uint64_t *) bytecode->bytes)[bytecode->size] = qword;
+    memcpy((uint8_t *) (bytecode->bytes + bytecode->size), &qword, sizeof (qword));
     bytecode->size += sizeof (uint64_t);
 }
 

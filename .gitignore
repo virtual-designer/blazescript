@@ -41,3 +41,5 @@ stamp-*
 /aclocal.m4
 /build-aux
 *.a
+*#
+*.#*

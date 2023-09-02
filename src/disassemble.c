@@ -28,15 +28,15 @@ void disassemble_operand(FILE *__restrict__ fp, struct bytecode *bytecode, size_
             break;
 
         case 2:
-            fprintf(fp, "0x%x", bytecode_get_word(bytecode, i));
+            fprintf(fp, "0x%04x", bytecode_get_word(bytecode, i));
             break;
 
         case 4:
-            fprintf(fp, "0x%x", bytecode_get_dword(bytecode, i));
+            fprintf(fp, "0x%08x", bytecode_get_dword(bytecode, i));
             break;
 
         case 8:
-            fprintf(fp, "0x%lx", bytecode_get_qword(bytecode, i));
+            fprintf(fp, "0x%016lx", bytecode_get_qword(bytecode, i));
             break;
 
         default:
@@ -66,7 +66,7 @@ void disassemble(FILE *__restrict__ fp, struct bytecode *bytecode)
                 fprintf(fp, "%02x ", bytecode->bytes[i + a]);
             }
 
-            for (size_t s = (inst_size * 3) - 1; s < 50; s++)
+            for (size_t s = (inst_size * 3) - 1; s < 35; s++)
             {
                 printf(" ");
             }

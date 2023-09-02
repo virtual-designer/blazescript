@@ -161,14 +161,41 @@ OPCODE_HANDLER(syscall)
 {
     uint64_t r0 = registers[R0];
 
-    printf("%lu == %d\n", r0, SYS_EXIT);
-
     switch (r0)
     {
         case SYS_EXIT:
         {
             uint64_t r1 = registers[R1];
             bytecode_exit_code = r1;
+            break;
+        }
+
+        case SYS_REGDUMP:
+        {
+            OPCODE_HANDLER_REF(regdump)(bytecode, ip);
+            break;
+        }
+
+        case SYS_PRINT:
+        {
+            uint64_t r1 = registers[R1];
+            uint64_t r2 = registers[R2];
+
+            if (r1 == 0x00)
+                printf("%llu\n", r2);
+            else if (r1 == 0x01)
+                printf("%p\n", (uint8_t *) r2);
+            else if (r1 == 0x02)
+                printf("%s\n", (char *) r2);
+            else if (r1 == 0x03)
+                printf("%c\n", (char) r2);
+            else
+            {
+                bytecode_error = xmalloc(35);
+                sprintf(bytecode_error, "Invalid value type: 0x%02lx", r1);
+                return NULL;
+            }
+            
             break;
         }
 
