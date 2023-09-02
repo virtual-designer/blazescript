@@ -21,6 +21,11 @@ blaze_HEADERS_ = alloca.h \
 		  valmap.h \
 		  vector.h
 
+blazevm_HEADERS_ = bytecode.h \
+	      opcode.h \
+          register.h \
+          disassemble.h
+
 blaze_SOURCES = alloca.c \
                 file.c \
                 lexer.c \
@@ -49,7 +54,9 @@ blazevm_SOURCES = alloca.c \
                   valmap.c \
                   eval.c \
 				  blazevm.c \
-				  disassemble.c
+				  disassemble.c \
+                  file.c \
+                  $(blazevm_HEADERS_)
 
 AM_CPPFLAGS = -std=gnu11 -I$(top_srcdir)/include $(GLOBAL_CPPFLAGS_)
 AM_LDFLAGS = -L$(top_srcdir)/lib $(GLOBAL_LDFLAGS_)

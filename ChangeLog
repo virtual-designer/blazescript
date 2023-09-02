@@ -1,3 +1,21 @@
+## [2.12.1](https://github.com/virtual-designer/blazescript/compare/v2.12.0...v2.12.1) (2023-09-01)
+
+
+### Bug Fixes
+
+* update Makefile.am ([003a37a](https://github.com/virtual-designer/blazescript/commit/003a37ade3df0fb72611bc5e4d2e608660bf3a42))
+
+
+
+# [2.12.0](https://github.com/virtual-designer/blazescript/compare/v2.11.0...v2.12.0) (2023-09-01)
+
+
+### Features
+
+* syscalls ([7931206](https://github.com/virtual-designer/blazescript/commit/79312066a275a2950fcdf5a8a28b0ec23a6023de))
+
+
+
 # [2.11.0](https://github.com/virtual-designer/blazescript/compare/v2.10.0...v2.11.0) (2023-09-01)
 
 
@@ -27,25 +45,6 @@
 ### Bug Fixes
 
 * NDEBUG macro usages ([f089baa](https://github.com/virtual-designer/blazescript/commit/f089baa8eb6a9279f871ece1038ddd9581c3eb7b))
-
-
-
-## [2.9.5](https://github.com/virtual-designer/blazescript/compare/v2.9.4...v2.9.5) (2023-08-30)
-
-
-### Performance Improvements
-
-* do not use libcurl ([608fd98](https://github.com/virtual-designer/blazescript/commit/608fd98f309720b01b0d4b34284e081dac077567))
-
-
-
-## [2.9.4](https://github.com/virtual-designer/blazescript/compare/v2.9.3...v2.9.4) (2023-08-30)
-
-
-### Performance Improvements
-
-* reduce pointer usage ([278b87c](https://github.com/virtual-designer/blazescript/commit/278b87ca4811159133704c4e27a61e5482545170))
-* **speed:** reduce usage of pointers ([01d6185](https://github.com/virtual-designer/blazescript/commit/01d6185e9b251b12e38fcc221401f2f737326761))
 
 
 
