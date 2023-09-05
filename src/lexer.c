@@ -43,10 +43,21 @@ static const struct char_to_token_map chartokens[] = {
     { '}', T_BLOCK_BRACE_CLOSE },
     { '.', T_PERIOD },
     { '[', T_SQUARE_BRACE_OPEN },
-    { ']', T_SQUARE_BRACE_CLOSE }
+    { ']', T_SQUARE_BRACE_CLOSE },
+    { '<', T_BINARY_OPERATOR },
+    { '>', T_BINARY_OPERATOR },
 };
 
 static const struct multichar_token multichar_tokens[] = {
+    { "<=", T_BINARY_OPERATOR },
+    { ">=", T_BINARY_OPERATOR },
+    { "==", T_BINARY_OPERATOR },
+    { "===", T_BINARY_OPERATOR },
+    { "!=", T_BINARY_OPERATOR },
+    { "!==", T_BINARY_OPERATOR },
+};
+
+static const struct multichar_token keywords[] = {
     { "var", T_VAR },
     { "const", T_CONST },
     { "function", T_FUNCTION },
@@ -219,16 +230,16 @@ static void lex_number(struct lex *lex)
 
 static enum lex_token_type convert_str_to_token(const char *keyword)
 {
-    for (size_t i = 0; i < (sizeof (multichar_tokens) / sizeof multichar_tokens[0]); i++)
+    for (size_t i = 0; i < (sizeof (keywords) / sizeof keywords[0]); i++)
     {
-        if (strcmp(multichar_tokens[i].identifier, keyword) == 0)
-            return multichar_tokens[i].token_type;
+        if (strcmp(keywords[i].identifier, keyword) == 0)
+            return keywords[i].token_type;
     }
 
     return T_UNKNOWN;
 }
 
-static void lex_identifier_or_multichar_token(struct lex *lex)
+static void lex_identifier_or_keyword(struct lex *lex)
 {
     size_t column_start = lex->current_column;
     char *identifier = NULL;
@@ -254,6 +265,7 @@ static void lex_identifier_or_multichar_token(struct lex *lex)
         .column_end = lex->current_column,
     });
 }
+
 static void lex_push_char_token(struct lex *lex, enum lex_token_type type)
 {
     size_t column_start = lex->current_column;
@@ -266,6 +278,46 @@ static void lex_push_char_token(struct lex *lex, enum lex_token_type type)
         .column_start = column_start,
         .column_end = lex->current_column,
     });
+}
+
+static bool lex_multichar_operators(struct lex *lex)
+{
+    size_t column_start = lex->current_column;
+    char *value;
+
+    if (lex_has_value(lex) && (lex->index + 1) < lex->len)
+    {
+        if ((lex->index + 2) < lex->len && lex->buf[lex->index] == '=' &&
+            lex->buf[lex->index + 1] == '=' &&
+            lex->buf[lex->index + 2] == '=')
+            value = "===";
+        else if ((lex->index + 2) < lex->len && lex->buf[lex->index] == '!' &&
+            lex->buf[lex->index + 1] == '=' &&
+            lex->buf[lex->index + 2] == '=')
+            value = "!==";
+        else if (lex->buf[lex->index] == '=' && lex->buf[lex->index + 1] == '=')
+            value = "==";
+        else if (lex->buf[lex->index] == '!' && lex->buf[lex->index + 1] == '=')
+            value = "!=";
+        else
+            return false;
+
+        for (int i = 0; i < strlen(value); i++)
+            lex_char_forward(lex);
+
+        lex_tokens_array_push(lex, (struct lex_token) {
+           .type = T_BINARY_OPERATOR,
+           .value = strdup(value),
+           .line_start = lex->current_line,
+           .line_end = lex->current_line,
+           .column_start = column_start,
+           .column_end = lex->current_column,
+       });
+    }
+    else
+        return false;
+
+    return true;
 }
 
 bool lex_analyze(struct lex *lex)
@@ -321,6 +373,9 @@ bool lex_analyze(struct lex *lex)
             continue;
         }
 
+        if (lex_multichar_operators(lex))
+            continue;
+
         for (size_t i = 0; i < (sizeof (chartokens) / sizeof (chartokens[0])); i++)
         {
             if (c == chartokens[i].token_char)
@@ -335,7 +390,7 @@ bool lex_analyze(struct lex *lex)
         else if (isdigit(c))
             lex_number(lex);
         else if (isalpha(c))
-            lex_identifier_or_multichar_token(lex);
+            lex_identifier_or_keyword(lex);
         else
         {
             syntax_error("unknown token '%c'", lex_char(lex));

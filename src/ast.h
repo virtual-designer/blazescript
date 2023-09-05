@@ -28,7 +28,15 @@ typedef enum ast_bin_operator {
     OP_MINUS = '-',
     OP_DIVIDE = '/',
     OP_TIMES = '*',
-    OP_MODULUS = '%'
+    OP_MODULUS = '%',
+    OP_CMP_GT = '>',
+    OP_CMP_LT = '<',
+    OP_CMP_GE = 0xF0,
+    OP_CMP_LE = 0xF1,
+    OP_CMP_EQ = 0xF2,
+    OP_CMP_EQ_S = 0xF3,
+    OP_CMP_NE = 0xF4,
+    OP_CMP_NE_S = 0xF5,
 } ast_bin_operator_t;
 
 typedef struct ast_int_lit {

@@ -32,6 +32,7 @@ static ast_node_t parser_parse_var_decl(struct parser *parser);
 static ast_node_t parser_parse_assignment_expr(struct parser *parser);
 static ast_node_t parser_parse_fn_decl(struct parser *parser);
 static ast_node_t parser_parse_array_lit(struct parser *parser);
+static ast_node_t parser_parse_binexp_comparison(struct parser *parser);
 
 struct parser parser_init()
 {
@@ -246,7 +247,7 @@ static ast_node_t *create_node()
 static ast_node_t parser_parse_array_lit(struct parser *parser)
 {
     if (parser_at(parser).type != T_ARRAY)
-        return parser_parse_binexp_additive(parser);
+        return parser_parse_binexp_comparison(parser);
 
     (parser_expect(parser, T_ARRAY));
     (parser_expect(parser, T_SQUARE_BRACE_OPEN));
@@ -263,16 +264,15 @@ static ast_node_t parser_parse_array_lit(struct parser *parser)
         ast_node_t *expr = create_node();
         memcpy(expr, &expr_orig, sizeof expr_orig);
 
-        (expr);
         vector_push(node.array_lit->elements, expr);
 
         if (parser_at(parser).type == T_SQUARE_BRACE_CLOSE)
             break;
 
-        (parser_expect(parser, T_COMMA));
+        parser_expect(parser, T_COMMA);
     }
 
-    (parser_expect(parser, T_SQUARE_BRACE_CLOSE));
+    parser_expect(parser, T_SQUARE_BRACE_CLOSE);
     return node;
 }
 
@@ -518,6 +518,29 @@ static ast_node_t parser_parse_binexp_inner(struct parser *parser, const char op
     return binexpr;
 }
 
+static ast_bin_operator_t parser_parse_binexp_operator(struct parser *parser)
+{
+    ast_bin_operator_t operator;
+    const char *operator_str = parser_expect(parser, T_BINARY_OPERATOR).value;
+
+    if (strcmp(operator_str, ">=") == 0)
+        operator = OP_CMP_GE;
+    else if (strcmp(operator_str, "<=") == 0)
+        operator = OP_CMP_LE;
+    else if (strcmp(operator_str, "==") == 0)
+        operator = OP_CMP_EQ;
+    else if (strcmp(operator_str, "===") == 0)
+        operator = OP_CMP_EQ_S;
+    else if (strcmp(operator_str, "!=") == 0)
+        operator = OP_CMP_NE;
+    else if (strcmp(operator_str, "!==") == 0)
+        operator = OP_CMP_NE_S;
+    else
+        operator = (ast_bin_operator_t) operator_str[0];
+
+    return operator;
+}
+
 static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
 {
     ast_node_t left = parser_parse_call_expr(parser);
@@ -526,7 +549,7 @@ static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
            (parser_at(parser).value[0] == OP_TIMES || parser_at(parser).value[0] == OP_DIVIDE ||
             parser_at(parser).value[0] == OP_MODULUS))
     {
-        const char operator = parser_ret_forward(parser).value[0];
+        ast_bin_operator_t operator = parser_parse_binexp_operator(parser);
         ast_node_t right = parser_parse_call_expr(parser);
         left = parser_parse_binexp_inner(parser, operator, left, right);
     }
@@ -537,16 +560,31 @@ static ast_node_t parser_parse_binexp_multiplicative(struct parser *parser)
 static ast_node_t parser_parse_binexp_additive(struct parser *parser)
 {
     ast_node_t left = parser_parse_binexp_multiplicative(parser);
-    (left);
 
     while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
            (parser_at(parser).value[0] == OP_PLUS || parser_at(parser).value[0] == OP_MINUS))
     {
-        const char operator = parser_ret_forward(parser).value[0];
+        ast_bin_operator_t operator = parser_parse_binexp_operator(parser);
         ast_node_t right = parser_parse_binexp_multiplicative(parser);
-        (right);
         left = parser_parse_binexp_inner(parser, operator, left, right);
-        (left);
+    }
+
+    return left;
+}
+
+static ast_node_t parser_parse_binexp_comparison(struct parser *parser)
+{
+    ast_node_t left = parser_parse_binexp_additive(parser);
+
+    while (!parser_is_eof(parser) && parser_at(parser).type == T_BINARY_OPERATOR &&
+           (parser_at(parser).value[0] == OP_CMP_GT || parser_at(parser).value[0] == OP_CMP_LT ||
+            strcmp(parser_at(parser).value, ">=") == 0 || strcmp(parser_at(parser).value, "<=") == 0 ||
+            strcmp(parser_at(parser).value, "==") == 0 || strcmp(parser_at(parser).value, "===") == 0 ||
+            strcmp(parser_at(parser).value, "!=") == 0 || strcmp(parser_at(parser).value, "!==") == 0))
+    {
+        ast_bin_operator_t operator = parser_parse_binexp_operator(parser);
+        ast_node_t right = parser_parse_binexp_additive(parser);
+        left = parser_parse_binexp_inner(parser, operator, left, right);
     }
 
     return left;

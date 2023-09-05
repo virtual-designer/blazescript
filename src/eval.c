@@ -318,6 +318,54 @@ static val_t eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *ri
             val.intval->value = left->intval->value % right->intval->value;
             break;
 
+        case OP_CMP_GT:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value > right->intval->value;
+        break;
+
+        case OP_CMP_LT:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value < right->intval->value;
+        break;
+
+        case OP_CMP_GE:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value >= right->intval->value;
+        break;
+
+        case OP_CMP_LE:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value <= right->intval->value;
+        break;
+
+        case OP_CMP_EQ:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value == right->intval->value;
+        break;
+
+        case OP_CMP_EQ_S:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value == right->intval->value;
+        break;
+
+        case OP_CMP_NE:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value != right->intval->value;
+        break;
+
+        case OP_CMP_NE_S:
+            val.type = VAL_BOOLEAN;
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = left->intval->value != right->intval->value;
+        break;
+
         default:
         {
             fatal_error("unsupported operator '%c' (%d)", operator, operator);
