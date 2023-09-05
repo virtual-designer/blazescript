@@ -25,7 +25,7 @@ struct valmap
 struct valmap_entry
 {
     char *key;
-    val_t *value;
+    val_t value;
     bool is_const;
 };
 
@@ -64,7 +64,7 @@ val_t *valmap_get(struct valmap *valmap, const char *key)
     {
         if (strcmp(valmap->array[index].key, key) == 0)
         {
-            return valmap->array[index].value;
+            return &valmap->array[index].value;
         }
 
         index++;
@@ -94,7 +94,7 @@ enum overwrite_mode
 };
 
 static const char *valmap_set_entry(struct valmap_entry *array,
-            size_t capacity, const char *key, val_t *value, size_t *element_count,
+            size_t capacity, const char *key, val_t value, size_t *element_count,
             bool is_const, bool attempt_free, enum overwrite_mode overwrite, enum valmap_set_status *result)
 {
     size_t index = hash_key(capacity, key);
@@ -119,8 +119,8 @@ static const char *valmap_set_entry(struct valmap_entry *array,
             }
 
             if (attempt_free) {
-                val_free(array[index].value);
-                array[index].value = NULL;
+                val_free_force_no_root(&array[index].value);
+                array[index].value.type = VAL_NULL;
             }
 
             array[index].value = value;
@@ -178,14 +178,14 @@ static void valmap_check_realloc(struct valmap *valmap)
     }
 }
 
-void valmap_set(struct valmap *valmap, const char *key, val_t *value, bool is_const, bool attempt_free)
+void valmap_set(struct valmap *valmap, const char *key, val_t value, bool is_const, bool attempt_free)
 {
     valmap_check_realloc(valmap);
     valmap_set_entry(valmap->array, valmap->capacity, key, value,
  &valmap->elements, is_const, attempt_free, OW_DEFAULT, NULL);
 }
 
-enum valmap_set_status valmap_set_no_overwrite(struct valmap *valmap, const char *key, val_t *value, bool is_const, bool attempt_free)
+enum valmap_set_status valmap_set_no_overwrite(struct valmap *valmap, const char *key, val_t value, bool is_const, bool attempt_free)
 {
     enum valmap_set_status status = VAL_SET_OK;
     valmap_check_realloc(valmap);
@@ -194,7 +194,7 @@ enum valmap_set_status valmap_set_no_overwrite(struct valmap *valmap, const char
     return status;
 }
 
-enum valmap_set_status valmap_set_no_create(struct valmap *valmap, const char *key, val_t *value, bool is_const, bool attempt_free)
+enum valmap_set_status valmap_set_no_create(struct valmap *valmap, const char *key, val_t value, bool is_const, bool attempt_free)
 {
     enum valmap_set_status status = VAL_SET_OK;
     valmap_check_realloc(valmap);
@@ -203,7 +203,7 @@ enum valmap_set_status valmap_set_no_create(struct valmap *valmap, const char *k
     return status;
 }
 
-void valmap_set_no_free(struct valmap *valmap, const char *key, val_t *value, bool is_const)
+void valmap_set_no_free(struct valmap *valmap, const char *key, val_t value, bool is_const)
 {
     valmap_set(valmap, key, value, is_const, false);
 }
@@ -217,9 +217,10 @@ void valmap_free(struct valmap *valmap, bool free_values)
             blaze_free(valmap->array[i].key);
         }
 
-        if (free_values && valmap->array[i].value != NULL)
+        if (free_values && valmap->array[i].key != NULL &&
+            valmap->array[i].value.type != VAL_NULL)
         {
-            val_free(valmap->array[i].value);
+            val_free_force_no_root(&valmap->array[i].value);
         }
     }
 
@@ -231,9 +232,8 @@ void valmap_free_builtin_fns(struct valmap *valmap)
 {
     for (size_t i = 0; i < valmap->capacity; i++)
     {
-        if (valmap->array[i].value != NULL &&
-            valmap->array[i].value->type == VAL_FUNCTION &&
-            valmap->array[i].value->fnval->type == FN_BUILT_IN)
+        if (valmap->array[i].value.type == VAL_FUNCTION &&
+            valmap->array[i].value.fnval->type == FN_BUILT_IN)
         {
             if (valmap->array[i].key != NULL)
             {
@@ -241,8 +241,8 @@ void valmap_free_builtin_fns(struct valmap *valmap)
                 valmap->array[i].key = NULL;
             }
 
-            val_free_force(valmap->array[i].value);
-            valmap->array[i].value = NULL;
+            val_free_force_no_root(&valmap->array[i].value);
+            valmap->array[i].value.type = VAL_NULL;
         }
     }
 }

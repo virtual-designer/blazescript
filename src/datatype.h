@@ -45,7 +45,7 @@ typedef struct {
         FN_USER_CUSTOM
     } type;
     union {
-        struct value *(*built_in_callback)(struct scope *scope, size_t argc, struct value **args);
+        struct value (*built_in_callback)(struct scope *scope, size_t argc, struct value *args);
         struct {
             ast_node_t **custom_body;
             size_t size;
@@ -62,7 +62,6 @@ typedef struct {
 
 typedef struct value {
     val_type_t type;
-    size_t index;
     bool nofree;
 
     union {
@@ -78,12 +77,15 @@ typedef struct value {
 void val_free(val_t *val);
 void print_val(val_t *val);
 const char *val_type_to_str(val_type_t type);
-val_t *val_create(val_type_t type);
+val_t val_create(val_type_t type);
+val_t *val_create_heap(val_type_t type);
 void val_free_global();
 void val_free_force(val_t *val);
 void print_val_internal(val_t *val, bool quote_strings);
 val_t *val_copy_deep(val_t *orig);
-val_t *val_init();
+val_t val_init();
+val_t *val_init_heap();
 val_t *val_copy(val_t *value);
+void val_free_force_no_root(val_t *val);
 
 #endif /* BLAZESCRIPT_DATATYPE_H */

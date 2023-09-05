@@ -15,14 +15,17 @@
 static val_t **values = NULL;
 static size_t values_count = 0;
 
-val_t *val_init()
+val_t val_init()
+{
+    return (val_t) {
+        .nofree = false
+    };
+}
+
+val_t *val_init_heap()
 {
     val_t *val = blaze_malloc(sizeof(val_t));
     val->nofree = false;
-
-    values = blaze_realloc(values, sizeof(val_t *) * ++values_count);
-    values[values_count - 1] = val;
-    val->index = values_count - 1;
 
     log_debug("Created value: %p", val);
     return val;
@@ -34,58 +37,60 @@ val_t *val_copy(val_t *value)
     memcpy(copy, value, sizeof (val_t));
     values = blaze_realloc(values, sizeof(val_t *) * ++values_count);
     values[values_count - 1] = copy;
-    copy->index = values_count - 1;
     return copy;
 }
 
 void val_free_global()
 {
-    for (size_t i = 0; i < values_count; i++)
-    {
-        val_free(values[i]);
-    }
 
-    blaze_free(values);
 }
 
-val_t *val_create(val_type_t type)
+val_t *val_create_heap(val_type_t type)
 {
-    val_t *val = val_init();
-    val->type = type;
+    val_t val = val_create(type);
+    val_t *val_ret = val_init_heap();
+    memcpy(val_ret, &val, sizeof val);
+    return val_ret;
+}
 
-    switch (val->type)
+val_t val_create(val_type_t type)
+{
+    val_t val = val_init();
+    val.type = type;
+
+    switch (val.type)
     {
-    case VAL_INTEGER:
-        val->intval = blaze_malloc(sizeof *(val->intval));
-        break;
+        case VAL_INTEGER:
+            val.intval = blaze_malloc(sizeof *(val.intval));
+            break;
 
-    case VAL_FLOAT:
-        val->floatval = blaze_malloc(sizeof *(val->floatval));
-        break;
+        case VAL_FLOAT:
+            val.floatval = blaze_malloc(sizeof *(val.floatval));
+            break;
 
-    case VAL_STRING:
-        val->strval = blaze_malloc(sizeof *(val->strval));
-        break;
+        case VAL_STRING:
+            val.strval = blaze_malloc(sizeof *(val.strval));
+            break;
 
-    case VAL_BOOLEAN:
-        val->boolval = blaze_malloc(sizeof *(val->boolval));
-        break;
+        case VAL_BOOLEAN:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            break;
 
-    case VAL_FUNCTION:
-        val->fnval = blaze_calloc(1, sizeof *(val->fnval));
-        val->fnval->scope = NULL;
-        break;
+        case VAL_FUNCTION:
+            val.fnval = blaze_calloc(1, sizeof *(val.fnval));
+            val.fnval->scope = NULL;
+            break;
 
-    case VAL_ARRAY:
-        val->arrval = blaze_calloc(1, sizeof *(val->arrval));
-        val->arrval->array = vector_init();
-        break;
+        case VAL_ARRAY:
+            val.arrval = blaze_calloc(1, sizeof *(val.arrval));
+            val.arrval->array = vector_init();
+            break;
 
-    case VAL_NULL:
-        break;
+        case VAL_NULL:
+            break;
 
-    default:
-        log_warn("unrecognized value type: %d", val->type);
+        default:
+            log_warn("unrecognized value type: %d", val.type);
     }
 
     return val;
@@ -96,72 +101,71 @@ val_t *val_copy_deep(val_t *orig)
     if (orig->type == VAL_NULL)
         return orig;
 
-    val_t *val = val_create(orig->type);
+    val_t *val = val_create_heap(orig->type);
 
     switch (orig->type)
     {
-    case VAL_INTEGER:
-        val->intval->value = orig->intval->value;
-        break;
+        case VAL_INTEGER:
+            val->intval->value = orig->intval->value;
+            break;
 
-    case VAL_FLOAT:
-        val->floatval->value = orig->floatval->value;
-        break;
+        case VAL_FLOAT:
+            val->floatval->value = orig->floatval->value;
+            break;
 
-    case VAL_STRING:
-        val->strval->value = orig->strval->value;
-        break;
+        case VAL_STRING:
+            val->strval->value = orig->strval->value;
+            break;
 
-    case VAL_BOOLEAN:
-        val->boolval->value = orig->boolval->value;
-        break;
+        case VAL_BOOLEAN:
+            val->boolval->value = orig->boolval->value;
+            break;
 
-    case VAL_FUNCTION:
-        memcpy(val->fnval, orig->fnval, sizeof (*val->fnval));
+        case VAL_FUNCTION:
+            memcpy(val->fnval, orig->fnval, sizeof (*val->fnval));
 
-        if (val->fnval->type == FN_USER_CUSTOM)
-        {
-            val->fnval->custom_body = NULL;
-            val->fnval->size = 0;
-
-            for (size_t i = 0; i < orig->fnval->size; i++)
+            if (val->fnval->type == FN_USER_CUSTOM)
             {
-                val->fnval->custom_body = blaze_realloc(
-                    val->fnval->custom_body,
-                    sizeof(ast_node_t *) * (++val->fnval->size));
-                val->fnval->custom_body[val->fnval->size - 1] = parser_ast_deep_copy(orig->fnval->custom_body[i]);
+                val->fnval->custom_body = NULL;
+                val->fnval->size = 0;
+
+                for (size_t i = 0; i < orig->fnval->size; i++)
+                {
+                    val->fnval->custom_body = blaze_realloc(
+                        val->fnval->custom_body,
+                        sizeof(ast_node_t *) * (++val->fnval->size));
+                    val->fnval->custom_body[val->fnval->size - 1] = parser_ast_deep_copy(orig->fnval->custom_body[i]);
+                }
+
+                val->fnval->param_count = 0;
+                val->fnval->param_names = NULL;
+
+                for (size_t i = 0; i < orig->fnval->param_count; i++)
+                {
+                    val->fnval->param_names = blaze_realloc(
+                        val->fnval->param_names,
+                        sizeof(char *) * (++val->fnval->param_count));
+                    val->fnval->param_names[val->fnval->param_count - 1] = blaze_strdup(orig->fnval->param_names[i]);
+                }
+
+                val->fnval->scope = scope_init(orig->fnval->scope);
             }
 
-            val->fnval->param_count = 0;
-            val->fnval->param_names = NULL;
+            break;
 
-            for (size_t i = 0; i < orig->fnval->param_count; i++)
-            {
-                val->fnval->param_names = blaze_realloc(
-                    val->fnval->param_names,
-                    sizeof(char *) * (++val->fnval->param_count));
-                val->fnval->param_names[val->fnval->param_count - 1] = blaze_strdup(orig->fnval->param_names[i]);
-            }
+        case VAL_NULL:
+            break;
 
-            val->fnval->scope = scope_init(orig->fnval->scope);
-        }
-
-        break;
-
-    case VAL_NULL:
-        break;
-
-    default:
-        log_warn("unrecognized value type: %d", val->type);
+        default:
+            log_warn("unrecognized value type: %d", val->type);
     }
 
     return val;
 }
 
-void val_free_force(val_t *val)
+void val_free_force_no_root(val_t *val)
 {
     log_debug("Freeing value: %p", val);
-    values[val->index] = NULL;
 
     switch (val->type)
     {
@@ -213,6 +217,12 @@ void val_free_force(val_t *val)
         log_warn("unrecognized value type: %d", val->type);
     }
 
+    blaze_free(val);
+}
+
+void val_free_force(val_t *val)
+{
+    val_free_force_no_root(val);
     blaze_free(val);
 }
 

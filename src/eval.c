@@ -2,8 +2,6 @@
  * Created by rakinar2 on 8/24/23.
  */
 
-#include <assert.h>
-#include <stdio.h>
 #include "eval.h"
 #include "alloca.h"
 #include "ast.h"
@@ -12,22 +10,25 @@
 #include "parser.h"
 #include "scope.h"
 #include "utils.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-val_t *eval_int(scope_t *scope, const ast_node_t *node);
-val_t *eval_float(scope_t *scope, const ast_node_t *node);
-val_t *eval_string(scope_t *scope, const ast_node_t *node);
-val_t *eval_root(scope_t *scope, const ast_node_t *node);
-val_t *eval_binexp(scope_t *scope, const ast_node_t *node);
-val_t *eval_var_decl(scope_t *scope, const ast_node_t *node);
-val_t *eval_identifier(scope_t *scope, const ast_node_t *node);
-val_t *eval_assignment(scope_t *scope, const ast_node_t *node);
-val_t *eval_expr_call(scope_t *scope, const ast_node_t *node);
-val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node);
-val_t *eval_array_lit(scope_t *scope, const ast_node_t *node);
+val_t eval_int(scope_t *scope, const ast_node_t *node);
+val_t eval_float(scope_t *scope, const ast_node_t *node);
+val_t eval_string(scope_t *scope, const ast_node_t *node);
+val_t eval_root(scope_t *scope, const ast_node_t *node);
+val_t eval_binexp(scope_t *scope, const ast_node_t *node);
+val_t eval_var_decl(scope_t *scope, const ast_node_t *node);
+val_t eval_identifier(scope_t *scope, const ast_node_t *node);
+val_t eval_assignment(scope_t *scope, const ast_node_t *node);
+val_t eval_expr_call(scope_t *scope, const ast_node_t *node);
+val_t eval_fn_decl(scope_t *scope, const ast_node_t *node);
+val_t eval_array_lit(scope_t *scope, const ast_node_t *node);
 
 char *eval_fn_error = NULL;
 
-val_t *eval(scope_t *scope, const ast_node_t *node)
+val_t eval(scope_t *scope, const ast_node_t *node)
 {
     switch (node->type)
     {
@@ -63,55 +64,49 @@ val_t *eval(scope_t *scope, const ast_node_t *node)
 
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
-            return NULL;
     }
 }
 
-#define VAL_CHECK_EXIT(val) \
-    if (val == NULL) \
-        return NULL;
-
-val_t *eval_array_lit(scope_t *scope, const ast_node_t *node)
+val_t eval_array_lit(scope_t *scope, const ast_node_t *node)
 {
-    val_t *arr = val_create(VAL_ARRAY);
+    val_t arr = val_create(VAL_ARRAY);
 
     VECTOR_FOREACH(node->array_lit->elements)
     {
-        val_t *val = eval(scope, ((ast_node_t **) node->array_lit->elements->data)[i]);
-        VAL_CHECK_EXIT(val);
-        vector_push(arr->arrval->array, val);
+        val_t val = eval(scope, ((ast_node_t **) node->array_lit->elements->data)[i]);
+        vector_push(arr.arrval->array, val_copy_deep(&val));
     }
 
     return arr;
 }
 
-val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
+val_t eval_fn_decl(scope_t *scope, const ast_node_t *node)
 {
-    val_t *fn = val_create(VAL_FUNCTION);
+    val_t fn = val_create(VAL_FUNCTION);
 
-    fn->fnval->type = FN_USER_CUSTOM;
-    fn->fnval->custom_body = NULL;
-    fn->fnval->size = 0;
+    fn.fnval->type = FN_USER_CUSTOM;
+    fn.fnval->custom_body = NULL;
+    fn.fnval->size = 0;
 
     for (size_t i = 0; i < node->fn_decl->size; i++)
     {
-        fn->fnval->custom_body = blaze_realloc(
-            fn->fnval->custom_body, sizeof(ast_node_t *) * (++fn->fnval->size));
-        fn->fnval->custom_body[fn->fnval->size - 1] = parser_ast_deep_copy(&node->fn_decl->body[i]);
+        fn.fnval->custom_body = blaze_realloc(
+            fn.fnval->custom_body, sizeof(ast_node_t *) * (++fn.fnval->size));
+        fn.fnval->custom_body[fn.fnval->size - 1] = parser_ast_deep_copy(&node->fn_decl->body[i]);
     }
 
-    fn->fnval->param_count = 0;
-    fn->fnval->param_names = NULL;
+    fn.fnval->param_count = 0;
+    fn.fnval->param_names = NULL;
 
     for (size_t i = 0; i < node->fn_decl->param_count; i++)
     {
-        fn->fnval->param_names =
-            blaze_realloc(fn->fnval->param_names,
-                          sizeof(char *) * (++fn->fnval->param_count));
-        fn->fnval->param_names[fn->fnval->param_count - 1] = blaze_strdup(node->fn_decl->param_names[i]);
+        fn.fnval->param_names =
+            blaze_realloc(fn.fnval->param_names,
+                          sizeof(char *) * (++fn.fnval->param_count));
+        fn.fnval->param_names[fn.fnval->param_count - 1] = blaze_strdup(node->fn_decl->param_names[i]);
     }
 
-    fn->fnval->scope = scope_init(scope);
+    fn.fnval->scope = scope_init(scope);
 
     enum valmap_set_status status = scope_declare_identifier(scope, node->fn_decl->identifier->symbol, fn, true);
 
@@ -122,14 +117,12 @@ val_t *eval_fn_decl(scope_t *scope, const ast_node_t *node)
                       node->column_start,
                       "'%s' is already defined",
                       node->fn_decl->identifier->symbol);
-
-        return NULL;
     }
 
-    return scope->null;
+    return *scope->null;
 }
 
-val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
+val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
 {
     char *identifier = node->fn_call->identifier->symbol;
 
@@ -142,7 +135,6 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
                       node->column_start,
                       "undefined function '%s'",
                       identifier);
-        return NULL;
     }
 
     if (val->type != VAL_FUNCTION)
@@ -152,22 +144,20 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
                       node->column_start,
                       "'%s' is not a function",
                       identifier);
-        return NULL;
     }
 
-    val_t **args = NULL;
+    val_t *args = NULL;
 
     for (size_t i = 0; i < node->fn_call->argc; i++)
     {
-        val_t *arg = eval(scope, &node->fn_call->args[i]);
-        VAL_CHECK_EXIT(arg);
-        args = blaze_realloc(args, sizeof(val_t *) * (i + 1));
+        val_t arg = eval(scope, &node->fn_call->args[i]);
+        args = blaze_realloc(args, sizeof(val_t) * (i + 1));
         args[i] = arg;
     }
 
     if (val->fnval->type == FN_BUILT_IN)
     {
-        val_t *ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
+        val_t ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
         blaze_free(args);
 
         if (eval_fn_error != NULL)
@@ -180,7 +170,7 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
 
             blaze_free(eval_fn_error);
             eval_fn_error = NULL;
-            return NULL;
+            exit(-1);
         }
 
         return ret;
@@ -193,12 +183,12 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
                       node->column_start,
                       "function '%s' requires %lu arguments, but %lu were passed",
                       identifier, val->fnval->param_count, node->fn_call->argc);
-        return NULL;
+        exit(-1);
     }
 
     for (size_t i = 0; i < node->fn_call->argc; i++)
     {
-        val_t *arg = args[i];
+        val_t arg = args[i];
         enum valmap_set_status status = scope_declare_identifier(val->fnval->scope, val->fnval->param_names[i], arg, true);
 
         if (status == VAL_SET_EXISTS)
@@ -209,29 +199,26 @@ val_t *eval_expr_call(scope_t *scope, const ast_node_t *node)
                           "cannot redefine '%s' as a function parameter",
                           node->fn_decl->identifier->symbol);
 
-            return NULL;
+            exit(-1);
         }
     }
 
-    val_t *ret;
+    val_t ret;
 
     for (size_t i = 0; i < val->fnval->size; i++)
     {
         ret = eval(val->fnval->scope, val->fnval->custom_body[i]);
-        VAL_CHECK_EXIT(ret);
     }
 
-    val_t *copy = val_copy_deep(ret);
+    val_t *copy = val_copy_deep(&ret);
     blaze_free(args);
     val->fnval->scope = scope_init(scope);
-    return copy;
+    return *copy;
 }
 
-val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
+val_t eval_assignment(scope_t *scope, const ast_node_t *node)
 {
-    val_t *val = eval(scope, node->assignment_expr->value);
-
-    VAL_CHECK_EXIT(val);
+    val_t val = eval(scope, node->assignment_expr->value);
 
     enum valmap_set_status status = scope_assign_identifier(scope, node->assignment_expr->assignee->identifier->symbol, val);
 
@@ -242,7 +229,7 @@ val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
                       node->assignment_expr->assignee->column_start,
                       "use of undeclared identifier '%s'",
                       node->assignment_expr->assignee->identifier->symbol);
-        return NULL;
+        exit(-1);
     }
     else if (status == VAL_SET_IS_CONST)
     {
@@ -251,13 +238,13 @@ val_t *eval_assignment(scope_t *scope, const ast_node_t *node)
                       node->assignment_expr->assignee->column_start,
                       "cannot assign to constant '%s'",
                       node->assignment_expr->assignee->identifier->symbol);
-        return NULL;
+        exit(-1);
     }
 
     return val;
 }
 
-val_t *eval_identifier(scope_t *scope, const ast_node_t *node)
+val_t eval_identifier(scope_t *scope, const ast_node_t *node)
 {
     val_t *val = scope_resolve_identifier(scope, node->identifier->symbol);
 
@@ -266,46 +253,46 @@ val_t *eval_identifier(scope_t *scope, const ast_node_t *node)
         RUNTIME_ERROR(node->filename, node->line_start,
                       node->column_start, "use of undeclared identifier '%s'",
                       node->identifier->symbol);
-        return NULL;
+        exit(-1);
     }
 
+    return *val;
+}
+
+val_t eval_int(scope_t *scope, const ast_node_t *node)
+{
+    val_t val = val_create(VAL_INTEGER);
+    val.intval->value = node->integer->intval;
     return val;
 }
 
-val_t *eval_int(scope_t *scope, const ast_node_t *node)
+val_t eval_string(scope_t *scope, const ast_node_t *node)
 {
-    val_t *val = val_create(VAL_INTEGER);
-    val->intval->value = node->integer->intval;
+    val_t val = val_create(VAL_STRING);
+    val.strval->value = blaze_strdup(node->string->strval);
     return val;
 }
 
-val_t *eval_string(scope_t *scope, const ast_node_t *node)
+static val_t eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)
 {
-    val_t *val = val_create(VAL_STRING);
-    val->strval->value = blaze_strdup(node->string->strval);
-    return val;
-}
-
-static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)
-{
-    val_t *val = val_init();
-    val->type = VAL_INTEGER;
+    val_t val = val_init();
+    val.type = VAL_INTEGER;
 
     switch (operator)
     {
         case OP_PLUS:
-            val->intval = blaze_malloc(sizeof *(val->intval));
-            val->intval->value = left->intval->value + right->intval->value;
+            val.intval = blaze_malloc(sizeof *(val.intval));
+            val.intval->value = left->intval->value + right->intval->value;
             break;
 
         case OP_MINUS:
-            val->intval = blaze_malloc(sizeof *(val->intval));
-            val->intval->value = left->intval->value - right->intval->value;
+            val.intval = blaze_malloc(sizeof *(val.intval));
+            val.intval->value = left->intval->value - right->intval->value;
             break;
 
         case OP_TIMES:
-            val->intval = blaze_malloc(sizeof *(val->intval));
-            val->intval->value = left->intval->value * right->intval->value;
+            val.intval = blaze_malloc(sizeof *(val.intval));
+            val.intval->value = left->intval->value * right->intval->value;
             break;
 
         case OP_DIVIDE:
@@ -315,9 +302,9 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
                           node->binexpr->right->column_start,
                           "cannot divide %lli by zero", left->intval->value);
 
-            val->type = VAL_FLOAT;
-            val->floatval = blaze_malloc(sizeof *(val->intval));
-            val->floatval->value = (long double) left->intval->value / (long double) right->intval->value;
+            val.type = VAL_FLOAT;
+            val.floatval = blaze_malloc(sizeof *(val.intval));
+            val.floatval->value = (long double) left->intval->value / (long double) right->intval->value;
             break;
 
         case OP_MODULUS:
@@ -327,25 +314,23 @@ static val_t *eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *r
                               node->binexpr->right->column_start,
                               "cannot divide %lli by zero", left->intval->value);
 
-            val->intval = blaze_malloc(sizeof *(val->intval));
-            val->intval->value = left->intval->value % right->intval->value;
+            val.intval = blaze_malloc(sizeof *(val.intval));
+            val.intval->value = left->intval->value % right->intval->value;
             break;
 
         default:
         {
             fatal_error("unsupported operator '%c' (%d)", operator, operator);
-            return NULL;
+            exit(-1);
         }
     }
 
     return val;
 }
 
-val_t *eval_var_decl(scope_t *scope, const ast_node_t *node)
+val_t eval_var_decl(scope_t *scope, const ast_node_t *node)
 {
-    val_t *val = node->var_decl->value == NULL ? scope->null : eval(scope, node->var_decl->value);
-
-    VAL_CHECK_EXIT(val);
+    val_t val = node->var_decl->value == NULL ? *scope->null : eval(scope, node->var_decl->value);
 
     enum valmap_set_status status = scope_declare_identifier(scope, node->var_decl->name, val, node->var_decl->is_const);
 
@@ -355,41 +340,40 @@ val_t *eval_var_decl(scope_t *scope, const ast_node_t *node)
             node->filename, node->line_start, node->column_start,
             "cannot redeclare identifier '%s'", node->identifier->symbol);
 
-        return NULL;
+        exit(-1);
     }
 
-    return scope->null;
+    return *scope->null;
 }
 
-val_t *eval_binexp(scope_t *scope, const ast_node_t *node)
+val_t eval_binexp(scope_t *scope, const ast_node_t *node)
 {
-    val_t *left = eval(scope, node->binexpr->left);
-    VAL_CHECK_EXIT(left);
-    val_t *right = eval(scope, node->binexpr->right);
-    VAL_CHECK_EXIT(right);
-    val_t *ret = NULL;
+    val_t left = eval(scope, node->binexpr->left);
+    val_t right = eval(scope, node->binexpr->right);
+    val_t ret = {
+        .type = VAL_NULL
+    };
 
-    if (left->type == VAL_INTEGER && right->type == VAL_INTEGER)
+    if (left.type == VAL_INTEGER && right.type == VAL_INTEGER)
     {
-        ret = eval_binexp_int(node->binexpr->operator, left, right, node);
+        ret = eval_binexp_int(node->binexpr->operator, &left, &right, node);
     }
     else
         RUNTIME_ERROR(node->filename, node->line_start, node->column_start,
                         "unsupported binary operation (lhs: %s(%d), rhs: %s(%d))",
-                        val_type_to_str(left->type), left->type,
-                        val_type_to_str(right->type), right->type);
+                        val_type_to_str(left.type), left.type,
+                        val_type_to_str(right.type), right.type);
 
     return ret;
 }
 
-val_t *eval_root(scope_t *scope, const ast_node_t *node)
+val_t eval_root(scope_t *scope, const ast_node_t *node)
 {
-    val_t *value = NULL;
+    val_t value = *scope->null;
 
     for (size_t i = 0; i < node->root->size; i++)
     {
         value = eval(scope, &node->root->nodes[i]);
-        VAL_CHECK_EXIT(value);
     }
 
     return value;

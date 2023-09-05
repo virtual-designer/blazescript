@@ -5,6 +5,7 @@
 #include "bytecode.h"
 #include "disassemble.h"
 #include "file.h"
+#include "opcode.h"
 #include "utils.h"
 #include <stdio.h>
 
@@ -18,14 +19,18 @@ static _Noreturn void process_file(const char *filepath)
     filebuf_free(&filebuf);
     disassemble(stdout, &bytecode);
 
+    execution_init();
+
     if (!bytecode_exec(&bytecode))
     {
+        execution_end();
         bytecode_free(&bytecode);
         fatal_error("%s", bytecode_error);
         free(bytecode_error);
         exit(-1);
     }
 
+    execution_end();
     bytecode_free(&bytecode);
     exit(bytecode_exit_code);
 }

@@ -16,6 +16,9 @@ typedef enum {
     OP_ADD_RR,
     OP_SYSCALL,
     OP_REGDUMP,
+    OP_PUSH_R_B,
+    OP_POP_R_B,
+    OP_STACK_DMP,
     OPCODE_COUNT
 } opcode_t;
 
@@ -28,6 +31,7 @@ typedef enum {
 typedef enum {
     SYS_EXIT,
     SYS_REGDUMP,
+    SYS_STACK_DUMP,
     SYS_PRINT,
 } syscall_t;
 
@@ -40,5 +44,8 @@ const char *opcode_to_str(opcode_t opcode);
 size_t opcode_get_size(opcode_t opcode);
 void opcode_get_operand_info(opcode_t opcode, operand_info_t info[2]);
 uint8_t *instruction_exec(opcode_t opcode, struct bytecode *bytecode);
+
+void execution_init();
+void execution_end();
 
 #endif /* BLAZESCRIPT_OPCODE_H */

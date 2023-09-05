@@ -9,7 +9,7 @@
 #include "datatype.h"
 #include "scope.h"
 
-val_t *eval(scope_t *scope, const ast_node_t *node);
+val_t eval(scope_t *scope, const ast_node_t *node);
 
 extern char *eval_fn_error;
 

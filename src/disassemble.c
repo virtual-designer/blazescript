@@ -104,10 +104,9 @@ void disassemble(FILE *__restrict__ fp, struct bytecode *bytecode)
 
             while (info[1].size --> 0)
                 i++;
-
-            i--;
         }
 
+        i--;
         fprintf(fp, "\n");
     }
 }

@@ -24,7 +24,7 @@ struct scope *scope_init(struct scope *parent)
 
     if (parent == NULL)
     {
-        scope->null = val_create(VAL_NULL);
+        scope->null = val_create_heap(VAL_NULL);
         scope->null->nofree = true;
     }
     else
@@ -50,23 +50,23 @@ struct scope *scope_create_global()
 {
     struct scope *scope = scope_init(NULL);
 
-    true_val = val_create(VAL_BOOLEAN);
-    false_val = val_create(VAL_BOOLEAN);
+    true_val = val_create_heap(VAL_BOOLEAN);
+    false_val = val_create_heap(VAL_BOOLEAN);
     true_val->boolval->value = true;
     false_val->boolval->value = false;
     true_val->nofree = true;
     false_val->nofree = true;
 
-    scope_declare_identifier(scope, "true", true_val, true);
-    scope_declare_identifier(scope, "false", false_val, true);
-    scope_declare_identifier(scope, "null", scope->null, true);
+    scope_declare_identifier(scope, "true", *true_val, true);
+    scope_declare_identifier(scope, "false", *false_val, true);
+    scope_declare_identifier(scope, "null", *scope->null, true);
 
     for (size_t i = 0; i < (sizeof builtin_functions) / (sizeof builtin_functions[0]); i++)
     {
-        val_t *fn_val = val_create(VAL_FUNCTION);
+        val_t *fn_val = val_create_heap(VAL_FUNCTION);
         fn_val->fnval->type = FN_BUILT_IN;
         fn_val->fnval->built_in_callback = builtin_functions[i].callback;
-        scope_declare_identifier(scope, builtin_functions[i].name, fn_val, true);
+        scope_declare_identifier(scope, builtin_functions[i].name, *fn_val, true);
     }
 
     return scope;
@@ -108,7 +108,7 @@ void scope_free(struct scope *scope)
     blaze_free(scope);
 }
 
-enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *name, val_t *val)
+enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *name, val_t val)
 {
     enum valmap_set_status status = valmap_set_no_create(scope->valmap, name, val, false, true);
 
@@ -120,7 +120,7 @@ enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *
     return status;
 }
 
-enum valmap_set_status scope_declare_identifier(struct scope *scope, const char *name, val_t *val, bool is_const)
+enum valmap_set_status scope_declare_identifier(struct scope *scope, const char *name, val_t val, bool is_const)
 {
     return valmap_set_no_overwrite(scope->valmap, name, val, is_const, true);
 }

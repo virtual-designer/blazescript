@@ -10,6 +10,7 @@
 #include "file.h"
 #include "lexer.h"
 #include "log.h"
+#include "map.h"
 #include "parser.h"
 #include "utils.h"
 #include "valmap.h"
