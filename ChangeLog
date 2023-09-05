@@ -1,3 +1,12 @@
+## [2.14.1](https://github.com/virtual-designer/blazescript/compare/v2.14.0...v2.14.1) (2023-09-05)
+
+
+### Performance Improvements
+
+* use stack memory for faster code execution ([c422b12](https://github.com/virtual-designer/blazescript/commit/c422b12899020b71acda0edf33efc2338c4d65af))
+
+
+
 # [2.14.0](https://github.com/virtual-designer/blazescript/compare/v2.13.0...v2.14.0) (2023-09-02)
 
 
@@ -32,15 +41,6 @@
 ### Features
 
 * syscalls ([7931206](https://github.com/virtual-designer/blazescript/commit/79312066a275a2950fcdf5a8a28b0ec23a6023de))
-
-
-
-# [2.11.0](https://github.com/virtual-designer/blazescript/compare/v2.10.0...v2.11.0) (2023-09-01)
-
-
-### Features
-
-* basic VM ([02024de](https://github.com/virtual-designer/blazescript/commit/02024de1f1d5c50bded6b2963e2d8571d36f871e))
 
 
 
