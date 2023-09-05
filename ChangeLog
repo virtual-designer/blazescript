@@ -1,3 +1,13 @@
+# [2.14.0](https://github.com/virtual-designer/blazescript/compare/v2.13.0...v2.14.0) (2023-09-02)
+
+
+### Features
+
+* **blazevm:** load bytecode from files ([d5d4af0](https://github.com/virtual-designer/blazescript/commit/d5d4af0334681a18efa4ff6b2a43f5a74187842d))
+* **blazevm:** stack ([b502541](https://github.com/virtual-designer/blazescript/commit/b5025419ad70bfc3ea06af666ad702e828fb7ec3))
+
+
+
 # [2.13.0](https://github.com/virtual-designer/blazescript/compare/v2.12.1...v2.13.0) (2023-09-02)
 
 
@@ -31,20 +41,6 @@
 ### Features
 
 * basic VM ([02024de](https://github.com/virtual-designer/blazescript/commit/02024de1f1d5c50bded6b2963e2d8571d36f871e))
-
-
-
-# [2.10.0](https://github.com/virtual-designer/blazescript/compare/v2.9.6...v2.10.0) (2023-08-30)
-
-
-### Bug Fixes
-
-* use RUNTIME_ERROR() macro instead of fatal_error() ([d9fe705](https://github.com/virtual-designer/blazescript/commit/d9fe7051b322a601e093b47e6c09fa74c81ad90f))
-
-
-### Features
-
-* blaze vm ([ded3f50](https://github.com/virtual-designer/blazescript/commit/ded3f50ae643b5c76966e43770f4d636f1a9e6b9))
 
 
 
