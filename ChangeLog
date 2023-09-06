@@ -1,3 +1,12 @@
+# [2.16.0](https://github.com/virtual-designer/blazescript/compare/v2.15.0...v2.16.0) (2023-09-06)
+
+
+### Features
+
+* if statements ([3d6ce09](https://github.com/virtual-designer/blazescript/commit/3d6ce09bfbbb580ded7626bdfd9bb6fdb7f3eb9c))
+
+
+
 # [2.15.0](https://github.com/virtual-designer/blazescript/compare/v2.14.1...v2.15.0) (2023-09-05)
 
 
@@ -32,15 +41,6 @@
 ### Features
 
 * print syscall ([af6a78f](https://github.com/virtual-designer/blazescript/commit/af6a78ff45acaee4da466392b044a3c02c2df495))
-
-
-
-## [2.12.1](https://github.com/virtual-designer/blazescript/compare/v2.12.0...v2.12.1) (2023-09-01)
-
-
-### Bug Fixes
-
-* update Makefile.am ([003a37a](https://github.com/virtual-designer/blazescript/commit/003a37ade3df0fb72611bc5e4d2e608660bf3a42))
 
 
 
