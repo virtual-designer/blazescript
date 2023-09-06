@@ -36,6 +36,10 @@ jobs:
     - name: make
       run: make
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      
+    - name: check
+      run: make check
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
     - name: install
       run: make install

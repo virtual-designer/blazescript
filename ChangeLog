@@ -1,3 +1,12 @@
+# [2.15.0](https://github.com/virtual-designer/blazescript/compare/v2.14.1...v2.15.0) (2023-09-05)
+
+
+### Features
+
+* comparison operators ([5f68ad4](https://github.com/virtual-designer/blazescript/commit/5f68ad40438e1a9098a5d99f3f4c8d88bd14dcea))
+
+
+
 ## [2.14.1](https://github.com/virtual-designer/blazescript/compare/v2.14.0...v2.14.1) (2023-09-05)
 
 
@@ -32,15 +41,6 @@
 ### Bug Fixes
 
 * update Makefile.am ([003a37a](https://github.com/virtual-designer/blazescript/commit/003a37ade3df0fb72611bc5e4d2e608660bf3a42))
-
-
-
-# [2.12.0](https://github.com/virtual-designer/blazescript/compare/v2.11.0...v2.12.0) (2023-09-01)
-
-
-### Features
-
-* syscalls ([7931206](https://github.com/virtual-designer/blazescript/commit/79312066a275a2950fcdf5a8a28b0ec23a6023de))
 
 
 
