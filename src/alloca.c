@@ -108,7 +108,9 @@ void *blaze_realloc(void *ptr, size_t new_size)
 
     if (new_ptr != ptr)
     {
-        alloca_tbl_remove_ptr(&global_alloca_tbl, ptr);
+        if (ptr != NULL)
+            alloca_tbl_remove_ptr(&global_alloca_tbl, ptr);
+
         alloca_tbl_push_ptr(&global_alloca_tbl, new_ptr);
     }
 

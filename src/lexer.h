@@ -27,7 +27,9 @@ enum lex_token_type
     T_SQUARE_BRACE_OPEN,
     T_SQUARE_BRACE_CLOSE,
     T_IMPORT,
-    T_ARRAY
+    T_ARRAY,
+    T_IF,
+    T_ELSE
 };
 
 struct lex_token

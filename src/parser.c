@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include "lexer.h"
 #include "parser.h"
 #include "alloca.h"
@@ -33,6 +32,8 @@ static ast_node_t parser_parse_assignment_expr(struct parser *parser);
 static ast_node_t parser_parse_fn_decl(struct parser *parser);
 static ast_node_t parser_parse_array_lit(struct parser *parser);
 static ast_node_t parser_parse_binexp_comparison(struct parser *parser);
+static ast_node_t parser_parse_block(struct parser *parser);
+static ast_node_t parser_parse_if(struct parser *parser);
 
 struct parser parser_init()
 {
@@ -109,7 +110,6 @@ ast_node_t parser_create_ast_node(struct parser *parser)
         root->nodes =
             blaze_realloc(root->nodes, (++root->size) * sizeof(ast_node_t));
         root->nodes[root->size - 1] = parser_parse_stmt(parser);
-        (root->nodes[root->size - 1]);
     }
 
     ast_node_t node;
@@ -227,6 +227,12 @@ ast_node_t *parser_ast_deep_copy(ast_node_t *node)
             copy->fn_decl->identifier->symbol = blaze_strdup(node->fn_decl->identifier->symbol);
             break;
 
+        case NODE_BLOCK:
+            copy->block = blaze_calloc(1, sizeof (ast_block_t));
+            copy->block->size = node->block->size;
+            copy->block->children = node->block->children;
+            break;
+
         default:
             fatal_error("%s(): AST type not recognized: (%d)", __func__, node->type);
     }
@@ -244,13 +250,68 @@ static ast_node_t *create_node()
     return blaze_calloc(1, sizeof(ast_node_t));
 }
 
+static ast_node_t parser_parse_if(struct parser *parser)
+{
+    ast_if_stmt_t *if_node = blaze_calloc(1, sizeof (ast_if_stmt_t));
+    ast_node_t node = {
+        .type = NODE_IF_STMT,
+    };
+
+    parser_expect(parser, T_IF);
+    parser_expect(parser, T_PAREN_OPEN);
+    ast_node_t condition = parser_parse_expr(parser);
+    parser_expect(parser, T_PAREN_CLOSE);
+    ast_node_t if_body = parser_parse_stmt(parser);
+
+    if (parser_at(parser).type == T_ELSE)
+    {
+        ast_node_t else_body;
+        parser_expect(parser, T_ELSE);
+        else_body = parser_parse_stmt(parser);
+        if_node->else_block = parser_ast_deep_copy(&else_body);
+    }
+    else
+    {
+        if_node->else_block = NULL;
+    }
+
+    if_node->condition = parser_ast_deep_copy(&condition);
+    if_node->if_block = parser_ast_deep_copy(&if_body);
+    node.if_stmt = if_node;
+    return node;
+}
+
+static ast_node_t parser_parse_block(struct parser *parser)
+{
+    parser_expect(parser, T_BLOCK_BRACE_OPEN);
+
+    ast_node_t node = {
+        .type = NODE_BLOCK,
+        .block = blaze_calloc(1, sizeof (ast_block_t))
+    };
+
+    size_t size = 0;
+    node.block->children = NULL;
+
+    while (!parser_is_eof(parser) && parser_at(parser).type != T_BLOCK_BRACE_CLOSE)
+    {
+        ast_node_t child_node = parser_parse_stmt(parser);
+        node.block->children = blaze_realloc(node.block->children, (++size) * (sizeof (ast_node_t)));
+        node.block->children[size - 1] = child_node;
+    }
+
+    parser_expect(parser, T_BLOCK_BRACE_CLOSE);
+    node.block->size = size;
+    return node;
+}
+
 static ast_node_t parser_parse_array_lit(struct parser *parser)
 {
     if (parser_at(parser).type != T_ARRAY)
         return parser_parse_binexp_comparison(parser);
 
-    (parser_expect(parser, T_ARRAY));
-    (parser_expect(parser, T_SQUARE_BRACE_OPEN));
+    parser_expect(parser, T_ARRAY);
+    parser_expect(parser, T_SQUARE_BRACE_OPEN);
 
     ast_node_t node;
     node.type = NODE_ARRAY_LIT;
@@ -279,26 +340,35 @@ static ast_node_t parser_parse_array_lit(struct parser *parser)
 static ast_node_t parser_parse_stmt(struct parser *parser)
 {
     ast_node_t stmt;
-    bool semicolon_is_expected = true;
+    bool semicolon_is_expected = false;
 
     switch (parser_at(parser).type)
     {
         case T_VAR:
         case T_CONST:
             stmt = parser_parse_var_decl(parser);
+            semicolon_is_expected = true;
             break;
 
         case T_FUNCTION:
             stmt = parser_parse_fn_decl(parser);
-            semicolon_is_expected = false;
+            break;
+
+        case T_BLOCK_BRACE_OPEN:
+            stmt = parser_parse_block(parser);
+            break;
+
+        case T_IF:
+            stmt = parser_parse_if(parser);
             break;
 
         default:
             stmt = parser_parse_expr(parser);
+            semicolon_is_expected = true;
     }
 
     if (semicolon_is_expected)
-        (parser_expect(parser, T_SEMICOLON));
+        parser_expect(parser, T_SEMICOLON);
 
     while (parser_at(parser).type == T_SEMICOLON)
         parser_ret_forward(parser);
@@ -309,10 +379,8 @@ static ast_node_t parser_parse_stmt(struct parser *parser)
 static ast_node_t parser_parse_fn_decl(struct parser *parser)
 {
     struct lex_token first_token = parser_expect(parser, T_FUNCTION);
-    (first_token);
     struct lex_token fn_name_token = parser_expect(parser, T_IDENTIFIER);
-    (fn_name_token);
-    (parser_expect(parser, T_PAREN_OPEN));
+    parser_expect(parser, T_PAREN_OPEN);
 
     ast_node_t node;
 
@@ -331,7 +399,6 @@ static ast_node_t parser_parse_fn_decl(struct parser *parser)
     while (!parser_is_eof(parser) && parser_at(parser).type != T_PAREN_CLOSE)
     {
         struct lex_token identifier = parser_expect(parser, T_IDENTIFIER);
-        (identifier);
         node.fn_decl->param_names =
             blaze_realloc(node.fn_decl->param_names,
                           sizeof(char *) * (++node.fn_decl->param_count));
@@ -340,16 +407,15 @@ static ast_node_t parser_parse_fn_decl(struct parser *parser)
         if (parser_at(parser).type == T_PAREN_CLOSE)
             break;
 
-        (parser_expect(parser, T_COMMA));
+        parser_expect(parser, T_COMMA);
     }
 
-    (parser_expect(parser, T_PAREN_CLOSE));
-    (parser_expect(parser, T_BLOCK_BRACE_OPEN));
+    parser_expect(parser, T_PAREN_CLOSE);
+    parser_expect(parser, T_BLOCK_BRACE_OPEN);
 
     while (!parser_is_eof(parser) && parser_at(parser).type != T_BLOCK_BRACE_CLOSE)
     {
         ast_node_t stmt = parser_parse_stmt(parser);
-        (stmt);
         node.fn_decl->body =
             blaze_realloc(node.fn_decl->body,
                           sizeof(ast_node_t) * (++node.fn_decl->size));
@@ -357,7 +423,7 @@ static ast_node_t parser_parse_fn_decl(struct parser *parser)
     }
 
     struct lex_token last_token = parser_expect(parser, T_BLOCK_BRACE_CLOSE);
-    (last_token);
+
     node.line_end = last_token.line_end;
     node.column_end = last_token.column_end;
 
@@ -656,8 +722,7 @@ static ast_node_t parser_parse_primary_expr(struct parser *parser)
         {
             parser_ret_forward(parser);
             ast_node_t node = parser_parse_expr(parser);
-            (node);
-            (parser_expect(parser, T_PAREN_CLOSE));
+            parser_expect(parser, T_PAREN_CLOSE);
             return node;
         }
 
@@ -679,6 +744,8 @@ const char *ast_type_to_str(enum ast_node_type type)
         [NODE_EXPR_CALL] = "CALL_EXPR",
         [NODE_FN_DECL] = "FN_DECL",
         [NODE_ARRAY_LIT] = "ARRAY_LIT",
+        [NODE_BLOCK] = "BLOCK",
+        [NODE_IF_STMT] = "IF_STMT",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -765,6 +832,24 @@ static void parser_ast_free_inner(ast_node_t *node)
             blaze_free(node->fn_decl);
             break;
 
+        case NODE_BLOCK:
+            for (size_t i = 0; i < node->block->size; i++)
+                parser_ast_free(&node->block->children[i]);
+
+            blaze_free(node->block->children);
+            blaze_free(node->block);
+            break;
+
+        case NODE_IF_STMT:
+            parser_ast_free(node->if_stmt->condition);
+            parser_ast_free(node->if_stmt->if_block);
+
+            if (node->if_stmt->else_block != NULL)
+                parser_ast_free(node->if_stmt->else_block);
+
+            blaze_free(node->if_stmt);
+            break;
+
         default:
             fatal_error("parser_ast_free_inner(): AST type not recognized: %s (%d)",
                      ast_type_to_str(node->type), node->type);
@@ -820,6 +905,39 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
             blaze_debug__print_ast_indent_string(inner_indent_level, "]\n");
             break;
 
+        case NODE_BLOCK:
+            blaze_debug__print_ast_indent_string(inner_indent_level, "capacity: %lu,\n", node->block->size);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "children: [\n");
+
+            for (size_t i = 0; i < node->block->size; i++)
+            {
+                blaze_debug__print_ast_internal(&node->block->children[i], inner_indent_level + 1, false, true);
+
+                if (i < node->block->size - 1)
+                    printf(",");
+
+                printf("\n");
+            }
+
+            blaze_debug__print_ast_indent_string(inner_indent_level, "]\n");
+            break;
+
+        case NODE_IF_STMT:
+            blaze_debug__print_ast_indent_string(inner_indent_level, "condition: ");
+            blaze_debug__print_ast_internal(node->if_stmt->condition, inner_indent_level, false, false);
+            printf(",\n");
+            blaze_debug__print_ast_indent_string(inner_indent_level, "if_body: ");
+            blaze_debug__print_ast_internal(node->if_stmt->if_block, inner_indent_level, false, false);
+            printf(",\n");
+            blaze_debug__print_ast_indent_string(inner_indent_level, "else_body: ");
+
+            if (node->if_stmt->else_block == NULL)
+                puts("[None]");
+            else
+                blaze_debug__print_ast_internal(node->if_stmt->else_block, inner_indent_level, true, false);
+
+            break;
+
         case NODE_ARRAY_LIT:
             blaze_debug__print_ast_indent_string(inner_indent_level, "length: %lu,\n", node->array_lit->elements->length);
             blaze_debug__print_ast_indent_string(inner_indent_level, "children: [\n");
@@ -850,7 +968,26 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
             break;
 
         case NODE_BINARY_EXPR:
-            blaze_debug__print_ast_indent_string(inner_indent_level, "operator: '%c',\n", node->binexpr->operator);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "operator: '");
+            ast_bin_operator_t operator = node->binexpr->operator;
+
+            if (operator == OP_CMP_GE)
+                printf(">=");
+            else if (operator == OP_CMP_LE)
+                printf("<=");
+            else if (operator == OP_CMP_EQ)
+                printf("==");
+            else if (operator == OP_CMP_EQ_S)
+                printf("===");
+            else if (operator == OP_CMP_NE)
+                printf("!=");
+            else if (operator == OP_CMP_NE_S)
+                printf("!==");
+            else
+                printf("%c", operator);
+
+            printf("',\n");
+
             blaze_debug__print_ast_indent_string(inner_indent_level, "left: ");
             blaze_debug__print_ast_internal(node->binexpr->left, inner_indent_level, false, false);
             printf(", \n");

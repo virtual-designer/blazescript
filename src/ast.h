@@ -9,7 +9,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef enum ast_node_type {
+typedef enum ast_node_type
+{
     NODE_ROOT,
     NODE_INT_LIT,
     NODE_BINARY_EXPR,
@@ -20,10 +21,13 @@ typedef enum ast_node_type {
     NODE_EXPR_CALL,
     NODE_FN_DECL,
     NODE_ARRAY_LIT,
-    NODE_IMPORT_STMT
+    NODE_IMPORT_STMT,
+    NODE_BLOCK,
+    NODE_IF_STMT
 } ast_type_t;
 
-typedef enum ast_bin_operator {
+typedef enum ast_bin_operator
+{
     OP_PLUS = '+',
     OP_MINUS = '-',
     OP_DIVIDE = '/',
@@ -39,47 +43,56 @@ typedef enum ast_bin_operator {
     OP_CMP_NE_S = 0xF5,
 } ast_bin_operator_t;
 
-typedef struct ast_int_lit {
+typedef struct ast_int_lit
+{
     long long int intval;
 } ast_intlit_t;
 
-typedef struct ast_str_lit {
+typedef struct ast_str_lit
+{
     char *strval;
 } ast_string_t;
 
-typedef struct ast_binexpr {
+typedef struct ast_binexpr
+{
     struct ast_node *left;
     struct ast_node *right;
     ast_bin_operator_t operator;
 } ast_binexpr_t;
 
-typedef struct ast_identifier {
+typedef struct ast_identifier
+{
     char *symbol;
 } ast_identifier_t;
 
-typedef struct ast_assignment_expr {
+typedef struct ast_assignment_expr
+{
     struct ast_node *assignee;
     struct ast_node *value;
 } ast_assignment_expr_t;
 
-typedef struct ast_var_decl {
+typedef struct ast_var_decl
+{
     char *name;
     bool is_const;
     struct ast_node *value;
 } ast_var_decl_t;
 
-typedef struct ast_root {
+typedef struct ast_root
+{
     size_t size;
     struct ast_node *nodes;
 } ast_root_t;
 
-typedef struct ast_fn_call {
+typedef struct ast_fn_call
+{
     size_t argc;
     struct ast_node *args;
     ast_identifier_t *identifier;
 } ast_call_t;
 
-typedef struct ast_fn_decl {
+typedef struct ast_fn_decl
+{
     size_t param_count;
     char **param_names;
     ast_identifier_t *identifier;
@@ -87,11 +100,26 @@ typedef struct ast_fn_decl {
     size_t size;
 } ast_fn_decl_t;
 
-typedef struct ast_array_lit {
+typedef struct ast_array_lit
+{
     vector_t *elements;
 } ast_array_lit_t;
 
-typedef struct ast_import_stmt {
+typedef struct ast_block
+{
+    size_t size;
+    struct ast_node *children;
+} ast_block_t;
+
+typedef struct ast_if_stmt_t
+{
+    struct ast_node *condition;
+    struct ast_node *if_block;
+    struct ast_node *else_block;
+} ast_if_stmt_t;
+
+typedef struct ast_import_stmt
+{
     // TODO
 } ast_import_stmt_t;
 
@@ -114,6 +142,8 @@ typedef struct ast_node
         ast_fn_decl_t *fn_decl;
         ast_array_lit_t *array_lit;
         ast_import_stmt_t *import_stmt;
+        ast_if_stmt_t *if_stmt;
+        ast_block_t *block;
     };
 } ast_node_t;
 

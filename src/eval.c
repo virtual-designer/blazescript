@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BLAZE_NULL ((val_t) { .type = VAL_NULL })
+
 val_t eval_int(scope_t *scope, const ast_node_t *node);
 val_t eval_float(scope_t *scope, const ast_node_t *node);
 val_t eval_string(scope_t *scope, const ast_node_t *node);
@@ -25,6 +27,8 @@ val_t eval_assignment(scope_t *scope, const ast_node_t *node);
 val_t eval_expr_call(scope_t *scope, const ast_node_t *node);
 val_t eval_fn_decl(scope_t *scope, const ast_node_t *node);
 val_t eval_array_lit(scope_t *scope, const ast_node_t *node);
+val_t eval_block(scope_t *scope, const ast_node_t *node);
+val_t eval_if_stmt(scope_t *scope, const ast_node_t *node);
 
 char *eval_fn_error = NULL;
 
@@ -62,9 +66,45 @@ val_t eval(scope_t *scope, const ast_node_t *node)
         case NODE_ARRAY_LIT:
             return eval_array_lit(scope, node);
 
+        case NODE_BLOCK:
+            return eval_block(scope, node);
+
+        case NODE_IF_STMT:
+            return eval_if_stmt(scope, node);
+
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
+            return *scope->null;
     }
+}
+
+inline bool val_is_truthy(const val_t *val)
+{
+    return val->type != VAL_NULL &&
+           (val->type != VAL_BOOLEAN || val->boolval->value != false) &&
+           (val->type != VAL_INTEGER || val->intval->value != 0);
+}
+
+val_t eval_if_stmt(scope_t *scope, const ast_node_t *node)
+{
+    val_t cond_val = eval(scope, node->if_stmt->condition);
+
+    if (val_is_truthy(&cond_val))
+        eval(scope, node->if_stmt->if_block);
+    else
+        eval(scope, node->if_stmt->else_block);
+
+    return BLAZE_NULL;
+}
+
+val_t eval_block(scope_t *scope, const ast_node_t *node)
+{
+    for (size_t i = 0; i < node->block->size; i++)
+    {
+        eval(scope, &node->block->children[i]);
+    }
+
+    return BLAZE_NULL;
 }
 
 val_t eval_array_lit(scope_t *scope, const ast_node_t *node)
@@ -273,6 +313,79 @@ val_t eval_string(scope_t *scope, const ast_node_t *node)
     return val;
 }
 
+static long long int val_to_int(val_t *val)
+{
+    if (val->type == VAL_INTEGER)
+        return val->intval->value;
+
+    if (val->type == VAL_NULL)
+        return 0;
+
+    if (val->type == VAL_BOOLEAN)
+        return val->boolval->value;
+
+    return 1;
+}
+
+static val_t eval_binexp_cmp_generic(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)
+{
+    val_t val = val_init();
+    val.type = VAL_BOOLEAN;
+    long long int li = val_to_int(left);
+    long long int ri = val_to_int(right);
+
+    switch (operator)
+    {
+        case OP_CMP_GT:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li > ri;
+            break;
+
+        case OP_CMP_LT:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li < ri;
+            break;
+
+        case OP_CMP_GE:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li >= ri;
+            break;
+
+        case OP_CMP_LE:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li <= ri;
+            break;
+
+        case OP_CMP_EQ:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li == ri;
+            break;
+
+        case OP_CMP_EQ_S:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li == ri;
+            break;
+
+        case OP_CMP_NE:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li != ri;
+            break;
+
+        case OP_CMP_NE_S:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li != ri;
+            break;
+
+        default:
+        {
+            fatal_error("unsupported comparison operator '%c' (%d)", operator, operator);
+            exit(-1);
+        }
+    }
+
+    return val;
+}
+
 static val_t eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)
 {
     val_t val = val_init();
@@ -318,54 +431,6 @@ static val_t eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *ri
             val.intval->value = left->intval->value % right->intval->value;
             break;
 
-        case OP_CMP_GT:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value > right->intval->value;
-        break;
-
-        case OP_CMP_LT:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value < right->intval->value;
-        break;
-
-        case OP_CMP_GE:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value >= right->intval->value;
-        break;
-
-        case OP_CMP_LE:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value <= right->intval->value;
-        break;
-
-        case OP_CMP_EQ:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value == right->intval->value;
-        break;
-
-        case OP_CMP_EQ_S:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value == right->intval->value;
-        break;
-
-        case OP_CMP_NE:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value != right->intval->value;
-        break;
-
-        case OP_CMP_NE_S:
-            val.type = VAL_BOOLEAN;
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = left->intval->value != right->intval->value;
-        break;
-
         default:
         {
             fatal_error("unsupported operator '%c' (%d)", operator, operator);
@@ -401,11 +466,12 @@ val_t eval_binexp(scope_t *scope, const ast_node_t *node)
     val_t ret = {
         .type = VAL_NULL
     };
+    ast_bin_operator_t operator = node->binexpr->operator;
 
-    if (left.type == VAL_INTEGER && right.type == VAL_INTEGER)
-    {
-        ret = eval_binexp_int(node->binexpr->operator, &left, &right, node);
-    }
+    if (operator >= OP_CMP_GT && operator <= OP_CMP_NE_S)
+        ret = eval_binexp_cmp_generic(operator, &left, &right, node);
+    else if (left.type == VAL_INTEGER && right.type == VAL_INTEGER)
+        ret = eval_binexp_int(operator, &left, &right, node);
     else
         RUNTIME_ERROR(node->filename, node->line_start, node->column_start,
                         "unsupported binary operation (lhs: %s(%d), rhs: %s(%d))",

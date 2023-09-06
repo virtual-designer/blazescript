@@ -63,6 +63,8 @@ static const struct multichar_token keywords[] = {
     { "function", T_FUNCTION },
     { "array", T_ARRAY },
     { "import", T_IMPORT },
+    { "if", T_IF },
+    { "else", T_ELSE },
 };
 
 struct lex lex_init(char *filename, char *buf)
@@ -307,7 +309,7 @@ static bool lex_multichar_operators(struct lex *lex)
 
         lex_tokens_array_push(lex, (struct lex_token) {
            .type = T_BINARY_OPERATOR,
-           .value = strdup(value),
+           .value = blaze_strdup(value),
            .line_start = lex->current_line,
            .line_end = lex->current_line,
            .column_start = column_start,
@@ -443,6 +445,8 @@ const char *lex_token_to_str(enum lex_token_type type)
         [T_IMPORT] = "T_IMPORT",
         [T_SQUARE_BRACE_OPEN] = "T_SQUARE_BRACE_OPEN",
         [T_SQUARE_BRACE_CLOSE] = "T_SQUARE_BRACE_CLOSE",
+        [T_IF] = "T_IF",
+        [T_ELSE] = "T_ELSE",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
