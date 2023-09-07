@@ -72,7 +72,7 @@ static uint8_t *((*handlers_lut[])(struct bytecode *bytecode, uint8_t *ip)) = {
     [OP_POP_R_B] = OPCODE_HANDLER_REF(pop_r_b),
 };
 
-static stack_t stack;
+static blaze_stack_t stack;
 
 size_t opcode_get_size(opcode_t opcode)
 {
@@ -140,12 +140,11 @@ bool validate_register(struct bytecode *bytecode, register_type_t id)
 
 void execution_init()
 {
-    stack = stack_create(STACK_SIZE);
+    stack = blaze_stack_create(STACK_SIZE);
 }
 
 void execution_end()
-{
-    stack_free(&stack);
+{ blaze_stack_free(&stack);
 }
 
 OPCODE_HANDLER(push_r_b)
@@ -155,7 +154,7 @@ OPCODE_HANDLER(push_r_b)
     if (!validate_register(bytecode, reg_id))
         return NULL;
 
-    stack_push_byte(&stack, registers[reg_id] & 0xFF);
+    blaze_stack_push_byte(&stack, registers[reg_id] & 0xFF);
     return ++ip;
 }
 
@@ -166,7 +165,7 @@ OPCODE_HANDLER(pop_r_b)
     if (!validate_register(bytecode, reg_id))
         return NULL;
 
-    registers[reg_id] = stack_pop_byte(&stack);
+    registers[reg_id] = blaze_stack_pop_byte(&stack);
     return ++ip;
 }
 

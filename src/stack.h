@@ -12,11 +12,11 @@ typedef struct {
     uint8_t *bytes;
     size_t size;
     size_t index;
-} stack_t;
+} blaze_stack_t;
 
-stack_t stack_create(size_t initial_size);
-uint8_t *stack_push_byte(stack_t *stack, uint8_t byte);
-uint8_t stack_pop_byte(stack_t *stack);
-void stack_free(stack_t *stack);
+blaze_stack_t blaze_stack_create(size_t initial_size);
+uint8_t *blaze_stack_push_byte(blaze_stack_t *stack, uint8_t byte);
+uint8_t blaze_stack_pop_byte(blaze_stack_t *stack);
+void blaze_stack_free(blaze_stack_t *stack);
 
 #endif /* BLAZESCRIPT_STACK_H */
