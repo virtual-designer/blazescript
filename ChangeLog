@@ -1,3 +1,12 @@
+# [2.17.0](https://github.com/virtual-designer/blazescript/compare/v2.16.0...v2.17.0) (2023-09-07)
+
+
+### Features
+
+* string binary operations ([6ed1e7f](https://github.com/virtual-designer/blazescript/commit/6ed1e7f8e1077440333cd3c82f3c116876685000))
+
+
+
 # [2.16.0](https://github.com/virtual-designer/blazescript/compare/v2.15.0...v2.16.0) (2023-09-06)
 
 
@@ -32,15 +41,6 @@
 
 * **blazevm:** load bytecode from files ([d5d4af0](https://github.com/virtual-designer/blazescript/commit/d5d4af0334681a18efa4ff6b2a43f5a74187842d))
 * **blazevm:** stack ([b502541](https://github.com/virtual-designer/blazescript/commit/b5025419ad70bfc3ea06af666ad702e828fb7ec3))
-
-
-
-# [2.13.0](https://github.com/virtual-designer/blazescript/compare/v2.12.1...v2.13.0) (2023-09-02)
-
-
-### Features
-
-* print syscall ([af6a78f](https://github.com/virtual-designer/blazescript/commit/af6a78ff45acaee4da466392b044a3c02c2df495))
 
 
 
