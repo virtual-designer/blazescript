@@ -1,3 +1,13 @@
+## [2.17.2](https://github.com/virtual-designer/blazescript/compare/v2.17.1...v2.17.2) (2023-09-07)
+
+
+### Bug Fixes
+
+* null values cause segfault ([89419f4](https://github.com/virtual-designer/blazescript/commit/89419f48dafd5a242ab8ce3f412d3922e69dc7d7))
+* **windows:** build errors ([0105488](https://github.com/virtual-designer/blazescript/commit/010548814d67e7553a42b30b437f484725bbfbec))
+
+
+
 ## [2.17.1](https://github.com/virtual-designer/blazescript/compare/v2.17.0...v2.17.1) (2023-09-07)
 
 
@@ -31,15 +41,6 @@
 ### Features
 
 * comparison operators ([5f68ad4](https://github.com/virtual-designer/blazescript/commit/5f68ad40438e1a9098a5d99f3f4c8d88bd14dcea))
-
-
-
-## [2.14.1](https://github.com/virtual-designer/blazescript/compare/v2.14.0...v2.14.1) (2023-09-05)
-
-
-### Performance Improvements
-
-* use stack memory for faster code execution ([c422b12](https://github.com/virtual-designer/blazescript/commit/c422b12899020b71acda0edf33efc2338c4d65af))
 
 
 
