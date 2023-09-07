@@ -17,9 +17,11 @@ all:
 		else \
 			printf "\033[1;31mFAIL\033[0m \033[1m%s\033[0m\n" $$test; \
 			printf "Error code: %d\n" $$exitcode; \
+			$(RM) *.bl; \
 			exit 1; \
 		fi; \
 		echo ""; \
+		$(RM) *.bl; \
 	done
 
 clean:
