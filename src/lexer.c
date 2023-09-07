@@ -301,6 +301,10 @@ static bool lex_multichar_operators(struct lex *lex)
             value = "==";
         else if (lex->buf[lex->index] == '!' && lex->buf[lex->index + 1] == '=')
             value = "!=";
+        else if (lex->buf[lex->index] == '>' && lex->buf[lex->index + 1] == '=')
+            value = ">=";
+        else if (lex->buf[lex->index] == '<' && lex->buf[lex->index + 1] == '=')
+            value = "<=";
         else
             return false;
 

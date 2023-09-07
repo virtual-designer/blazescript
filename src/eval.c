@@ -394,9 +394,6 @@ static val_t eval_binexp_string(ast_bin_operator_t operator, val_t *left, val_t 
     const char *left_str = val_stringify(left);
     const char *right_str = val_stringify(right);
 
-    val_type_t ltype = left->type;
-    val_type_t rtype = right->type;
-
     switch (operator)
     {
         case OP_CMP_EQ:
@@ -435,14 +432,14 @@ static val_t eval_binexp_cmp_generic(ast_bin_operator_t operator, val_t *left, v
 
     switch (operator)
     {
-        case OP_CMP_GT:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li > ri;
-            break;
-
         case OP_CMP_LT:
             val.boolval = blaze_malloc(sizeof *(val.boolval));
             val.boolval->value = li < ri;
+            break;
+
+        case OP_CMP_GT:
+            val.boolval = blaze_malloc(sizeof *(val.boolval));
+            val.boolval->value = li > ri;
             break;
 
         case OP_CMP_GE:
@@ -532,7 +529,7 @@ static val_t eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *ri
 
         default:
         {
-            fatal_error("unsupported operator '%c' (%d)", operator, operator);
+            fatal_error("unsupported int operator '%c' (%d)", operator, operator);
             exit(-1);
         }
     }
@@ -567,7 +564,7 @@ val_t eval_binexp(scope_t *scope, const ast_node_t *node)
     };
     ast_bin_operator_t operator = node->binexpr->operator;
 
-    if (operator >= OP_CMP_GT && operator <= OP_CMP_NE_S)
+    if (operator >= OP_CMP_LT && operator <= OP_CMP_NE_S)
         ret = eval_binexp_cmp_generic(operator, &left, &right, node);
     else if (left.type == VAL_INTEGER && right.type == VAL_INTEGER)
         ret = eval_binexp_int(operator, &left, &right, node);
