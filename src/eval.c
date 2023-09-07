@@ -94,7 +94,7 @@ val_t eval_if_stmt(scope_t *scope, const ast_node_t *node)
 
     if (val_is_truthy(&cond_val))
         eval(scope, node->if_stmt->if_block);
-    else
+    else if (node->if_stmt->else_block != NULL)
         eval(scope, node->if_stmt->else_block);
 
     return BLAZE_NULL;
