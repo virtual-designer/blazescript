@@ -1,4 +1,4 @@
 SUBDIRS = include lib src
 
-distcheck-hook:
+check-local:
 	$(MAKE) -C tests
