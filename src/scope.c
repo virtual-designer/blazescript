@@ -11,7 +11,8 @@
 #include "valmap.h"
 
 static val_t *true_val = NULL,
-             *false_val = NULL;
+             *false_val = NULL,
+             *null_val = NULL;
 
 static struct scope **allocated_scopes = NULL;
 static size_t scope_count = 0;
@@ -26,6 +27,7 @@ struct scope *scope_init(struct scope *parent)
     {
         scope->null = val_create_heap(VAL_NULL);
         scope->null->nofree = true;
+        null_val = scope->null;
     }
     else
     {
@@ -44,6 +46,11 @@ struct scope *scope_init(struct scope *parent)
     allocated_scopes[scope_count - 1] = scope;
 
     return scope;
+}
+
+val_t *blaze_null()
+{
+    return null_val;
 }
 
 struct scope *scope_create_global()

@@ -37,4 +37,4 @@ blaze_file << EOF
 println(array [1, 2, 3, 4, "String", null, true, false]);
 EOF
 
-blaze_test 'Array [1, 2, 3, 4, "String", null, true, false]\n'
+blaze_test 'Array (8) [1, 2, 3, 4, "String", null, true, false]\n'

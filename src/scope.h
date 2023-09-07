@@ -24,5 +24,6 @@ enum valmap_set_status scope_declare_identifier(struct scope *scope, const char 
 val_t *scope_resolve_identifier(struct scope *scope, const char *name);
 struct scope *scope_create_global();
 void scope_destroy_all();
+val_t *blaze_null();
 
 #endif /* BLAZESCRIPT_SCOPE_H */

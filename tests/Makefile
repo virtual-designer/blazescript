@@ -21,3 +21,6 @@ all:
 		fi; \
 		echo ""; \
 	done
+
+clean:
+	$(RM) *.bl

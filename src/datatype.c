@@ -99,7 +99,7 @@ val_t val_create(val_type_t type)
 val_t *val_copy_deep(val_t *orig)
 {
     if (orig->type == VAL_NULL)
-        return orig;
+        return blaze_null();
 
     val_t *val = val_create_heap(orig->type);
 
@@ -154,6 +154,7 @@ val_t *val_copy_deep(val_t *orig)
             break;
 
         case VAL_NULL:
+            val->type = VAL_NULL;
             break;
 
         default:
@@ -244,46 +245,46 @@ void print_val_internal(val_t *val, bool quote_strings)
 
     switch (val->type)
     {
-    case VAL_INTEGER:
-        printf("\033[1;33m%lld\033[0m", val->intval->value);
-        break;
+        case VAL_INTEGER:
+            printf("\033[1;33m%lld\033[0m", val->intval->value);
+            break;
 
-    case VAL_FLOAT:
-        printf("\033[1;33m%Lf\033[0m", val->floatval->value);
-        break;
+        case VAL_FLOAT:
+            printf("\033[1;33m%Lf\033[0m", val->floatval->value);
+            break;
 
-    case VAL_STRING:
-        printf("\033[32m%s%s%s\033[0m", quote_strings ? "\"" : "", val->strval->value, quote_strings ? "\"" : "");
-        break;
+        case VAL_STRING:
+            printf("\033[32m%s%s%s\033[0m", quote_strings ? "\"" : "", val->strval->value, quote_strings ? "\"" : "");
+            break;
 
-    case VAL_BOOLEAN:
-        printf("\033[36m%s\033[0m", val->boolval->value == true ? "true" : "false");
-        break;
+        case VAL_BOOLEAN:
+            printf("\033[36m%s\033[0m", val->boolval->value == true ? "true" : "false");
+            break;
 
-    case VAL_NULL:
-        printf("\033[2mnull\033[0m");
-        break;
+        case VAL_NULL:
+            printf("\033[2mnull\033[0m");
+            break;
 
-    case VAL_ARRAY:
-        printf("\033[34mArray\033[0m [");
+        case VAL_ARRAY:
+            printf("\033[34mArray (%zu)\033[0m [", val->arrval->array->length);
 
-        for (size_t i = 0; i < val->arrval->array->length; i++)
-        {
-            print_val_internal((val_t *) val->arrval->array->data[i], true);
+            for (size_t i = 0; i < val->arrval->array->length; i++)
+            {
+                print_val_internal((val_t *) val->arrval->array->data[i], true);
 
-            if (i != val->arrval->array->length - 1)
-                printf(", ");
-        }
+                if (i != val->arrval->array->length - 1)
+                    printf(", ");
+            }
 
-        printf("]");
-        break;
+            printf("]");
+            break;
 
-    case VAL_FUNCTION:
-        printf("\033[2m[Function%s]\033[0m", val->fnval->type == FN_USER_CUSTOM ? "" : " Built-in");
-        break;
+        case VAL_FUNCTION:
+            printf("\033[2m[Function%s]\033[0m", val->fnval->type == FN_USER_CUSTOM ? "" : " Built-in");
+            break;
 
-    default:
-        fatal_error("unrecognized value type: %d", val->type);
+        default:
+            fatal_error("unrecognized value type: %d", val->type);
     }
 }
 
