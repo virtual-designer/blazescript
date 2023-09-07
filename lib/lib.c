@@ -4,12 +4,22 @@
 
 #include "include/lib.h"
 #include "alloca.h"
-#include "eval.h"
 #include "datatype.h"
+#include "eval.h"
+#include "utils.h"
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 BUILTIN_FN(println)
+{
+    val_t ret = BUILTIN_FN_REF(print)(scope, argc, args);
+    printf("\n");
+    return ret;
+}
+
+BUILTIN_FN(print)
 {
     if (argc == 0)
     {
@@ -28,8 +38,6 @@ BUILTIN_FN(println)
             printf(" ");
     }
 
-    printf("\n");
-
     return *scope->null;
 }
 
@@ -42,6 +50,33 @@ BUILTIN_FN(array)
         vector_push(val.arrval->array, (void *) val_copy_deep(&args[i]));
     }
 
+    return val;
+}
+
+BUILTIN_FN(read)
+{
+    val_t val = val_create(VAL_STRING);
+    char *line = NULL;
+    size_t n = 0;
+
+    if (blaze_getline(&line, &n, stdin) < 0)
+    {
+        char errstr[1024];
+        sprintf(errstr, "read(): failed to read from stdin: %s", strerror(errno));
+        eval_fn_error = blaze_strdup(errstr);
+        return *scope->null;
+    }
+
+    for (ssize_t i = (ssize_t) n - 1; i >= 0; i--)
+    {
+        if (line[i] == '\n')
+        {
+            line[i] = 0;
+            break;
+        }
+    }
+
+    val.strval->value = line;
     return val;
 }
 

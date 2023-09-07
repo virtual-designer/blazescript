@@ -1,54 +1,17 @@
 #define _GNU_SOURCE
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 
 #include "alloca.h"
 #include "eval.h"
 #include "file.h"
 #include "lexer.h"
-#include "log.h"
-#include "map.h"
 #include "parser.h"
 #include "utils.h"
 #include "valmap.h"
-#include "vector.h"
-
-#define REPL_FILENAME "<stdin>"
-
-#define BLAZE_ERROR(...)                                    \
-    do {                                                    \
-        log_error(__VA_ARGS__);                             \
-        exit(EXIT_FAILURE);                                 \
-    }                                                       \
-    while (0)
 
 static struct lex lex;
 static struct parser parser;
-static ast_node_t *root_node = NULL;
-static scope_t *global_scope = NULL;
-
-#if !defined(getline)
-ssize_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream)
-{
-    *lineptr = NULL;
-    *n = 0;
-    int c;
-
-    while (!feof(stream) && (c = fgetc(stream)) != '\n')
-    {
-        *lineptr = blaze_realloc(*lineptr, ++(*n));
-        (*lineptr)[(*n) - 1] = (char) c;
-    }
-
-    *lineptr = blaze_realloc(*lineptr, (*n) + 2);
-    (*lineptr)[(*n)++] = '\n';
-    (*lineptr)[(*n)++] = 0;
-    return (ssize_t) (*n);
-}
-#endif
 
 static void process_file(const char *name)
 {

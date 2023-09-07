@@ -12,8 +12,10 @@
 #define BUILTIN_FN(name) val_t blaze_builin_fn__##name(scope_t *scope, size_t argc, val_t *args)
 
 BUILTIN_FN(println);
+BUILTIN_FN(print);
 BUILTIN_FN(array);
 BUILTIN_FN(array_filter);
+BUILTIN_FN(read);
 
 struct builtin_function
 {
@@ -23,8 +25,10 @@ struct builtin_function
 
 static struct builtin_function const builtin_functions[] = {
     { "println", BUILTIN_FN_REF(println) },
+    { "print", BUILTIN_FN_REF(print) },
     { "vector", BUILTIN_FN_REF(array) },
     { "array_filter", BUILTIN_FN_REF(array_filter) },
+    { "read", BUILTIN_FN_REF(read) },
 };
 
 #endif /* BLAZESCRIPT_LIB_H */

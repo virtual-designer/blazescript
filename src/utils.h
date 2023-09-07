@@ -6,6 +6,7 @@
 #define BLAZESCRIPT_UTILS_H
 
 #include <stdbool.h>
+#include <stdio.h>
 #define SYNTAX_ERROR_LINE(token, filename, fmt) \
     syntax_error("\033[0m\033[1m%s\033[0m:%lu:%lu: " fmt, filename, token->line_start, token->column_start)
 
@@ -26,6 +27,8 @@ void syntax_error(const char *fmt, ...);
 char *ctos(char c);
 void set_repl_mode(bool value);
 void blaze_error_exit();
+
+ssize_t blaze_getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream);
 
 extern bool is_repl;
 

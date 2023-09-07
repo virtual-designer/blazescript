@@ -2,6 +2,8 @@
  * Created by rakinar2 on 8/24/23.
  */
 
+#define _GNU_SOURCE
+
 #include "eval.h"
 #include "alloca.h"
 #include "ast.h"
@@ -13,6 +15,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BLAZE_NULL ((val_t) { .type = VAL_NULL })
 
@@ -327,8 +330,104 @@ static long long int val_to_int(val_t *val)
     return 1;
 }
 
+static char *val_stringify(val_t *val)
+{
+    char *string = NULL;
+    val_type_t type = val->type;
+
+    if (type == VAL_STRING)
+        string = blaze_strdup(val->strval->value);
+    else if (type == VAL_INTEGER)
+        asprintf(&string, "%lld", val->intval->value);
+    else if (type == VAL_BOOLEAN)
+        string = blaze_strdup(val->boolval->value ? "true" : "false");
+    else if (type == VAL_NULL)
+        string = blaze_strdup("null");
+
+    return string;
+}
+
+static val_t eval_concat(val_t *left, val_t *right, const ast_node_t *node)
+{
+    val_t val = val_create(VAL_STRING);
+    val_type_t ltype = left->type;
+    val_type_t rtype = right->type;
+
+    val.strval->value = NULL;
+
+    if (ltype == VAL_STRING && rtype == VAL_STRING)
+        asprintf(&val.strval->value, "%s%s",
+                 left->strval->value, right->strval->value);
+    else if (ltype == VAL_STRING && rtype == VAL_INTEGER)
+        asprintf(&val.strval->value, "%s%lld",
+                 left->strval->value, right->intval->value);
+    else if (ltype == VAL_INTEGER && rtype == VAL_STRING)
+        asprintf(&val.strval->value, "%lld%s",
+                 left->intval->value, right->strval->value);
+    else if (ltype == VAL_STRING && rtype == VAL_BOOLEAN)
+        asprintf(&val.strval->value, "%s%s",
+                 left->strval->value, right->boolval->value ? "true" : "false");
+    else if (ltype == VAL_BOOLEAN && rtype == VAL_STRING)
+        asprintf(&val.strval->value, "%s%s",
+                 left->boolval->value ? "true" : "false", right->strval->value);
+    else if (ltype == VAL_NULL && rtype == VAL_STRING)
+        asprintf(&val.strval->value, "null%s", right->strval->value);
+    else if (ltype == VAL_STRING && rtype == VAL_NULL)
+        asprintf(&val.strval->value, "%snull", left->strval->value);
+    else
+        RUNTIME_ERROR(node->binexpr->left->filename,
+                      node->binexpr->left->line_start,
+                      node->binexpr->left->column_start,
+                      "cannot use operator '%c' with type string",
+                      '+');
+
+    blaze_alloca_tbl_push_ptr(val.strval->value);
+    return val;
+}
+
+static val_t eval_binexp_string(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)
+{
+    if (operator == OP_PLUS)
+        return eval_concat(left, right, node);
+
+    val_t val = val_create(VAL_BOOLEAN);
+    const char *left_str = val_stringify(left);
+    const char *right_str = val_stringify(right);
+
+    val_type_t ltype = left->type;
+    val_type_t rtype = right->type;
+
+    switch (operator)
+    {
+        case OP_CMP_EQ:
+            val.boolval->value = strcmp(left_str, right_str) == 0;
+            break;
+
+        case OP_CMP_EQ_S:
+            val.boolval->value = strcmp(left_str, right_str) == 0 && left->type == right->type;
+            break;
+
+        case OP_CMP_NE:
+            val.boolval->value = strcmp(left_str, right_str) != 0;
+            break;
+
+        case OP_CMP_NE_S:
+            val.boolval->value = strcmp(left_str, right_str) != 0 && left->type == right->type;
+            break;
+
+        default:
+            fatal_error("unsupported operator '%c' (%d) being used with type string", operator, operator);
+            exit(-1);
+    }
+
+    return val;
+}
+
 static val_t eval_binexp_cmp_generic(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)
 {
+    if (left->type == VAL_STRING || right->type == VAL_STRING)
+        return eval_binexp_string(operator, left, right, node);
+
     val_t val = val_init();
     val.type = VAL_BOOLEAN;
     long long int li = val_to_int(left);
@@ -363,7 +462,7 @@ static val_t eval_binexp_cmp_generic(ast_bin_operator_t operator, val_t *left, v
 
         case OP_CMP_EQ_S:
             val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li == ri;
+            val.boolval->value = li == ri && left->type == right->type;
             break;
 
         case OP_CMP_NE:
@@ -373,7 +472,7 @@ static val_t eval_binexp_cmp_generic(ast_bin_operator_t operator, val_t *left, v
 
         case OP_CMP_NE_S:
             val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li != ri;
+            val.boolval->value = li != ri && left->type == right->type;
             break;
 
         default:
@@ -472,6 +571,8 @@ val_t eval_binexp(scope_t *scope, const ast_node_t *node)
         ret = eval_binexp_cmp_generic(operator, &left, &right, node);
     else if (left.type == VAL_INTEGER && right.type == VAL_INTEGER)
         ret = eval_binexp_int(operator, &left, &right, node);
+    else if (left.type == VAL_STRING || right.type == VAL_STRING)
+        ret = eval_binexp_string(operator, &left, &right, node);
     else
         RUNTIME_ERROR(node->filename, node->line_start, node->column_start,
                         "unsupported binary operation (lhs: %s(%d), rhs: %s(%d))",

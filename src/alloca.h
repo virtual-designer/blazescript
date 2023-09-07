@@ -19,6 +19,7 @@ void *blaze_calloc(size_t n, size_t size);
 bool blaze_free(void *ptr);
 void blaze_alloca_tbl_free();
 void blaze_alloca_tbl_init();
+size_t blaze_alloca_tbl_push_ptr(void *ptr);
 void *blaze_strdup(const char *str);
 
 void *xmalloc(size_t size);

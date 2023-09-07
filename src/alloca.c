@@ -62,6 +62,11 @@ size_t alloca_tbl_push_ptr(struct alloca_tbl_t *tbl, void *ptr)
     return tbl->count - 1;
 }
 
+size_t blaze_alloca_tbl_push_ptr(void *ptr)
+{
+    return alloca_tbl_push_ptr(&global_alloca_tbl, ptr);
+}
+
 ssize_t alloca_tbl_remove_ptr(struct alloca_tbl_t *tbl, void *ptr)
 {
     for (ssize_t i = 0; i < tbl->count; i++)
