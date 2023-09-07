@@ -81,7 +81,7 @@ val_t eval(scope_t *scope, const ast_node_t *node)
     }
 }
 
-inline bool val_is_truthy(const val_t *val)
+bool val_is_truthy(const val_t *val)
 {
     return val->type != VAL_NULL &&
            (val->type != VAL_BOOLEAN || val->boolval->value != false) &&
