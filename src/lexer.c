@@ -391,7 +391,7 @@ bool lex_analyze(struct lex *lex)
             lex_string(lex);
         else if (isdigit(c))
             lex_number(lex);
-        else if (isalpha(c))
+        else if (isalpha(c) || c == '_')
             lex_identifier_or_keyword(lex);
         else
         {
