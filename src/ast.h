@@ -23,7 +23,8 @@ typedef enum ast_node_type
     NODE_ARRAY_LIT,
     NODE_IMPORT_STMT,
     NODE_BLOCK,
-    NODE_IF_STMT
+    NODE_IF_STMT,
+    NODE_LOOP_STMT,
 } ast_type_t;
 
 typedef enum ast_bin_operator
@@ -111,12 +112,19 @@ typedef struct ast_block
     struct ast_node *children;
 } ast_block_t;
 
-typedef struct ast_if_stmt_t
+typedef struct ast_if_stmt
 {
     struct ast_node *condition;
     struct ast_node *if_block;
     struct ast_node *else_block;
 } ast_if_stmt_t;
+
+typedef struct ast_loop_stmt
+{
+    struct ast_node *iter_count;
+    char *iter_varname;
+    struct ast_node *body;
+} ast_loop_stmt_t;
 
 typedef struct ast_import_stmt
 {
@@ -143,6 +151,7 @@ typedef struct ast_node
         ast_array_lit_t *array_lit;
         ast_import_stmt_t *import_stmt;
         ast_if_stmt_t *if_stmt;
+        ast_loop_stmt_t *loop_stmt;
         ast_block_t *block;
     };
 } ast_node_t;

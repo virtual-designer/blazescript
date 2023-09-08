@@ -18,6 +18,9 @@
 #include <string.h>
 
 #define BLAZE_NULL ((val_t) { .type = VAL_NULL })
+#define BLAZE_INT(__value) ((val_t) { .type = VAL_INTEGER, .intval = & ((val_integer_t) { .value = __value }) })
+#define BLAZE_BOOL(__value) ((val_t) { .type = VAL_BOOLEAN, .boolval = & ((val_boolean_t) { .value = __value }) })
+#define BLAZE_TRUE BLAZE_BOOL(true)
 
 val_t eval_int(scope_t *scope, const ast_node_t *node);
 val_t eval_float(scope_t *scope, const ast_node_t *node);
@@ -32,6 +35,7 @@ val_t eval_fn_decl(scope_t *scope, const ast_node_t *node);
 val_t eval_array_lit(scope_t *scope, const ast_node_t *node);
 val_t eval_block(scope_t *scope, const ast_node_t *node);
 val_t eval_if_stmt(scope_t *scope, const ast_node_t *node);
+val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node);
 
 char *eval_fn_error = NULL;
 
@@ -75,6 +79,9 @@ val_t eval(scope_t *scope, const ast_node_t *node)
         case NODE_IF_STMT:
             return eval_if_stmt(scope, node);
 
+        case NODE_LOOP_STMT:
+            return eval_loop_stmt(scope, node);
+
         default:
             fatal_error("cannot evaluate AST: unsupported AST node");
             return *scope->null;
@@ -86,6 +93,55 @@ bool val_is_truthy(const val_t *val)
     return val->type != VAL_NULL &&
            (val->type != VAL_BOOLEAN || val->boolval->value != false) &&
            (val->type != VAL_INTEGER || val->intval->value != 0);
+}
+
+val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
+{
+    val_t iter_count_val = node->loop_stmt->iter_count == NULL ? BLAZE_TRUE : eval(scope, node->loop_stmt->iter_count);
+
+    if (iter_count_val.type != VAL_BOOLEAN && iter_count_val.type != VAL_INTEGER)
+    {
+        RUNTIME_ERROR(node->filename,
+                      node->line_start,
+                      node->column_start,
+                      "type '%s' is not iterable",
+                      val_type_to_str(iter_count_val.type));
+    }
+
+    if (iter_count_val.type == VAL_INTEGER && iter_count_val.intval->value < 0)
+    {
+        RUNTIME_ERROR(node->filename,
+                      node->line_start,
+                      node->column_start,
+                      "the iteration count must not be a negative number%s",
+                      "");
+    }
+
+    val_integer_t *counter_val = blaze_calloc(1, sizeof (val_integer_t));
+    long long int counter = 0;
+    counter_val->value = counter;
+    char *varname = node->loop_stmt->iter_varname;
+    scope_t *new_scope = scope_init(scope);
+
+    if (varname != NULL)
+        scope_declare_identifier(new_scope, varname, (val_t) {
+             .type = VAL_INTEGER,
+             .intval = counter_val
+         }, false);
+
+    while ((iter_count_val.type == VAL_BOOLEAN && iter_count_val.boolval->value) ||
+           (iter_count_val.type == VAL_INTEGER && counter < iter_count_val.intval->value))
+    {
+        eval(new_scope, node->loop_stmt->body);
+        counter++;
+
+        if (varname != NULL)
+            counter_val->value = counter;
+    }
+
+    blaze_free(counter_val);
+    scope_free(new_scope);
+    return BLAZE_NULL;
 }
 
 val_t eval_if_stmt(scope_t *scope, const ast_node_t *node)
@@ -102,11 +158,14 @@ val_t eval_if_stmt(scope_t *scope, const ast_node_t *node)
 
 val_t eval_block(scope_t *scope, const ast_node_t *node)
 {
+    scope_t *new_scope = scope_init(scope);
+
     for (size_t i = 0; i < node->block->size; i++)
     {
-        eval(scope, &node->block->children[i]);
+        eval(new_scope, &node->block->children[i]);
     }
 
+    scope_free(new_scope);
     return BLAZE_NULL;
 }
 
@@ -263,7 +322,7 @@ val_t eval_assignment(scope_t *scope, const ast_node_t *node)
 {
     val_t val = eval(scope, node->assignment_expr->value);
 
-    enum valmap_set_status status = scope_assign_identifier(scope, node->assignment_expr->assignee->identifier->symbol, val);
+    enum valmap_set_status status = scope_assign_identifier(scope, node->assignment_expr->assignee->identifier->symbol, *(val_copy_deep(&val)));
 
     if (status == VAL_SET_NOT_FOUND)
     {

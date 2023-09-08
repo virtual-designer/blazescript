@@ -16,6 +16,7 @@ BUILTIN_FN(print);
 BUILTIN_FN(array);
 BUILTIN_FN(array_filter);
 BUILTIN_FN(read);
+BUILTIN_FN(exit);
 
 struct builtin_function
 {
@@ -29,6 +30,7 @@ static struct builtin_function const builtin_functions[] = {
     { "vector", BUILTIN_FN_REF(array) },
     { "array_filter", BUILTIN_FN_REF(array_filter) },
     { "read", BUILTIN_FN_REF(read) },
+    { "exit", BUILTIN_FN_REF(exit) },
 };
 
 #endif /* BLAZESCRIPT_LIB_H */

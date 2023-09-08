@@ -65,6 +65,8 @@ static const struct multichar_token keywords[] = {
     { "import", T_IMPORT },
     { "if", T_IF },
     { "else", T_ELSE },
+    { "loop", T_LOOP },
+    { "as", T_AS },
 };
 
 struct lex lex_init(char *filename, char *buf)
@@ -451,6 +453,8 @@ const char *lex_token_to_str(enum lex_token_type type)
         [T_SQUARE_BRACE_CLOSE] = "T_SQUARE_BRACE_CLOSE",
         [T_IF] = "T_IF",
         [T_ELSE] = "T_ELSE",
+        [T_LOOP] = "T_LOOP",
+        [T_AS] = "T_AS",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);

@@ -34,6 +34,7 @@ static ast_node_t parser_parse_array_lit(struct parser *parser);
 static ast_node_t parser_parse_binexp_comparison(struct parser *parser);
 static ast_node_t parser_parse_block(struct parser *parser);
 static ast_node_t parser_parse_if(struct parser *parser);
+static ast_node_t parser_parse_loop_stmt(struct parser *parser);
 
 struct parser parser_init()
 {
@@ -250,6 +251,47 @@ static ast_node_t *create_node()
     return blaze_calloc(1, sizeof(ast_node_t));
 }
 
+static ast_node_t parser_parse_loop_stmt(struct parser *parser)
+{
+    ast_loop_stmt_t *loop_stmt = blaze_calloc(1, sizeof(ast_loop_stmt_t));
+    ast_node_t node = {
+        .type = NODE_LOOP_STMT,
+    };
+
+    loop_stmt->iter_varname = NULL;
+    loop_stmt->iter_count = NULL;
+
+    parser_expect(parser, T_LOOP);
+
+    if (parser_at(parser).type == T_PAREN_OPEN)
+    {
+        parser_expect(parser, T_PAREN_OPEN);
+        ast_node_t iter_count = parser_parse_expr(parser);
+
+        if (parser_at(parser).type != T_PAREN_CLOSE)
+        {
+            parser_expect(parser, T_AS);
+            char *iter_varname = parser_expect(parser, T_IDENTIFIER).value;
+            loop_stmt->iter_varname = blaze_strdup(iter_varname);
+        }
+
+        loop_stmt->iter_count = parser_ast_deep_copy(&iter_count);
+        parser_expect(parser, T_PAREN_CLOSE);
+    }
+
+    if (parser_at(parser).type == T_IDENTIFIER)
+    {
+        char *iter_varname = parser_expect(parser, T_IDENTIFIER).value;
+        loop_stmt->iter_varname = blaze_strdup(iter_varname);
+    }
+
+    ast_node_t body = parser_parse_stmt(parser);
+    loop_stmt->body = parser_ast_deep_copy(&body);
+
+    node.loop_stmt = loop_stmt;
+    return node;
+}
+
 static ast_node_t parser_parse_if(struct parser *parser)
 {
     ast_if_stmt_t *if_node = blaze_calloc(1, sizeof (ast_if_stmt_t));
@@ -360,6 +402,10 @@ static ast_node_t parser_parse_stmt(struct parser *parser)
 
         case T_IF:
             stmt = parser_parse_if(parser);
+            break;
+
+        case T_LOOP:
+            stmt = parser_parse_loop_stmt(parser);
             break;
 
         default:
@@ -746,6 +792,7 @@ const char *ast_type_to_str(enum ast_node_type type)
         [NODE_ARRAY_LIT] = "ARRAY_LIT",
         [NODE_BLOCK] = "BLOCK",
         [NODE_IF_STMT] = "IF_STMT",
+        [NODE_LOOP_STMT] = "LOOP_STMT",
     };
 
     size_t length = sizeof (translate) / sizeof (const char *);
@@ -850,6 +897,17 @@ static void parser_ast_free_inner(ast_node_t *node)
             blaze_free(node->if_stmt);
             break;
 
+        case NODE_LOOP_STMT:
+            if (node->loop_stmt->iter_count != NULL)
+                parser_ast_free(node->loop_stmt->iter_count);
+
+            if (node->loop_stmt->iter_varname != NULL)
+                blaze_free(node->if_stmt->if_block);
+
+            parser_ast_free(node->loop_stmt->body);
+            blaze_free(node->loop_stmt);
+            break;
+
         default:
             fatal_error("parser_ast_free_inner(): AST type not recognized: %s (%d)",
                      ast_type_to_str(node->type), node->type);
@@ -936,6 +994,18 @@ static void blaze_debug__print_ast_internal(ast_node_t *node, int indent_level, 
             else
                 blaze_debug__print_ast_internal(node->if_stmt->else_block, inner_indent_level, true, false);
 
+            break;
+
+        case NODE_LOOP_STMT:
+            blaze_debug__print_ast_indent_string(inner_indent_level, "count: ");
+            if (node->loop_stmt->iter_count == NULL)
+                printf("null");
+            else
+                blaze_debug__print_ast_internal(node->loop_stmt->iter_count, inner_indent_level, false, false);
+            printf(",\n");
+            blaze_debug__print_ast_indent_string(inner_indent_level, "varname: %s,\n", node->loop_stmt->iter_varname == NULL ? "null" : node->loop_stmt->iter_varname);
+            blaze_debug__print_ast_indent_string(inner_indent_level, "body: ");
+            blaze_debug__print_ast_internal(node->loop_stmt->body, inner_indent_level, true, false);
             break;
 
         case NODE_ARRAY_LIT:

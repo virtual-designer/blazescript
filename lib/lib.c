@@ -10,7 +10,19 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+BUILTIN_FN(exit)
+{
+    if (argc >= 1 && args[0].type != VAL_INTEGER)
+    {
+        eval_fn_error = blaze_strdup("#1 argument passed to function exit() must be an integer");
+        return *scope->null;
+    }
+
+    exit(argc >= 1 ? (int) (args[0].intval->value & 0xFF) : 0);
+}
 
 BUILTIN_FN(println)
 {

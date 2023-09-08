@@ -29,7 +29,9 @@ enum lex_token_type
     T_IMPORT,
     T_ARRAY,
     T_IF,
-    T_ELSE
+    T_ELSE,
+    T_LOOP,
+    T_AS
 };
 
 struct lex_token
