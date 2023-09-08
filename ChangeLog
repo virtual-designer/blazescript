@@ -1,3 +1,12 @@
+# [2.19.0](https://github.com/virtual-designer/blazescript/compare/v2.18.0...v2.19.0) (2023-09-08)
+
+
+### Features
+
+* loop statements ([1bd2696](https://github.com/virtual-designer/blazescript/commit/1bd2696d5eac159f0159df4a13ec894df69b6607))
+
+
+
 # [2.18.0](https://github.com/virtual-designer/blazescript/compare/v2.17.3...v2.18.0) (2023-09-07)
 
 
@@ -37,15 +46,6 @@
 ### Bug Fixes
 
 * **darwin:** conflicting symbols ([77421d9](https://github.com/virtual-designer/blazescript/commit/77421d90e966b4e1c1a19d7e48b689eb92d8e613))
-
-
-
-# [2.17.0](https://github.com/virtual-designer/blazescript/compare/v2.16.0...v2.17.0) (2023-09-07)
-
-
-### Features
-
-* string binary operations ([6ed1e7f](https://github.com/virtual-designer/blazescript/commit/6ed1e7f8e1077440333cd3c82f3c116876685000))
 
 
 
