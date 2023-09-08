@@ -24,18 +24,6 @@ typedef enum {
 } val_type_t;
 
 typedef struct {
-    long long int value;
-} val_integer_t;
-
-typedef struct {
-    long double value;
-} val_float_t;
-
-typedef struct {
-    char *value;
-} val_string_t;
-
-typedef struct {
     bool value;
 } val_boolean_t;
 
@@ -56,21 +44,17 @@ typedef struct {
     };
 } val_function_t;
 
-typedef struct {
-    vector_t *array;
-} val_array_t;
-
 typedef struct value {
     val_type_t type;
     bool nofree;
 
     union {
-        val_integer_t *intval;
-        val_float_t *floatval;
-        val_string_t *strval;
-        val_boolean_t *boolval;
+        long long int intval;
+        long double floatval;
+        char *strval;
+        bool boolval;
         val_function_t *fnval;
-        val_array_t *arrval;
+        vector_t *arrval;
     };
 } val_t;
 

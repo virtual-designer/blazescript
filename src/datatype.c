@@ -60,33 +60,20 @@ val_t val_create(val_type_t type)
 
     switch (val.type)
     {
-        case VAL_INTEGER:
-            val.intval = blaze_malloc(sizeof *(val.intval));
-            break;
-
-        case VAL_FLOAT:
-            val.floatval = blaze_malloc(sizeof *(val.floatval));
-            break;
-
-        case VAL_STRING:
-            val.strval = blaze_malloc(sizeof *(val.strval));
-            break;
-
-        case VAL_BOOLEAN:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            break;
-
         case VAL_FUNCTION:
             val.fnval = blaze_calloc(1, sizeof *(val.fnval));
             val.fnval->scope = NULL;
             break;
 
         case VAL_ARRAY:
-            val.arrval = blaze_calloc(1, sizeof *(val.arrval));
-            val.arrval->array = vector_init();
+            val.arrval = vector_init();
             break;
 
         case VAL_NULL:
+        case VAL_INTEGER:
+        case VAL_FLOAT:
+        case VAL_STRING:
+        case VAL_BOOLEAN:
             break;
 
         default:
@@ -106,19 +93,19 @@ val_t *val_copy_deep(val_t *orig)
     switch (orig->type)
     {
         case VAL_INTEGER:
-            val->intval->value = orig->intval->value;
+            val->intval = orig->intval;
             break;
 
         case VAL_FLOAT:
-            val->floatval->value = orig->floatval->value;
+            val->floatval = orig->floatval;
             break;
 
         case VAL_STRING:
-            val->strval->value = orig->strval->value;
+            val->strval = blaze_strdup(orig->strval);
             break;
 
         case VAL_BOOLEAN:
-            val->boolval->value = orig->boolval->value;
+            val->boolval = orig->boolval;
             break;
 
         case VAL_FUNCTION:
@@ -170,52 +157,41 @@ void val_free_force_no_root(val_t *val)
 
     switch (val->type)
     {
-    case VAL_INTEGER:
-        blaze_free(val->intval);
-        break;
+        case VAL_STRING:
+            blaze_free(val->strval);
+            break;
 
-    case VAL_FLOAT:
-        blaze_free(val->floatval);
-        break;
+        case VAL_ARRAY:
+            vector_free(val->arrval);
+            break;
 
-    case VAL_STRING:
-        blaze_free(val->strval->value);
-        blaze_free(val->strval);
-        break;
+        case VAL_FUNCTION:
+            if (val->fnval->type == FN_USER_CUSTOM)
+            {
+                for (size_t i = 0; i < val->fnval->size; i++)
+                    parser_ast_free(val->fnval->custom_body[i]);
 
-    case VAL_BOOLEAN:
-        blaze_free(val->boolval);
-        break;
+                blaze_free(val->fnval->custom_body);
 
-    case VAL_ARRAY:
-        vector_free(val->arrval->array);
-        blaze_free(val->arrval);
-        break;
+                for (size_t i = 0; i < val->fnval->param_count; i++)
+                    blaze_free(val->fnval->param_names[i]);
 
-    case VAL_FUNCTION:
-        if (val->fnval->type == FN_USER_CUSTOM)
-        {
-            for (size_t i = 0; i < val->fnval->size; i++)
-                parser_ast_free(val->fnval->custom_body[i]);
+                blaze_free(val->fnval->param_names);
+                scope_free(val->fnval->scope);
+                val->fnval->scope = NULL;
+            }
 
-            blaze_free(val->fnval->custom_body);
+            blaze_free(val->fnval);
+            break;
 
-            for (size_t i = 0; i < val->fnval->param_count; i++)
-                blaze_free(val->fnval->param_names[i]);
+        case VAL_INTEGER:
+        case VAL_FLOAT:
+        case VAL_BOOLEAN:
+        case VAL_NULL:
+            break;
 
-            blaze_free(val->fnval->param_names);
-            scope_free(val->fnval->scope);
-            val->fnval->scope = NULL;
-        }
-
-        blaze_free(val->fnval);
-        break;
-
-    case VAL_NULL:
-        break;
-
-    default:
-        log_warn("unrecognized value type: %d", val->type);
+        default:
+            log_warn("unrecognized value type: %d", val->type);
     }
 
     blaze_free(val);
@@ -246,19 +222,19 @@ void print_val_internal(val_t *val, bool quote_strings)
     switch (val->type)
     {
         case VAL_INTEGER:
-            printf("\033[1;33m%lld\033[0m", val->intval->value);
+            printf("\033[1;33m%lld\033[0m", val->intval);
             break;
 
         case VAL_FLOAT:
-            printf("\033[1;33m%Lf\033[0m", val->floatval->value);
+            printf("\033[1;33m%Lf\033[0m", val->floatval);
             break;
 
         case VAL_STRING:
-            printf("\033[32m%s%s%s\033[0m", quote_strings ? "\"" : "", val->strval->value, quote_strings ? "\"" : "");
+            printf("\033[32m%s%s%s\033[0m", quote_strings ? "\"" : "", val->strval, quote_strings ? "\"" : "");
             break;
 
         case VAL_BOOLEAN:
-            printf("\033[36m%s\033[0m", val->boolval->value == true ? "true" : "false");
+            printf("\033[36m%s\033[0m", val->boolval == true ? "true" : "false");
             break;
 
         case VAL_NULL:
@@ -266,13 +242,13 @@ void print_val_internal(val_t *val, bool quote_strings)
             break;
 
         case VAL_ARRAY:
-            printf("\033[34mArray (%zu)\033[0m [", val->arrval->array->length);
+            printf("\033[34mArray (%zu)\033[0m [", val->arrval->length);
 
-            for (size_t i = 0; i < val->arrval->array->length; i++)
+            for (size_t i = 0; i < val->arrval->length; i++)
             {
-                print_val_internal((val_t *) val->arrval->array->data[i], true);
+                print_val_internal((val_t *) val->arrval->data[i], true);
 
-                if (i != val->arrval->array->length - 1)
+                if (i != val->arrval->length - 1)
                     printf(", ");
             }
 

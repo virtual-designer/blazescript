@@ -91,8 +91,8 @@ val_t eval(scope_t *scope, const ast_node_t *node)
 bool val_is_truthy(const val_t *val)
 {
     return val->type != VAL_NULL &&
-           (val->type != VAL_BOOLEAN || val->boolval->value != false) &&
-           (val->type != VAL_INTEGER || val->intval->value != 0);
+           (val->type != VAL_BOOLEAN || val->boolval != false) &&
+           (val->type != VAL_INTEGER || val->intval != 0);
 }
 
 val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
@@ -108,7 +108,7 @@ val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
                       val_type_to_str(iter_count_val.type));
     }
 
-    if (iter_count_val.type == VAL_INTEGER && iter_count_val.intval->value < 0)
+    if (iter_count_val.type == VAL_INTEGER && iter_count_val.intval < 0)
     {
         RUNTIME_ERROR(node->filename,
                       node->line_start,
@@ -117,29 +117,30 @@ val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
                       "");
     }
 
-    val_integer_t *counter_val = blaze_calloc(1, sizeof (val_integer_t));
     long long int counter = 0;
-    counter_val->value = counter;
     char *varname = node->loop_stmt->iter_varname;
     scope_t *new_scope = scope_init(scope);
+    new_scope->allow_redecl = true;
 
     if (varname != NULL)
         scope_declare_identifier(new_scope, varname, (val_t) {
              .type = VAL_INTEGER,
-             .intval = counter_val
+             .intval = counter
          }, false);
 
-    while ((iter_count_val.type == VAL_BOOLEAN && iter_count_val.boolval->value) ||
-           (iter_count_val.type == VAL_INTEGER && counter < iter_count_val.intval->value))
+    while ((iter_count_val.type == VAL_BOOLEAN && iter_count_val.boolval) ||
+           (iter_count_val.type == VAL_INTEGER && counter < iter_count_val.intval))
     {
         eval(new_scope, node->loop_stmt->body);
         counter++;
 
         if (varname != NULL)
-            counter_val->value = counter;
+            scope_assign_identifier(new_scope, varname, (val_t) {
+                .type = VAL_INTEGER,
+                .intval = counter
+            });
     }
 
-    blaze_free(counter_val);
     scope_free(new_scope);
     return BLAZE_NULL;
 }
@@ -158,14 +159,11 @@ val_t eval_if_stmt(scope_t *scope, const ast_node_t *node)
 
 val_t eval_block(scope_t *scope, const ast_node_t *node)
 {
-    scope_t *new_scope = scope_init(scope);
-
     for (size_t i = 0; i < node->block->size; i++)
     {
-        eval(new_scope, &node->block->children[i]);
+        eval(scope, &node->block->children[i]);
     }
 
-    scope_free(new_scope);
     return BLAZE_NULL;
 }
 
@@ -176,7 +174,7 @@ val_t eval_array_lit(scope_t *scope, const ast_node_t *node)
     VECTOR_FOREACH(node->array_lit->elements)
     {
         val_t val = eval(scope, ((ast_node_t **) node->array_lit->elements->data)[i]);
-        vector_push(arr.arrval->array, val_copy_deep(&val));
+        vector_push(arr.arrval, val_copy_deep(&val));
     }
 
     return arr;
@@ -312,6 +310,7 @@ val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
         ret = eval(val->fnval->scope, val->fnval->custom_body[i]);
     }
 
+
     val_t *copy = val_copy_deep(&ret);
     blaze_free(args);
     val->fnval->scope = scope_init(scope);
@@ -322,7 +321,7 @@ val_t eval_assignment(scope_t *scope, const ast_node_t *node)
 {
     val_t val = eval(scope, node->assignment_expr->value);
 
-    enum valmap_set_status status = scope_assign_identifier(scope, node->assignment_expr->assignee->identifier->symbol, *(val_copy_deep(&val)));
+    enum valmap_set_status status = scope_assign_identifier(scope, node->assignment_expr->assignee->identifier->symbol, val);
 
     if (status == VAL_SET_NOT_FOUND)
     {
@@ -364,27 +363,27 @@ val_t eval_identifier(scope_t *scope, const ast_node_t *node)
 val_t eval_int(scope_t *scope, const ast_node_t *node)
 {
     val_t val = val_create(VAL_INTEGER);
-    val.intval->value = node->integer->intval;
+    val.intval = node->integer->intval;
     return val;
 }
 
 val_t eval_string(scope_t *scope, const ast_node_t *node)
 {
     val_t val = val_create(VAL_STRING);
-    val.strval->value = blaze_strdup(node->string->strval);
+    val.strval = blaze_strdup(node->string->strval);
     return val;
 }
 
 static long long int val_to_int(val_t *val)
 {
     if (val->type == VAL_INTEGER)
-        return val->intval->value;
+        return val->intval;
 
     if (val->type == VAL_NULL)
         return 0;
 
     if (val->type == VAL_BOOLEAN)
-        return val->boolval->value;
+        return val->boolval;
 
     return 1;
 }
@@ -395,11 +394,11 @@ static char *val_stringify(val_t *val)
     val_type_t type = val->type;
 
     if (type == VAL_STRING)
-        string = blaze_strdup(val->strval->value);
+        string = blaze_strdup(val->strval);
     else if (type == VAL_INTEGER)
-        asprintf(&string, "%lld", val->intval->value);
+        asprintf(&string, "%lld", val->intval);
     else if (type == VAL_BOOLEAN)
-        string = blaze_strdup(val->boolval->value ? "true" : "false");
+        string = blaze_strdup(val->boolval ? "true" : "false");
     else if (type == VAL_NULL)
         string = blaze_strdup("null");
 
@@ -412,27 +411,27 @@ static val_t eval_concat(val_t *left, val_t *right, const ast_node_t *node)
     val_type_t ltype = left->type;
     val_type_t rtype = right->type;
 
-    val.strval->value = NULL;
+    val.strval = NULL;
 
     if (ltype == VAL_STRING && rtype == VAL_STRING)
-        asprintf(&val.strval->value, "%s%s",
-                 left->strval->value, right->strval->value);
+        asprintf(&val.strval, "%s%s",
+                 left->strval, right->strval);
     else if (ltype == VAL_STRING && rtype == VAL_INTEGER)
-        asprintf(&val.strval->value, "%s%lld",
-                 left->strval->value, right->intval->value);
+        asprintf(&val.strval, "%s%lld",
+                 left->strval, right->intval);
     else if (ltype == VAL_INTEGER && rtype == VAL_STRING)
-        asprintf(&val.strval->value, "%lld%s",
-                 left->intval->value, right->strval->value);
+        asprintf(&val.strval, "%lld%s",
+                 left->intval, right->strval);
     else if (ltype == VAL_STRING && rtype == VAL_BOOLEAN)
-        asprintf(&val.strval->value, "%s%s",
-                 left->strval->value, right->boolval->value ? "true" : "false");
+        asprintf(&val.strval, "%s%s",
+                 left->strval, right->boolval ? "true" : "false");
     else if (ltype == VAL_BOOLEAN && rtype == VAL_STRING)
-        asprintf(&val.strval->value, "%s%s",
-                 left->boolval->value ? "true" : "false", right->strval->value);
+        asprintf(&val.strval, "%s%s",
+                 left->boolval ? "true" : "false", right->strval);
     else if (ltype == VAL_NULL && rtype == VAL_STRING)
-        asprintf(&val.strval->value, "null%s", right->strval->value);
+        asprintf(&val.strval, "null%s", right->strval);
     else if (ltype == VAL_STRING && rtype == VAL_NULL)
-        asprintf(&val.strval->value, "%snull", left->strval->value);
+        asprintf(&val.strval, "%snull", left->strval);
     else
         RUNTIME_ERROR(node->binexpr->left->filename,
                       node->binexpr->left->line_start,
@@ -440,7 +439,7 @@ static val_t eval_concat(val_t *left, val_t *right, const ast_node_t *node)
                       "cannot use operator '%c' with type string",
                       '+');
 
-    blaze_alloca_tbl_push_ptr(val.strval->value);
+    blaze_alloca_tbl_push_ptr(val.strval);
     return val;
 }
 
@@ -456,19 +455,19 @@ static val_t eval_binexp_string(ast_bin_operator_t operator, val_t *left, val_t 
     switch (operator)
     {
         case OP_CMP_EQ:
-            val.boolval->value = strcmp(left_str, right_str) == 0;
+            val.boolval = strcmp(left_str, right_str) == 0;
             break;
 
         case OP_CMP_EQ_S:
-            val.boolval->value = strcmp(left_str, right_str) == 0 && left->type == right->type;
+            val.boolval = strcmp(left_str, right_str) == 0 && left->type == right->type;
             break;
 
         case OP_CMP_NE:
-            val.boolval->value = strcmp(left_str, right_str) != 0;
+            val.boolval = strcmp(left_str, right_str) != 0;
             break;
 
         case OP_CMP_NE_S:
-            val.boolval->value = strcmp(left_str, right_str) != 0 && left->type == right->type;
+            val.boolval = strcmp(left_str, right_str) != 0 && left->type == right->type;
             break;
 
         default:
@@ -492,43 +491,35 @@ static val_t eval_binexp_cmp_generic(ast_bin_operator_t operator, val_t *left, v
     switch (operator)
     {
         case OP_CMP_LT:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li < ri;
+            val.boolval = li < ri;
             break;
 
         case OP_CMP_GT:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li > ri;
+            val.boolval = li > ri;
             break;
 
         case OP_CMP_GE:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li >= ri;
+            val.boolval = li >= ri;
             break;
 
         case OP_CMP_LE:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li <= ri;
+            val.boolval = li <= ri;
             break;
 
         case OP_CMP_EQ:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li == ri;
+            val.boolval = li == ri;
             break;
 
         case OP_CMP_EQ_S:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li == ri && left->type == right->type;
+            val.boolval = li == ri && left->type == right->type;
             break;
 
         case OP_CMP_NE:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li != ri;
+            val.boolval = li != ri;
             break;
 
         case OP_CMP_NE_S:
-            val.boolval = blaze_malloc(sizeof *(val.boolval));
-            val.boolval->value = li != ri && left->type == right->type;
+            val.boolval = li != ri && left->type == right->type;
             break;
 
         default:
@@ -549,41 +540,36 @@ static val_t eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *ri
     switch (operator)
     {
         case OP_PLUS:
-            val.intval = blaze_malloc(sizeof *(val.intval));
-            val.intval->value = left->intval->value + right->intval->value;
+            val.intval = left->intval + right->intval;
             break;
 
         case OP_MINUS:
-            val.intval = blaze_malloc(sizeof *(val.intval));
-            val.intval->value = left->intval->value - right->intval->value;
+            val.intval = left->intval - right->intval;
             break;
 
         case OP_TIMES:
-            val.intval = blaze_malloc(sizeof *(val.intval));
-            val.intval->value = left->intval->value * right->intval->value;
+            val.intval = left->intval * right->intval;
             break;
 
         case OP_DIVIDE:
-            if (right->intval->value == 0)
+            if (right->intval == 0)
                 RUNTIME_ERROR(node->binexpr->right->filename,
                           node->binexpr->right->line_start,
                           node->binexpr->right->column_start,
-                          "cannot divide %lli by zero", left->intval->value);
+                          "cannot divide %lli by zero", left->intval);
 
             val.type = VAL_FLOAT;
-            val.floatval = blaze_malloc(sizeof *(val.intval));
-            val.floatval->value = (long double) left->intval->value / (long double) right->intval->value;
+            val.floatval = (long double) left->intval / (long double) right->intval;
             break;
 
         case OP_MODULUS:
-            if (right->intval->value == 0)
+            if (right->intval == 0)
                 RUNTIME_ERROR(node->binexpr->right->filename,
                               node->binexpr->right->line_start,
                               node->binexpr->right->column_start,
-                              "cannot divide %lli by zero", left->intval->value);
+                              "cannot divide %lli by zero", left->intval);
 
-            val.intval = blaze_malloc(sizeof *(val.intval));
-            val.intval->value = left->intval->value % right->intval->value;
+            val.intval = left->intval % right->intval;
             break;
 
         default:

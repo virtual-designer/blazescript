@@ -21,7 +21,7 @@ BUILTIN_FN(exit)
         return *scope->null;
     }
 
-    exit(argc >= 1 ? (int) (args[0].intval->value & 0xFF) : 0);
+    exit(argc >= 1 ? (int) (args[0].intval & 0xFF) : 0);
 }
 
 BUILTIN_FN(println)
@@ -42,7 +42,7 @@ BUILTIN_FN(print)
     for (size_t i = 0; i < argc; i++)
     {
         if (args[i].type == VAL_STRING)
-            printf("%s", args[i].strval->value);
+            printf("%s", args[i].strval);
         else
             print_val_internal(&args[i], false);
 
@@ -59,7 +59,7 @@ BUILTIN_FN(array)
 
     for (size_t i = 0; i < argc; i++)
     {
-        vector_push(val.arrval->array, (void *) val_copy_deep(&args[i]));
+        vector_push(val.arrval, (void *) val_copy_deep(&args[i]));
     }
 
     return val;
@@ -88,7 +88,7 @@ BUILTIN_FN(read)
         }
     }
 
-    val.strval->value = line;
+    val.strval = line;
     return val;
 }
 
@@ -110,7 +110,7 @@ static bool array_filter_call_fn(scope_t *scope, val_t *fn, val_t *test_val)
     }
 
     fn->fnval->scope = scope_init(scope);
-    return ret.type == VAL_BOOLEAN && ret.boolval->value;
+    return ret.type == VAL_BOOLEAN && ret.boolval;
 }
 
 BUILTIN_FN(array_filter)
@@ -132,11 +132,11 @@ BUILTIN_FN(array_filter)
 
     val_t new_array = val_create(VAL_ARRAY);
 
-    for (size_t i = 0; i < array.arrval->array->length; i++)
+    for (size_t i = 0; i < array.arrval->length; i++)
     {
-        if (array_filter_call_fn(scope, &callback, val_copy_deep(array.arrval->array->data[i])))
-            vector_push(new_array.arrval->array,
-                        (void *)(array.arrval->array->data[i]));
+        if (array_filter_call_fn(scope, &callback, val_copy_deep(array.arrval->data[i])))
+            vector_push(new_array.arrval,
+                        (void *)(array.arrval->data[i]));
     }
 
     return new_array;

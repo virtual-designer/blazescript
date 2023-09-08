@@ -13,6 +13,7 @@ struct scope
     struct scope *parent;
     valmap_t *valmap;
     val_t *null;
+    bool allow_redecl;
 };
 
 typedef struct scope scope_t;

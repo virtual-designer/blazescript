@@ -30,5 +30,6 @@ size_t valmap_get_count(struct valmap *valmap);
 enum valmap_set_status valmap_set_no_overwrite(struct valmap *valmap, const char *key, val_t value, bool is_const, bool attempt_free);
 enum valmap_set_status valmap_set_no_create(struct valmap *valmap, const char *key, val_t value, bool is_const, bool attempt_free);
 void valmap_free_builtin_fns(struct valmap *valmap);
+enum valmap_set_status valmap_set_default(struct valmap *valmap, const char *key, val_t value, bool is_const, bool attempt_free);
 
 #endif /* BLAZESCRIPT_VALMAP_H */

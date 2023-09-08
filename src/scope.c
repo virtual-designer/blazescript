@@ -22,6 +22,7 @@ struct scope *scope_init(struct scope *parent)
     struct scope *scope = blaze_calloc(1, sizeof(struct scope));
     scope->valmap = valmap_init_default();
     scope->parent = parent;
+    scope->allow_redecl = false;
 
     if (parent == NULL)
     {
@@ -59,8 +60,8 @@ struct scope *scope_create_global()
 
     true_val = val_create_heap(VAL_BOOLEAN);
     false_val = val_create_heap(VAL_BOOLEAN);
-    true_val->boolval->value = true;
-    false_val->boolval->value = false;
+    true_val->boolval = true;
+    false_val->boolval = false;
     true_val->nofree = true;
     false_val->nofree = true;
 
@@ -117,7 +118,7 @@ void scope_free(struct scope *scope)
 
 enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *name, val_t val)
 {
-    enum valmap_set_status status = valmap_set_no_create(scope->valmap, name, val, false, true);
+    enum valmap_set_status status = valmap_set_no_create(scope->valmap, name, val, false, false);
 
     if (status == VAL_SET_NOT_FOUND && scope->parent != NULL)
     {
@@ -129,7 +130,9 @@ enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *
 
 enum valmap_set_status scope_declare_identifier(struct scope *scope, const char *name, val_t val, bool is_const)
 {
-    return valmap_set_no_overwrite(scope->valmap, name, val, is_const, true);
+    return scope->allow_redecl ?
+       valmap_set_default(scope->valmap, name, val, is_const, true)
+       : valmap_set_no_overwrite(scope->valmap, name, val, is_const, true);
 }
 
 val_t *scope_resolve_identifier(struct scope *scope, const char *name)

@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define VALMAP_DEFAULT_SIZE 4096
+#define VALMAP_DEFAULT_SIZE 20
 #define FNV_OFFSET_BASIS 0xcbf29ce484222325UL
 #define FNV_PRIME 0x100000001b3UL
 
@@ -201,6 +201,14 @@ enum valmap_set_status valmap_set_no_create(struct valmap *valmap, const char *k
     valmap_set_entry(valmap->array, valmap->capacity, key, value,
  &valmap->elements, is_const, attempt_free, OW_NO_CREATE, &status);
     return status;
+}
+
+enum valmap_set_status valmap_set_default(struct valmap *valmap, const char *key, val_t value, bool is_const, bool attempt_free)
+{
+    valmap_check_realloc(valmap);
+    valmap_set_entry(valmap->array, valmap->capacity, key, value,
+ &valmap->elements, is_const, attempt_free, OW_DEFAULT, NULL);
+    return VAL_SET_OK;
 }
 
 void valmap_set_no_free(struct valmap *valmap, const char *key, val_t value, bool is_const)
