@@ -1,3 +1,17 @@
+# [2.18.0](https://github.com/virtual-designer/blazescript/compare/v2.17.3...v2.18.0) (2023-09-07)
+
+
+### Bug Fixes
+
+* binary operators ([5f41049](https://github.com/virtual-designer/blazescript/commit/5f410493a1c8064d26de554ea9ae632616280e4c))
+
+
+### Features
+
+* allow underscores as identifier name ([3654b97](https://github.com/virtual-designer/blazescript/commit/3654b971b2ff513cfecc21f1cbed7d6cbfc9e917))
+
+
+
 ## [2.17.3](https://github.com/virtual-designer/blazescript/compare/v2.17.2...v2.17.3) (2023-09-07)
 
 
@@ -32,15 +46,6 @@
 ### Features
 
 * string binary operations ([6ed1e7f](https://github.com/virtual-designer/blazescript/commit/6ed1e7f8e1077440333cd3c82f3c116876685000))
-
-
-
-# [2.16.0](https://github.com/virtual-designer/blazescript/compare/v2.15.0...v2.16.0) (2023-09-06)
-
-
-### Features
-
-* if statements ([3d6ce09](https://github.com/virtual-designer/blazescript/commit/3d6ce09bfbbb580ded7626bdfd9bb6fdb7f3eb9c))
 
 
 
