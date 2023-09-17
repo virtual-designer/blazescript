@@ -36,6 +36,7 @@ val_t eval_array_lit(scope_t *scope, const ast_node_t *node);
 val_t eval_block(scope_t *scope, const ast_node_t *node);
 val_t eval_if_stmt(scope_t *scope, const ast_node_t *node);
 val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node);
+val_t eval_block_no_scope(scope_t *scope, const ast_node_t *node);
 
 char *eval_fn_error = NULL;
 
@@ -131,7 +132,11 @@ val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
     while ((iter_count_val.type == VAL_BOOLEAN && iter_count_val.boolval) ||
            (iter_count_val.type == VAL_INTEGER && counter < iter_count_val.intval))
     {
-        eval(new_scope, node->loop_stmt->body);
+        if (node->loop_stmt->body->type == NODE_BLOCK)
+            eval_block_no_scope(new_scope, node->loop_stmt->body);
+        else
+            eval(new_scope, node->loop_stmt->body);
+
         counter++;
 
         if (varname != NULL)
@@ -158,6 +163,19 @@ val_t eval_if_stmt(scope_t *scope, const ast_node_t *node)
 }
 
 val_t eval_block(scope_t *scope, const ast_node_t *node)
+{
+    scope_t *new_scope = scope_init(scope);
+
+    for (size_t i = 0; i < node->block->size; i++)
+    {
+        eval(new_scope, &node->block->children[i]);
+    }
+
+    scope_free(new_scope);
+    return BLAZE_NULL;
+}
+
+val_t eval_block_no_scope(scope_t *scope, const ast_node_t *node)
 {
     for (size_t i = 0; i < node->block->size; i++)
     {

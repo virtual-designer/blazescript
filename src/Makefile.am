@@ -1,5 +1,5 @@
 if DEBUG
-GLOBAL_CPPFLAGS_ = -fsanitize=address -fsanitize=leak
+GLOBAL_CPPFLAGS_ = -Wextra -fsanitize=address -fsanitize=leak
 GLOBAL_LDFLAGS_ = -fsanitize=address -fsanitize=leak
 else
 GLOBAL_CPPFLAGS_ = -DNDEBUG
