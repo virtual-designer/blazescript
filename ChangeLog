@@ -1,3 +1,17 @@
+# [2.21.0](https://github.com/virtual-designer/blazescript/compare/v2.20.0...v2.21.0) (2023-09-18)
+
+
+### Bug Fixes
+
+* prevent memory leaking ([94ee4b0](https://github.com/virtual-designer/blazescript/commit/94ee4b08dc4d7f8a6d7b9681c64a40139ad160f3))
+
+
+### Features
+
+* improved memory allocation ([3c220b2](https://github.com/virtual-designer/blazescript/commit/3c220b2f2b670e9b4d4891202ddb9827b40dba4e))
+
+
+
 # [2.20.0](https://github.com/virtual-designer/blazescript/compare/v2.19.0...v2.20.0) (2023-09-08)
 
 
@@ -36,16 +50,6 @@
 ### Bug Fixes
 
 * segfaults without else block ([e6b62f3](https://github.com/virtual-designer/blazescript/commit/e6b62f32b3721e5da4de217f8a1d5eab75b3193d))
-
-
-
-## [2.17.2](https://github.com/virtual-designer/blazescript/compare/v2.17.1...v2.17.2) (2023-09-07)
-
-
-### Bug Fixes
-
-* null values cause segfault ([89419f4](https://github.com/virtual-designer/blazescript/commit/89419f48dafd5a242ab8ce3f412d3922e69dc7d7))
-* **windows:** build errors ([0105488](https://github.com/virtual-designer/blazescript/commit/010548814d67e7553a42b30b437f484725bbfbec))
 
 
 
