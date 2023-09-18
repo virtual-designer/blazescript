@@ -127,7 +127,7 @@ val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
         scope_declare_identifier(new_scope, varname, (val_t) {
              .type = VAL_INTEGER,
              .intval = counter
-         }, false);
+        }, false);
 
     while ((iter_count_val.type == VAL_BOOLEAN && iter_count_val.boolval) ||
            (iter_count_val.type == VAL_INTEGER && counter < iter_count_val.intval))
