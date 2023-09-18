@@ -4,6 +4,10 @@
 
 #define _GNU_SOURCE
 
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "eval.h"
 #include "alloca.h"
 #include "ast.h"
@@ -12,10 +16,6 @@
 #include "parser.h"
 #include "scope.h"
 #include "utils.h"
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define BLAZE_NULL ((val_t) { .type = VAL_NULL })
 #define BLAZE_INT(__value) ((val_t) { .type = VAL_INTEGER, .intval = & ((val_integer_t) { .value = __value }) })
@@ -23,7 +23,7 @@
 #define BLAZE_TRUE BLAZE_BOOL(true)
 
 val_t eval_int(scope_t *scope, const ast_node_t *node);
-val_t eval_float(scope_t *scope, const ast_node_t *node);
+val_t eval_float(scope_t *scope, const ast_node_t *node);                                 /* TODO */
 val_t eval_string(scope_t *scope, const ast_node_t *node);
 val_t eval_root(scope_t *scope, const ast_node_t *node);
 val_t eval_binexp(scope_t *scope, const ast_node_t *node);
