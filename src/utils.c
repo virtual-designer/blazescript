@@ -66,11 +66,11 @@ ssize_t blaze_getline(char **restrict lineptr, size_t *restrict n, FILE *restric
 
     while (!feof(stream) && (c = fgetc(stream)) != '\n')
     {
-        *lineptr = blaze_realloc(*lineptr, ++(*n));
+        *lineptr = xrealloc(*lineptr, ++(*n));
         (*lineptr)[(*n) - 1] = (char) c;
     }
 
-    *lineptr = blaze_realloc(*lineptr, (*n) + 2);
+    *lineptr = xrealloc(*lineptr, (*n) + 2);
     (*lineptr)[(*n)++] = '\n';
     (*lineptr)[(*n)++] = 0;
     return (ssize_t) (*n);
