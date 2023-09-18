@@ -1,3 +1,12 @@
+## [2.21.1](https://github.com/virtual-designer/blazescript/compare/v2.21.0...v2.21.1) (2023-09-18)
+
+
+### Bug Fixes
+
+* use `xrealloc()` instead of `blaze_realloc()` ([b554046](https://github.com/virtual-designer/blazescript/commit/b55404665f06a52ce27b35d14b8a31dfdd1169a1))
+
+
+
 # [2.21.0](https://github.com/virtual-designer/blazescript/compare/v2.20.0...v2.21.0) (2023-09-18)
 
 
@@ -41,15 +50,6 @@
 ### Features
 
 * allow underscores as identifier name ([3654b97](https://github.com/virtual-designer/blazescript/commit/3654b971b2ff513cfecc21f1cbed7d6cbfc9e917))
-
-
-
-## [2.17.3](https://github.com/virtual-designer/blazescript/compare/v2.17.2...v2.17.3) (2023-09-07)
-
-
-### Bug Fixes
-
-* segfaults without else block ([e6b62f3](https://github.com/virtual-designer/blazescript/commit/e6b62f32b3721e5da4de217f8a1d5eab75b3193d))
 
 
 
