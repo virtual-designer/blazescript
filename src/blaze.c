@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "alloca.h"
 #include "eval.h"
@@ -8,6 +9,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "utils.h"
+#include "valalloc.h"
 #include "valmap.h"
 
 static struct lex lex;
@@ -30,9 +32,8 @@ static void process_file(const char *name)
 #endif
     scope_t *scope = scope_create_global();
     eval(scope, &node);
-    scope_destroy_all();
-    val_free_global();
-    parser_ast_free(&node);
+    scope_free(scope);
+    parser_ast_free_inner(&node);
     parser_free(&parser);
     lex_free(&lex);
     filebuf_free(&buf);
@@ -46,9 +47,22 @@ int main(int argc, char **argv)
         fatal_error("No input files");
     }
 
-    atexit(&blaze_alloca_tbl_free);
-    blaze_alloca_tbl_init();
+//    struct val_alloc_tbl tbl = val_alloc_tbl_init();
+//
+//    for (size_t i = 0; i < 10000; i++)
+//    {
+//        val_t *value = val_alloc(&tbl);
+//        value->type = VAL_STRING;
+//        value->strval = strdup("KEKW");
+//        print_val(value);
+//        val_alloc_free(&tbl, value, true);
+//    }
+//
+//    val_alloc_tbl_free(&tbl, true);
+//    exit(0);
 
+    atexit(&val_alloc_tbl_global_free);
+    val_alloc_tbl_global_init();
     process_file(argv[1]);
     return 0;
 }

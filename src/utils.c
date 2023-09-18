@@ -47,7 +47,7 @@ void syntax_error(const char *fmt, ...)
 
 char *ctos(char c)
 {
-    char *s = blaze_malloc(2);
+    char *s = xmalloc(2);
     s[0] = c;
     s[1] = 0;
     return s;
@@ -57,11 +57,6 @@ ssize_t blaze_getline(char **restrict lineptr, size_t *restrict n, FILE *restric
 {
 #if defined _POSIX_C_SOURCE && _POSIX_C_SOURCE >= 200809L
     ssize_t ret = getline(lineptr, n, stream);
-
-    if (*lineptr != NULL)
-    {
-        blaze_alloca_tbl_push_ptr(*lineptr);
-    }
 
     return ret;
 #else

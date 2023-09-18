@@ -73,37 +73,37 @@ struct lex lex_init(char *filename, char *buf)
 {
     struct lex lex;
 
-    lex.buf = blaze_strdup(buf);
+    lex.buf = strdup(buf);
     lex.len = strlen(lex.buf);
     lex.current_line = 1;
     lex.current_column = 1;
     lex.token_count = 0;
     lex.index = 0;
     lex.tokens = NULL;
-    lex.filename = blaze_strdup(filename);
+    lex.filename = strdup(filename);
 
     return lex;
 }
 
 void lex_set_contents(struct lex *lex, const char *new_buf)
 {
-    blaze_free(lex->buf);
-    lex->buf = blaze_strdup(new_buf);
+    free(lex->buf);
+    lex->buf = strdup(new_buf);
 }
 
 void lex_free(struct lex *lex)
 {
     for (size_t i = 0; i < lex->token_count; i++)
-        blaze_free(lex->tokens[i].value);
+        free(lex->tokens[i].value);
 
-    blaze_free(lex->tokens);
-    blaze_free(lex->buf);
-    blaze_free(lex->filename);
+    free(lex->tokens);
+    free(lex->buf);
+    free(lex->filename);
 }
 
 static void lex_tokens_array_push(struct lex *lex, struct lex_token token)
 {
-    lex->tokens = blaze_realloc(lex->tokens, (++lex->token_count) * sizeof(struct lex_token));
+    lex->tokens = xrealloc(lex->tokens, (++lex->token_count) * sizeof(struct lex_token));
     lex->tokens[lex->token_count - 1] = token;
 }
 
@@ -180,7 +180,7 @@ static bool lex_string(struct lex *lex)
 
     while (lex_has_value(lex) && lex_char(lex) != quote)
     {
-        strbuf = blaze_realloc(strbuf, ++strbuf_size);
+        strbuf = xrealloc(strbuf, ++strbuf_size);
         strbuf[strbuf_size - 1] = lex_char_forward(lex);
     }
 
@@ -192,7 +192,7 @@ static bool lex_string(struct lex *lex)
 
     lex_char_forward(lex);
 
-    strbuf = blaze_realloc(strbuf, ++strbuf_size);
+    strbuf = xrealloc(strbuf, ++strbuf_size);
     strbuf[strbuf_size - 1] = 0;
 
     lex_tokens_array_push(lex, (struct lex_token) {
@@ -215,11 +215,11 @@ static void lex_number(struct lex *lex)
 
     while (lex_has_value(lex) && isdigit(lex_char(lex)))
     {
-        numbuf = blaze_realloc(numbuf, ++numbuf_size);
+        numbuf = xrealloc(numbuf, ++numbuf_size);
         numbuf[numbuf_size - 1] = lex_char_forward(lex);
     }
 
-    numbuf = blaze_realloc(numbuf, ++numbuf_size);
+    numbuf = xrealloc(numbuf, ++numbuf_size);
     numbuf[numbuf_size - 1] = 0;
 
     lex_tokens_array_push(lex, (struct lex_token) {
@@ -251,11 +251,11 @@ static void lex_identifier_or_keyword(struct lex *lex)
 
     while (lex_has_value(lex) && (isalnum(lex_char(lex)) || lex_char(lex) == '_'))
     {
-        identifier = blaze_realloc(identifier, ++size);
+        identifier = xrealloc(identifier, ++size);
         identifier[size - 1] = lex_char_forward(lex);
     }
 
-    identifier = blaze_realloc(identifier, ++size);
+    identifier = xrealloc(identifier, ++size);
     identifier[size - 1] = 0;
 
     enum lex_token_type keyword_token_type = convert_str_to_token(identifier);
@@ -315,7 +315,7 @@ static bool lex_multichar_operators(struct lex *lex)
 
         lex_tokens_array_push(lex, (struct lex_token) {
            .type = T_BINARY_OPERATOR,
-           .value = blaze_strdup(value),
+           .value = strdup(value),
            .line_start = lex->current_line,
            .line_end = lex->current_line,
            .column_start = column_start,
@@ -409,7 +409,7 @@ bool lex_analyze(struct lex *lex)
             NULL;
     }
 
-    lex_token_push_default(lex, T_EOF, blaze_strdup("[EOF]"));
+    lex_token_push_default(lex, T_EOF, strdup("[EOF]"));
     return true;
 }
 

@@ -208,7 +208,7 @@ val_t eval_fn_decl(scope_t *scope, const ast_node_t *node)
 
     for (size_t i = 0; i < node->fn_decl->size; i++)
     {
-        fn.fnval->custom_body = blaze_realloc(
+        fn.fnval->custom_body = xrealloc(
             fn.fnval->custom_body, sizeof(ast_node_t *) * (++fn.fnval->size));
         fn.fnval->custom_body[fn.fnval->size - 1] = parser_ast_deep_copy(&node->fn_decl->body[i]);
     }
@@ -219,9 +219,9 @@ val_t eval_fn_decl(scope_t *scope, const ast_node_t *node)
     for (size_t i = 0; i < node->fn_decl->param_count; i++)
     {
         fn.fnval->param_names =
-            blaze_realloc(fn.fnval->param_names,
+            xrealloc(fn.fnval->param_names,
                           sizeof(char *) * (++fn.fnval->param_count));
-        fn.fnval->param_names[fn.fnval->param_count - 1] = blaze_strdup(node->fn_decl->param_names[i]);
+        fn.fnval->param_names[fn.fnval->param_count - 1] = strdup(node->fn_decl->param_names[i]);
     }
 
     fn.fnval->scope = scope_init(scope);
@@ -269,14 +269,14 @@ val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
     for (size_t i = 0; i < node->fn_call->argc; i++)
     {
         val_t arg = eval(scope, &node->fn_call->args[i]);
-        args = blaze_realloc(args, sizeof(val_t) * (i + 1));
+        args = xrealloc(args, sizeof(val_t) * (i + 1));
         args[i] = arg;
     }
 
     if (val->fnval->type == FN_BUILT_IN)
     {
         val_t ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
-        blaze_free(args);
+        free(args);
 
         if (eval_fn_error != NULL)
         {
@@ -286,7 +286,7 @@ val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
                           "%s",
                           eval_fn_error);
 
-            blaze_free(eval_fn_error);
+            free(eval_fn_error);
             eval_fn_error = NULL;
             exit(-1);
         }
@@ -330,7 +330,7 @@ val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
 
 
     val_t *copy = val_copy_deep(&ret);
-    blaze_free(args);
+    free(args);
     val->fnval->scope = scope_init(scope);
     return *copy;
 }
@@ -388,7 +388,7 @@ val_t eval_int(scope_t *scope, const ast_node_t *node)
 val_t eval_string(scope_t *scope, const ast_node_t *node)
 {
     val_t val = val_create(VAL_STRING);
-    val.strval = blaze_strdup(node->string->strval);
+    val.strval = strdup(node->string->strval);
     return val;
 }
 
@@ -412,13 +412,13 @@ static char *val_stringify(val_t *val)
     val_type_t type = val->type;
 
     if (type == VAL_STRING)
-        string = blaze_strdup(val->strval);
+        string = strdup(val->strval);
     else if (type == VAL_INTEGER)
         asprintf(&string, "%lld", val->intval);
     else if (type == VAL_BOOLEAN)
-        string = blaze_strdup(val->boolval ? "true" : "false");
+        string = strdup(val->boolval ? "true" : "false");
     else if (type == VAL_NULL)
-        string = blaze_strdup("null");
+        string = strdup("null");
 
     return string;
 }
@@ -456,8 +456,6 @@ static val_t eval_concat(val_t *left, val_t *right, const ast_node_t *node)
                       node->binexpr->left->column_start,
                       "cannot use operator '%c' with type string",
                       '+');
-
-    blaze_alloca_tbl_push_ptr(val.strval);
     return val;
 }
 

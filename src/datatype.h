@@ -70,6 +70,10 @@ val_t *val_copy_deep(val_t *orig);
 val_t val_init();
 val_t *val_init_heap();
 val_t *val_copy(val_t *value);
+void val_alloc_tbl_global_init();
+void val_alloc_tbl_global_free();
 void val_free_force_no_root(val_t *val);
+
+extern struct val_alloc_tbl val_alloc_tbl;
 
 #endif /* BLAZESCRIPT_DATATYPE_H */

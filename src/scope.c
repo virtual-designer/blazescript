@@ -5,73 +5,42 @@
 #include <stdlib.h>
 
 #include "alloca.h"
-#include "eval.h"
 #include "include/lib.h"
 #include "scope.h"
 #include "valmap.h"
 
-static val_t *true_val = NULL,
-             *false_val = NULL,
-             *null_val = NULL;
-
-static struct scope **allocated_scopes = NULL;
-static size_t scope_count = 0;
+static val_t true_val = { .type = VAL_BOOLEAN, .boolval = true, .nofree = true },
+             false_val = { .type = VAL_BOOLEAN, .boolval = false, .nofree = true },
+             null_val = { .type = VAL_NULL, .nofree = true };
 
 struct scope *scope_init(struct scope *parent)
 {
-    struct scope *scope = blaze_calloc(1, sizeof(struct scope));
+    struct scope *scope = xcalloc(1, sizeof(struct scope));
     scope->valmap = valmap_init_default();
     scope->parent = parent;
     scope->allow_redecl = false;
 
-    if (parent == NULL)
-    {
-        scope->null = val_create_heap(VAL_NULL);
-        scope->null->nofree = true;
-        null_val = scope->null;
-    }
-    else
-    {
-        struct scope *tmp_scope = scope;
-
-        while (tmp_scope->parent != NULL)
-        {
-            tmp_scope = tmp_scope->parent;
-        }
-
-        scope->null = tmp_scope->null;
-    }
-
-    allocated_scopes = blaze_realloc(
-        allocated_scopes, (sizeof(struct scope *)) * (++scope_count));
-    allocated_scopes[scope_count - 1] = scope;
-
+    scope->null = &null_val;
     return scope;
 }
 
 val_t *blaze_null()
 {
-    return null_val;
+    return &null_val;
 }
 
 struct scope *scope_create_global()
 {
     struct scope *scope = scope_init(NULL);
 
-    true_val = val_create_heap(VAL_BOOLEAN);
-    false_val = val_create_heap(VAL_BOOLEAN);
-    true_val->boolval = true;
-    false_val->boolval = false;
-    true_val->nofree = true;
-    false_val->nofree = true;
-
-    scope_declare_identifier(scope, "true", *true_val, true);
-    scope_declare_identifier(scope, "false", *false_val, true);
-    scope_declare_identifier(scope, "null", *scope->null, true);
+    scope_declare_identifier(scope, "true", true_val, true);
+    scope_declare_identifier(scope, "false", false_val, true);
+    scope_declare_identifier(scope, "null", null_val, true);
 
     for (size_t i = 0; i < (sizeof builtin_functions) / (sizeof builtin_functions[0]); i++)
     {
         val_t *fn_val = val_create_heap(VAL_FUNCTION);
+        fn_val->nofree = true;
         fn_val->fnval->type = FN_BUILT_IN;
         fn_val->fnval->built_in_callback = builtin_functions[i].callback;
         scope_declare_identifier(scope, builtin_functions[i].name, *fn_val, true);
@@ -85,35 +54,11 @@ void scope_free(struct scope *scope)
     if (scope == NULL)
         return;
 
-    bool found = false;
-
-    for (size_t i = 0; i < scope_count; i++)
-    {
-        if (allocated_scopes[i] == scope)
-        {
-            found = true;
-            allocated_scopes[i] = NULL;
-        }
-    }
-
-    if (!found)
-    {
-        return;
-    }
-
     if (scope->parent == NULL)
         valmap_free_builtin_fns(scope->valmap);
 
     valmap_free(scope->valmap, true);
-
-    if (scope->parent == NULL)
-    {
-        val_free_force(scope->null);
-        val_free_force(true_val);
-        val_free_force(false_val);
-    }
-
-    blaze_free(scope);
+    free(scope);
 }
 
 enum valmap_set_status scope_assign_identifier(struct scope *scope, const char *name, val_t val)
@@ -143,16 +88,4 @@ val_t *scope_resolve_identifier(struct scope *scope, const char *name)
         return scope_resolve_identifier(scope->parent, name);
 
     return val;
-}
-
-void scope_destroy_all()
-{
-    for (size_t i = 0; i < scope_count; i++)
-    {
-        scope_free(allocated_scopes[i]);
-    }
-
-    blaze_free(allocated_scopes);
-    allocated_scopes = NULL;
-    scope_count = 0;
 }

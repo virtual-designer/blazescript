@@ -2,18 +2,29 @@
  * Created by rakinar2 on 8/30/23.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
 #include "datatype.h"
 #include "alloca.h"
 #include "log.h"
 #include "parser.h"
 #include "scope.h"
 #include "utils.h"
+#include "valalloc.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-static val_t **values = NULL;
-static size_t values_count = 0;
+struct val_alloc_tbl val_alloc_tbl;
+
+void val_alloc_tbl_global_init()
+{
+    val_alloc_tbl = val_alloc_tbl_init();
+}
+
+void val_alloc_tbl_global_free()
+{
+    val_alloc_tbl_free(&val_alloc_tbl, true);
+}
 
 val_t val_init()
 {
@@ -24,7 +35,7 @@ val_t val_init()
 
 val_t *val_init_heap()
 {
-    val_t *val = blaze_malloc(sizeof(val_t));
+    val_t *val = val_alloc(&val_alloc_tbl);
     val->nofree = false;
 
     log_debug("Created value: %p", val);
@@ -33,16 +44,14 @@ val_t *val_init_heap()
 
 val_t *val_copy(val_t *value)
 {
-    val_t *copy = blaze_calloc(1, sizeof(val_t));
+    val_t *copy = val_alloc(&val_alloc_tbl);
     memcpy(copy, value, sizeof (val_t));
-    values = blaze_realloc(values, sizeof(val_t *) * ++values_count);
-    values[values_count - 1] = copy;
     return copy;
 }
 
 void val_free_global()
 {
-
+    // FIXME
 }
 
 val_t *val_create_heap(val_type_t type)
@@ -61,7 +70,7 @@ val_t val_create(val_type_t type)
     switch (val.type)
     {
         case VAL_FUNCTION:
-            val.fnval = blaze_calloc(1, sizeof *(val.fnval));
+            val.fnval = xcalloc(1, sizeof *(val.fnval));
             val.fnval->scope = NULL;
             break;
 
@@ -101,7 +110,7 @@ val_t *val_copy_deep(val_t *orig)
             break;
 
         case VAL_STRING:
-            val->strval = blaze_strdup(orig->strval);
+            val->strval = strdup(orig->strval);
             break;
 
         case VAL_BOOLEAN:
@@ -118,7 +127,7 @@ val_t *val_copy_deep(val_t *orig)
 
                 for (size_t i = 0; i < orig->fnval->size; i++)
                 {
-                    val->fnval->custom_body = blaze_realloc(
+                    val->fnval->custom_body = xrealloc(
                         val->fnval->custom_body,
                         sizeof(ast_node_t *) * (++val->fnval->size));
                     val->fnval->custom_body[val->fnval->size - 1] = parser_ast_deep_copy(orig->fnval->custom_body[i]);
@@ -129,10 +138,10 @@ val_t *val_copy_deep(val_t *orig)
 
                 for (size_t i = 0; i < orig->fnval->param_count; i++)
                 {
-                    val->fnval->param_names = blaze_realloc(
+                    val->fnval->param_names = xrealloc(
                         val->fnval->param_names,
                         sizeof(char *) * (++val->fnval->param_count));
-                    val->fnval->param_names[val->fnval->param_count - 1] = blaze_strdup(orig->fnval->param_names[i]);
+                    val->fnval->param_names[val->fnval->param_count - 1] = strdup(orig->fnval->param_names[i]);
                 }
 
                 val->fnval->scope = scope_init(orig->fnval->scope);
@@ -153,16 +162,24 @@ val_t *val_copy_deep(val_t *orig)
 
 void val_free_force_no_root(val_t *val)
 {
+    if (val->nofree)
+        return;
+
     log_debug("Freeing value: %p", val);
+
+    if (val->type == VAL_FUNCTION)
+        log_debug("Attempt to free function: %p", val->fnval);
 
     switch (val->type)
     {
         case VAL_STRING:
-            blaze_free(val->strval);
+            free(val->strval);
+            val->strval = NULL;
             break;
 
         case VAL_ARRAY:
             vector_free(val->arrval);
+            val->arrval = NULL;
             break;
 
         case VAL_FUNCTION:
@@ -171,17 +188,17 @@ void val_free_force_no_root(val_t *val)
                 for (size_t i = 0; i < val->fnval->size; i++)
                     parser_ast_free(val->fnval->custom_body[i]);
 
-                blaze_free(val->fnval->custom_body);
+                free(val->fnval->custom_body);
 
                 for (size_t i = 0; i < val->fnval->param_count; i++)
-                    blaze_free(val->fnval->param_names[i]);
+                    free(val->fnval->param_names[i]);
 
-                blaze_free(val->fnval->param_names);
+                free(val->fnval->param_names);
                 scope_free(val->fnval->scope);
                 val->fnval->scope = NULL;
+                free(val->fnval);
             }
 
-            blaze_free(val->fnval);
             break;
 
         case VAL_INTEGER:
@@ -193,14 +210,12 @@ void val_free_force_no_root(val_t *val)
         default:
             log_warn("unrecognized value type: %d", val->type);
     }
-
-    blaze_free(val);
 }
 
 void val_free_force(val_t *val)
 {
     val_free_force_no_root(val);
-    blaze_free(val);
+    val_alloc_free(&val_alloc_tbl, val, true);
 }
 
 void val_free(val_t *val)

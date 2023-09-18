@@ -5,6 +5,7 @@
 #include "map.h"
 #include "alloca.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define VALMAP_DEFAULT_SIZE 4096
@@ -29,7 +30,7 @@ map_t map_create()
     return (map_t) {
         .capacity = MAP_INIT_SIZE,
         .size = 0,
-        .elements = blaze_calloc(sizeof (map_entry_t), MAP_INIT_SIZE)
+        .elements = xcalloc(sizeof (map_entry_t), MAP_INIT_SIZE)
     };
 }
 
@@ -38,7 +39,7 @@ static void map_realloc(map_t *map, size_t new_capacity)
     map_entry_t *old_array = map->elements;
     size_t old_capacity = map->capacity;
 
-    map->elements = blaze_calloc(1, new_capacity);
+    map->elements = xcalloc(1, new_capacity);
     map->capacity = new_capacity;
 
     for (size_t i = 0; i < old_capacity; i++)
@@ -46,11 +47,11 @@ static void map_realloc(map_t *map, size_t new_capacity)
         if (old_array[i].key != NULL)
         {
             map_set(map, old_array[i].key, old_array[i].value, MAP_CREATE | MAP_OVERWRITE);
-            blaze_free(old_array[i].key);
+            free(old_array[i].key);
         }
     }
 
-    blaze_free(old_array);
+    free(old_array);
 }
 
 static void map_check_realloc(map_t *map)
@@ -84,7 +85,7 @@ static const char *valmap_set_entry(map_entry_t *array,
                     if (result_flags != NULL)
                         *result_flags |= MAP_RESULT_FREED_ON_OVERWRITE;
 
-                    blaze_free(array[index].value);
+                    free(array[index].value);
                 }
 
                 array[index].value = value;
@@ -106,7 +107,7 @@ static const char *valmap_set_entry(map_entry_t *array,
 
     if ((flags & MAP_CREATE) == MAP_CREATE)
     {
-        array[index].key = blaze_strdup(key);
+        array[index].key = strdup(key);
         array[index].value = value;
 
         if (element_count != NULL)
@@ -174,5 +175,5 @@ void map_print(map_t *map)
 
 void map_free(map_t *map)
 {
-    blaze_free(map->elements);
+    free(map->elements);
 }

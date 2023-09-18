@@ -17,7 +17,7 @@ BUILTIN_FN(exit)
 {
     if (argc >= 1 && args[0].type != VAL_INTEGER)
     {
-        eval_fn_error = blaze_strdup("#1 argument passed to function exit() must be an integer");
+        eval_fn_error = strdup("#1 argument passed to function exit() must be an integer");
         return *scope->null;
     }
 
@@ -35,7 +35,7 @@ BUILTIN_FN(print)
 {
     if (argc == 0)
     {
-        eval_fn_error = blaze_strdup("function println() requires at least 1 argument to be passed");
+        eval_fn_error = strdup("function println() requires at least 1 argument to be passed");
         return *scope->null;
     }
 
@@ -75,7 +75,7 @@ BUILTIN_FN(read)
     {
         char errstr[1024];
         sprintf(errstr, "read(): failed to read from stdin: %s", strerror(errno));
-        eval_fn_error = blaze_strdup(errstr);
+        eval_fn_error = strdup(errstr);
         return *scope->null;
     }
 
@@ -117,7 +117,7 @@ BUILTIN_FN(array_filter)
 {
     if (argc != 2)
     {
-        eval_fn_error = blaze_strdup("function array_filter() requires exactly 2 arguments (vector, function) to be passed");
+        eval_fn_error = strdup("function array_filter() requires exactly 2 arguments (vector, function) to be passed");
         return *scope->null;
     }
 
@@ -126,7 +126,7 @@ BUILTIN_FN(array_filter)
 
     if (callback.fnval->param_count > 1)
     {
-        eval_fn_error = blaze_strdup("callback function passed to array_filter() must accept less than 2 arguments");
+        eval_fn_error = strdup("callback function passed to array_filter() must accept less than 2 arguments");
         return *scope->null;
     }
 

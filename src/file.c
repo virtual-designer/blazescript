@@ -35,7 +35,7 @@ struct filebuf filebuf_init(const char *filename)
     struct filebuf buf = {
         .size = 0,
         .content = NULL,
-        .filename = blaze_strdup(filename),
+        .filename = strdup(filename),
         .file = file
     };
 
@@ -58,7 +58,7 @@ void filebuf_close(struct filebuf *buf)
 void filebuf_read(struct filebuf *buf)
 {
     assert(buf != NULL);
-    char *content = blaze_malloc(buf->size + 1);
+    char *content = xmalloc(buf->size + 1);
 
     if (fread(content, 1, buf->size, buf->file) != buf->size)
         fatal_error("could not read file '%s': %s", buf->filename, strerror(errno));
@@ -69,7 +69,7 @@ void filebuf_read(struct filebuf *buf)
 
 void filebuf_free(struct filebuf *buf)
 {
-    blaze_free(buf->filename);
-    blaze_free(buf->content);
+    free(buf->filename);
+    free(buf->content);
     filebuf_current_file = NULL;
 }

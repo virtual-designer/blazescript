@@ -20,13 +20,15 @@ blaze_HEADERS_ = alloca.h \
 		  utils.h \
 		  valmap.h \
 		  vector.h \
-		  map.h
+		  map.h \
+		  valalloc.h
 
 blazevm_HEADERS_ = bytecode.h \
 	      opcode.h \
           register.h \
           disassemble.h \
-          stack.h
+          stack.h \
+		  valalloc.h
 
 blaze_SOURCES = alloca.c \
                 file.c \
@@ -41,6 +43,7 @@ blaze_SOURCES = alloca.c \
                 vector.c \
 			    datatype.c \
 			    map.c \
+			    valalloc.c \
                 $(blaze_HEADERS_)
 
 blazevm_SOURCES = alloca.c \
@@ -60,6 +63,7 @@ blazevm_SOURCES = alloca.c \
 				  disassemble.c \
                   file.c \
                   stack.c \
+			      valalloc.c \
                   $(blazevm_HEADERS_)
 
 AM_CPPFLAGS = -std=gnu11 -I$(top_srcdir)/include $(GLOBAL_CPPFLAGS_)
