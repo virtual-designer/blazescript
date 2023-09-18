@@ -582,7 +582,6 @@ static ast_node_t parser_parse_assignment_expr(struct parser *parser)
     if (!parser_is_eof(parser) && (parser->index + 1) < parser->token_count &&
         parser->tokens[parser->index + 1].type == T_ASSIGNMENT)
     {
-        printf("LMAO\n");
         struct lex_token start_token = parser_expect(parser, T_IDENTIFIER);
         char *identifier = strdup(start_token.value);
         parser_expect(parser, T_ASSIGNMENT);
