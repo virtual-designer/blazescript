@@ -18,20 +18,6 @@
 #define FNV_OFFSET_BASIS 0xcbf29ce484222325UL
 #define FNV_PRIME 0x100000001b3UL
 
-struct valmap
-{
-    struct valmap_entry *array;
-    size_t capacity;
-    size_t elements;
-};
-
-struct valmap_entry
-{
-    char *key;
-    val_t value;
-    bool is_const;
-};
-
 struct valmap *valmap_init(size_t size)
 {
     struct valmap *valmap = xcalloc(1, sizeof(struct valmap));

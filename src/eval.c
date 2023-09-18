@@ -121,7 +121,7 @@ val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
     long long int counter = 0;
     char *varname = node->loop_stmt->iter_varname;
     scope_t *new_scope = scope_init(scope);
-    new_scope->allow_redecl = true;
+    new_scope->allow_redecl = false;
 
     if (varname != NULL)
         scope_declare_identifier(new_scope, varname, (val_t) {
@@ -139,11 +139,20 @@ val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
 
         counter++;
 
+        for (size_t i = 0; i < valmap_get_capacity(new_scope->valmap); i++)
+        {
+            if (new_scope->valmap->array[i].key == NULL || strcmp(new_scope->valmap->array[i].key, varname) == 0)
+                continue;
+
+            free(new_scope->valmap->array[i].key);
+            new_scope->valmap->array[i].key = NULL;
+        }
+
         if (varname != NULL)
-            scope_assign_identifier(new_scope, varname, (val_t) {
+            valmap_set_default(new_scope->valmap, varname, (val_t) {
                 .type = VAL_INTEGER,
                 .intval = counter
-            });
+            }, false, false);
     }
 
     scope_free(new_scope);
@@ -276,6 +285,12 @@ val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
     if (val->fnval->type == FN_BUILT_IN)
     {
         val_t ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
+
+        for (size_t i = 0; i < node->fn_call->argc; i++)
+        {
+            val_free_force_no_root(&args[i]);
+        }
+
         free(args);
 
         if (eval_fn_error != NULL)
@@ -327,7 +342,6 @@ val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
     {
         ret = eval(val->fnval->scope, val->fnval->custom_body[i]);
     }
-
 
     val_t *copy = val_copy_deep(&ret);
     free(args);

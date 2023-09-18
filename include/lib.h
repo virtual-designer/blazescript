@@ -22,9 +22,10 @@ struct builtin_function
 {
     const char *name;
     val_t (*callback)(scope_t *scope, size_t argc, val_t *args);
+    val_t *fnval;
 };
 
-static struct builtin_function const builtin_functions[] = {
+static struct builtin_function builtin_functions[] = {
     { "println", BUILTIN_FN_REF(println) },
     { "print", BUILTIN_FN_REF(print) },
     { "vector", BUILTIN_FN_REF(array) },

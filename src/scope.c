@@ -2,11 +2,13 @@
  * Created by rakinar2 on 8/25/23.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "alloca.h"
 #include "include/lib.h"
 #include "scope.h"
+#include "valalloc.h"
 #include "valmap.h"
 
 static val_t true_val = { .type = VAL_BOOLEAN, .boolval = true, .nofree = true },
@@ -19,6 +21,15 @@ struct scope *scope_init(struct scope *parent)
     scope->valmap = valmap_init_default();
     scope->parent = parent;
     scope->allow_redecl = false;
+
+    if (parent != NULL)
+    {
+        for (size_t i = 0; i < (sizeof builtin_functions) / (sizeof builtin_functions[0]); i++)
+        {
+            assert(builtin_functions[i].fnval != NULL);
+            scope_declare_identifier(scope, builtin_functions[i].name, *builtin_functions[i].fnval, true);
+        }
+    }
 
     scope->null = &null_val;
     return scope;
@@ -40,10 +51,11 @@ struct scope *scope_create_global()
     for (size_t i = 0; i < (sizeof builtin_functions) / (sizeof builtin_functions[0]); i++)
     {
         val_t *fn_val = val_create_heap(VAL_FUNCTION);
-        fn_val->nofree = true;
         fn_val->fnval->type = FN_BUILT_IN;
+        fn_val->nofree = true;
         fn_val->fnval->built_in_callback = builtin_functions[i].callback;
         scope_declare_identifier(scope, builtin_functions[i].name, *fn_val, true);
+        builtin_functions[i].fnval = fn_val;
     }
 
     return scope;

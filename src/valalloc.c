@@ -64,6 +64,7 @@ void val_alloc_free(struct val_alloc_tbl *tbl, val_t *ptr, bool free_inner)
     }
 
     ptr->type = VAL_NULL;
+    ptr->nofree = false;
 }
 
 void val_alloc_tbl_free(struct val_alloc_tbl *tbl, bool recursive)

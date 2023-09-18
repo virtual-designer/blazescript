@@ -16,7 +16,19 @@ enum valmap_set_status
     VAL_SET_IS_CONST
 };
 
-typedef struct valmap valmap_t;
+struct valmap_entry
+{
+    char *key;
+    val_t value;
+    bool is_const;
+};
+
+typedef struct valmap
+{
+    struct valmap_entry *array;
+    size_t capacity;
+    size_t elements;
+} valmap_t;
 
 struct valmap *valmap_init(size_t size);
 struct valmap *valmap_init_default();
