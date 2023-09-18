@@ -1,3 +1,12 @@
+## [2.21.3](https://github.com/virtual-designer/blazescript/compare/v2.21.2...v2.21.3) (2023-09-18)
+
+
+### Bug Fixes
+
+* restrict variable redeclaration in loops ([f0bfdf1](https://github.com/virtual-designer/blazescript/commit/f0bfdf11e9b31b76cc7e7793f07def320c200c68))
+
+
+
 ## [2.21.2](https://github.com/virtual-designer/blazescript/compare/v2.21.1...v2.21.2) (2023-09-18)
 
 
@@ -36,15 +45,6 @@
 ### Features
 
 * performance optimizations ([3adb7c1](https://github.com/virtual-designer/blazescript/commit/3adb7c10516e17ed4696ff7b176d6db6277f07dc))
-
-
-
-# [2.19.0](https://github.com/virtual-designer/blazescript/compare/v2.18.0...v2.19.0) (2023-09-08)
-
-
-### Features
-
-* loop statements ([1bd2696](https://github.com/virtual-designer/blazescript/commit/1bd2696d5eac159f0159df4a13ec894df69b6607))
 
 
 
