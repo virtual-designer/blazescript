@@ -1,3 +1,12 @@
+## [2.21.5](https://github.com/virtual-designer/blazescript/compare/v2.21.4...v2.21.5) (2023-09-19)
+
+
+### Performance Improvements
+
+* **loop:** speedup loops ([3434c09](https://github.com/virtual-designer/blazescript/commit/3434c09fbf43ac5ab41f2d0fe52986bc8eb072ae))
+
+
+
 ## [2.21.4](https://github.com/virtual-designer/blazescript/compare/v2.21.3...v2.21.4) (2023-09-19)
 
 
@@ -31,20 +40,6 @@
 ### Bug Fixes
 
 * use `xrealloc()` instead of `blaze_realloc()` ([b554046](https://github.com/virtual-designer/blazescript/commit/b55404665f06a52ce27b35d14b8a31dfdd1169a1))
-
-
-
-# [2.21.0](https://github.com/virtual-designer/blazescript/compare/v2.20.0...v2.21.0) (2023-09-18)
-
-
-### Bug Fixes
-
-* prevent memory leaking ([94ee4b0](https://github.com/virtual-designer/blazescript/commit/94ee4b08dc4d7f8a6d7b9681c64a40139ad160f3))
-
-
-### Features
-
-* improved memory allocation ([3c220b2](https://github.com/virtual-designer/blazescript/commit/3c220b2f2b670e9b4d4891202ddb9827b40dba4e))
 
 
 
