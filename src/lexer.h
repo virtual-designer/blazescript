@@ -5,6 +5,9 @@
 #ifndef BLAZESCRIPT_LEXER_H
 #define BLAZESCRIPT_LEXER_H
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 enum lex_token_type
 {
     T_UNKNOWN,

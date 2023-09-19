@@ -26,12 +26,12 @@ struct builtin_function
 };
 
 static struct builtin_function builtin_functions[] = {
-    { "println", BUILTIN_FN_REF(println) },
-    { "print", BUILTIN_FN_REF(print) },
-    { "vector", BUILTIN_FN_REF(array) },
-    { "array_filter", BUILTIN_FN_REF(array_filter) },
-    { "read", BUILTIN_FN_REF(read) },
-    { "exit", BUILTIN_FN_REF(exit) },
+    { "println", BUILTIN_FN_REF(println), .fnval = NULL },
+    { "print", BUILTIN_FN_REF(print), .fnval = NULL },
+    { "vector", BUILTIN_FN_REF(array), .fnval = NULL },
+    { "array_filter", BUILTIN_FN_REF(array_filter), .fnval = NULL },
+    { "read", BUILTIN_FN_REF(read), .fnval = NULL },
+    { "exit", BUILTIN_FN_REF(exit), .fnval = NULL },
 };
 
 #endif /* BLAZESCRIPT_LIB_H */

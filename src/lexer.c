@@ -310,7 +310,7 @@ static bool lex_multichar_operators(struct lex *lex)
         else
             return false;
 
-        for (int i = 0; i < strlen(value); i++)
+        for (size_t i = 0; i < strlen(value); i++)
             lex_char_forward(lex);
 
         lex_tokens_array_push(lex, (struct lex_token) {
