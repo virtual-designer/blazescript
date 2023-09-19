@@ -1,3 +1,12 @@
+## [2.21.4](https://github.com/virtual-designer/blazescript/compare/v2.21.3...v2.21.4) (2023-09-19)
+
+
+### Bug Fixes
+
+* memory management ([d114921](https://github.com/virtual-designer/blazescript/commit/d1149213299930064485c540ef25eebc03c3294f))
+
+
+
 ## [2.21.3](https://github.com/virtual-designer/blazescript/compare/v2.21.2...v2.21.3) (2023-09-18)
 
 
@@ -36,15 +45,6 @@
 ### Features
 
 * improved memory allocation ([3c220b2](https://github.com/virtual-designer/blazescript/commit/3c220b2f2b670e9b4d4891202ddb9827b40dba4e))
-
-
-
-# [2.20.0](https://github.com/virtual-designer/blazescript/compare/v2.19.0...v2.20.0) (2023-09-08)
-
-
-### Features
-
-* performance optimizations ([3adb7c1](https://github.com/virtual-designer/blazescript/commit/3adb7c10516e17ed4696ff7b176d6db6277f07dc))
 
 
 
