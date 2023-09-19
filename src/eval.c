@@ -17,6 +17,8 @@
 #include "scope.h"
 #include "utils.h"
 
+// FIXME: String variable reference issue
+
 #define BLAZE_NULL ((val_t) { .type = VAL_NULL })
 #define BLAZE_INT(__value) ((val_t) { .type = VAL_INTEGER, .intval = & ((val_integer_t) { .value = __value }) })
 #define BLAZE_BOOL(__value) ((val_t) { .type = VAL_BOOLEAN, .boolval = & ((val_boolean_t) { .value = __value }) })
@@ -96,6 +98,9 @@ bool val_is_truthy(const val_t *val)
            (val->type != VAL_INTEGER || val->intval != 0);
 }
 
+/* FIXME: Performance issue. Add new scoping mode "loop" and
+   use an unique ID and previous unique ID field to identify
+   the same scope as equal or not equal. */
 val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
 {
     val_t iter_count_val = node->loop_stmt->iter_count == NULL ? BLAZE_TRUE : eval(scope, node->loop_stmt->iter_count);
@@ -286,11 +291,6 @@ val_t eval_expr_call(scope_t *scope, const ast_node_t *node)
     {
         val_t ret = val->fnval->built_in_callback(scope, node->fn_call->argc, args);
 
-        for (size_t i = 0; i < node->fn_call->argc; i++)
-        {
-            val_free_force_no_root(&args[i]);
-        }
-
         free(args);
 
         if (eval_fn_error != NULL)
@@ -401,9 +401,9 @@ val_t eval_int(scope_t *scope, const ast_node_t *node)
 
 val_t eval_string(scope_t *scope, const ast_node_t *node)
 {
-    val_t val = val_create(VAL_STRING);
-    val.strval = strdup(node->string->strval);
-    return val;
+    val_t *val = val_create_heap(VAL_STRING);
+    val->strval = strdup(node->string->strval);
+    return *val;
 }
 
 static long long int val_to_int(val_t *val)
@@ -439,38 +439,39 @@ static char *val_stringify(val_t *val)
 
 static val_t eval_concat(val_t *left, val_t *right, const ast_node_t *node)
 {
-    val_t val = val_create(VAL_STRING);
+    val_t *val = val_init_heap(VAL_STRING);
     val_type_t ltype = left->type;
     val_type_t rtype = right->type;
 
-    val.strval = NULL;
+    val->type = VAL_STRING;
+    val->strval = NULL;
 
     if (ltype == VAL_STRING && rtype == VAL_STRING)
-        asprintf(&val.strval, "%s%s",
+        asprintf(&val->strval, "%s%s",
                  left->strval, right->strval);
     else if (ltype == VAL_STRING && rtype == VAL_INTEGER)
-        asprintf(&val.strval, "%s%lld",
+        asprintf(&val->strval, "%s%lld",
                  left->strval, right->intval);
     else if (ltype == VAL_INTEGER && rtype == VAL_STRING)
-        asprintf(&val.strval, "%lld%s",
+        asprintf(&val->strval, "%lld%s",
                  left->intval, right->strval);
     else if (ltype == VAL_STRING && rtype == VAL_BOOLEAN)
-        asprintf(&val.strval, "%s%s",
+        asprintf(&val->strval, "%s%s",
                  left->strval, right->boolval ? "true" : "false");
     else if (ltype == VAL_BOOLEAN && rtype == VAL_STRING)
-        asprintf(&val.strval, "%s%s",
+        asprintf(&val->strval, "%s%s",
                  left->boolval ? "true" : "false", right->strval);
     else if (ltype == VAL_NULL && rtype == VAL_STRING)
-        asprintf(&val.strval, "null%s", right->strval);
+        asprintf(&val->strval, "null%s", right->strval);
     else if (ltype == VAL_STRING && rtype == VAL_NULL)
-        asprintf(&val.strval, "%snull", left->strval);
+        asprintf(&val->strval, "%snull", left->strval);
     else
         RUNTIME_ERROR(node->binexpr->left->filename,
                       node->binexpr->left->line_start,
                       node->binexpr->left->column_start,
                       "cannot use operator '%c' with type string",
                       '+');
-    return val;
+    return *val;
 }
 
 static val_t eval_binexp_string(ast_bin_operator_t operator, val_t *left, val_t *right, const ast_node_t *node)

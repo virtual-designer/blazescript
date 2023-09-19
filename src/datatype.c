@@ -29,7 +29,8 @@ void val_alloc_tbl_global_free()
 val_t val_init()
 {
     return (val_t) {
-        .nofree = false
+        .nofree = false,
+        .self_ptr = NULL
     };
 }
 
@@ -46,6 +47,7 @@ val_t *val_copy(val_t *value)
 {
     val_t *copy = val_alloc(&val_alloc_tbl);
     memcpy(copy, value, sizeof (val_t));
+    copy->self_ptr = copy;
     return copy;
 }
 
@@ -59,6 +61,7 @@ val_t *val_create_heap(val_type_t type)
     val_t val = val_create(type);
     val_t *val_ret = val_init_heap();
     memcpy(val_ret, &val, sizeof val);
+    val_ret->self_ptr = val_ret;
     return val_ret;
 }
 
@@ -173,6 +176,7 @@ void val_free_force_no_root(val_t *val)
     switch (val->type)
     {
         case VAL_STRING:
+            log_debug("Freeing string: %p", val);
             free(val->strval);
             val->strval = NULL;
             break;

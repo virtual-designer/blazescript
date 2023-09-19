@@ -47,6 +47,7 @@ typedef struct {
 typedef struct value {
     val_type_t type;
     bool nofree;
+    struct value *self_ptr;
 
     union {
         long long int intval;

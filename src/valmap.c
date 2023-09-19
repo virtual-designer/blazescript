@@ -215,9 +215,15 @@ void valmap_free(struct valmap *valmap, bool free_values)
         }
 
         if (free_values && valmap->array[i].key != NULL &&
-            valmap->array[i].value.type != VAL_NULL)
+            valmap->array[i].value.type != VAL_NULL && !valmap->array[i].value.nofree)
         {
-            val_alloc_free(&val_alloc_tbl, &valmap->array[i].value, true);
+            if (valmap->array[i].value.self_ptr == NULL)
+            {
+                log_debug("null pointer found: type: %s", val_type_to_str(valmap->array[i].value.type));
+                continue;
+            }
+
+            val_alloc_free(&val_alloc_tbl, valmap->array[i].value.self_ptr, true);
         }
     }
 

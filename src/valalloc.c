@@ -4,6 +4,10 @@
 
 #include "valalloc.h"
 #include "alloca.h"
+#include "log.h"
+#include "utils.h"
+#include <assert.h>
+#include <signal.h>
 #include <stdlib.h>
 
 struct val_alloc_tbl val_alloc_tbl_init()
@@ -23,6 +27,8 @@ bool val_alloc_tbl_resize(struct val_alloc_tbl *tbl)
     if (tbl->size < tbl->capacity - 1)
         return false;
 
+    log_warn("Resizing allocation table");
+
     tbl->capacity *= 2;
     tbl->values = xrealloc(tbl->values, (sizeof (val_t)) * tbl->capacity);
     return true;
@@ -34,13 +40,17 @@ val_t *val_alloc(struct val_alloc_tbl *tbl)
     {
         struct val_alloc_free_node *free_node = tbl->head;
         size_t index = free_node->index;
+        log_debug("Restoring memory: %zu", index);
         tbl->head = free_node->next;
         free(free_node);
-        return tbl->values + index;
+        return &tbl->values[index];
     }
 
     val_alloc_tbl_resize(tbl);
-    return tbl->values + (tbl->size++);
+    val_t *val = &tbl->values[tbl->size++];
+    val->nofree = false;
+    val->self_ptr = val;
+    return val;
 }
 
 val_t *val_multi_alloc(struct val_alloc_tbl *tbl, size_t n)
@@ -64,7 +74,7 @@ void val_alloc_free(struct val_alloc_tbl *tbl, val_t *ptr, bool free_inner)
     }
 
     ptr->type = VAL_NULL;
-    ptr->nofree = false;
+    ptr->nofree = true;
 }
 
 void val_alloc_tbl_free(struct val_alloc_tbl *tbl, bool recursive)
@@ -73,7 +83,10 @@ void val_alloc_tbl_free(struct val_alloc_tbl *tbl, bool recursive)
     {
         for (size_t i = 0; i < tbl->size; i++)
         {
-            val_free_force_no_root(&tbl->values[i]);
+            log_debug("%s", val_type_to_str(tbl->values[i].type));
+
+            if (tbl->values[i].type != VAL_NULL)
+                val_free_force_no_root(&tbl->values[i]);
         }
     }
 
