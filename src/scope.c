@@ -7,8 +7,8 @@
 
 #include "alloca.h"
 #include "include/lib.h"
+#include "log.h"
 #include "scope.h"
-#include "valalloc.h"
 #include "valmap.h"
 
 static val_t true_val = { .type = VAL_BOOLEAN, .boolval = true, .nofree = true },
@@ -21,6 +21,7 @@ struct scope *scope_init(struct scope *parent)
     scope->valmap = valmap_init_default();
     scope->parent = parent;
     scope->allow_redecl = false;
+    scope->mode = SC_DEFAULT;
 
     if (parent != NULL)
     {
@@ -68,6 +69,9 @@ void scope_free(struct scope *scope)
 
     if (scope->parent == NULL)
         valmap_free_builtin_fns(scope->valmap);
+
+    if (scope->parent != NULL)
+        log_debug("Child scope");
 
     valmap_free(scope->valmap, true);
     free(scope);

@@ -127,37 +127,34 @@ val_t eval_loop_stmt(scope_t *scope, const ast_node_t *node)
     char *varname = node->loop_stmt->iter_varname;
     scope_t *new_scope = scope_init(scope);
     new_scope->allow_redecl = false;
+    new_scope->mode = SC_MODE_REUSE;
+    new_scope->prev_unique_id = 0;
+    new_scope->unique_id = 1;
 
     if (varname != NULL)
         scope_declare_identifier(new_scope, varname, (val_t) {
              .type = VAL_INTEGER,
              .intval = counter
-        }, false);
+        }, true);
 
     while ((iter_count_val.type == VAL_BOOLEAN && iter_count_val.boolval) ||
            (iter_count_val.type == VAL_INTEGER && counter < iter_count_val.intval))
     {
+        new_scope->prev_unique_id = counter;
+
         if (node->loop_stmt->body->type == NODE_BLOCK)
             eval_block_no_scope(new_scope, node->loop_stmt->body);
         else
             eval(new_scope, node->loop_stmt->body);
 
         counter++;
-
-        for (size_t i = 0; i < valmap_get_capacity(new_scope->valmap); i++)
-        {
-            if (new_scope->valmap->array[i].key == NULL || strcmp(new_scope->valmap->array[i].key, varname) == 0)
-                continue;
-
-            free(new_scope->valmap->array[i].key);
-            new_scope->valmap->array[i].key = NULL;
-        }
+        new_scope->unique_id = counter;
 
         if (varname != NULL)
             valmap_set_default(new_scope->valmap, varname, (val_t) {
                 .type = VAL_INTEGER,
                 .intval = counter
-            }, false, false);
+            }, true, false);
     }
 
     scope_free(new_scope);
@@ -616,6 +613,12 @@ static val_t eval_binexp_int(ast_bin_operator_t operator, val_t *left, val_t *ri
 val_t eval_var_decl(scope_t *scope, const ast_node_t *node)
 {
     val_t val = node->var_decl->value == NULL ? *scope->null : eval(scope, node->var_decl->value);
+
+    if (scope->mode == SC_MODE_REUSE && scope->unique_id == scope->prev_unique_id)
+    {
+        valmap_set_default(scope->valmap, node->var_decl->name, val, node->var_decl->is_const, false);
+        return BLAZE_NULL;
+    }
 
     enum valmap_set_status status = scope_declare_identifier(scope, node->var_decl->name, val, node->var_decl->is_const);
 

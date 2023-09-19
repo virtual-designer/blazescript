@@ -5,8 +5,16 @@
 #ifndef BLAZESCRIPT_SCOPE_H
 #define BLAZESCRIPT_SCOPE_H
 
+#include <stdatomic.h>
+#include <stdint.h>
 #include "datatype.h"
 #include "valmap.h"
+
+enum scope_mode
+{
+    SC_DEFAULT,
+    SC_MODE_REUSE
+};
 
 struct scope
 {
@@ -14,6 +22,9 @@ struct scope
     valmap_t *valmap;
     val_t *null;
     bool allow_redecl;
+    enum scope_mode mode;
+    _Atomic uint64_t unique_id;
+    _Atomic uint64_t prev_unique_id;
 };
 
 typedef struct scope scope_t;
