@@ -1,3 +1,14 @@
+# [2.22.0](https://github.com/virtual-designer/blazescript/compare/v2.21.5...v2.22.0) (2023-09-22)
+
+
+### Features
+
+* **blazec:** basic compiler ([b051f86](https://github.com/virtual-designer/blazescript/commit/b051f863a9d831ec10565742c625a840125b5ac6))
+* **blazec:** parse source code ([0a32762](https://github.com/virtual-designer/blazescript/commit/0a32762b62d523261e9850fabf2b37bdbf2e49ae))
+* introduce blazec ([c5a7497](https://github.com/virtual-designer/blazescript/commit/c5a7497411051028a7b7217fa57bf30327bdeb6e))
+
+
+
 ## [2.21.5](https://github.com/virtual-designer/blazescript/compare/v2.21.4...v2.21.5) (2023-09-19)
 
 
@@ -31,15 +42,6 @@
 ### Bug Fixes
 
 * remove uneeded debug logs and printfs ([b48f648](https://github.com/virtual-designer/blazescript/commit/b48f648b5a058dcb73ddba10da444a50a40ac23d))
-
-
-
-## [2.21.1](https://github.com/virtual-designer/blazescript/compare/v2.21.0...v2.21.1) (2023-09-18)
-
-
-### Bug Fixes
-
-* use `xrealloc()` instead of `blaze_realloc()` ([b554046](https://github.com/virtual-designer/blazescript/commit/b55404665f06a52ce27b35d14b8a31dfdd1169a1))
 
 
 
