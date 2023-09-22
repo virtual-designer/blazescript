@@ -52,27 +52,3 @@ char *ctos(char c)
     s[1] = 0;
     return s;
 }
-
-ssize_t blaze_getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream)
-{
-#if defined _POSIX_C_SOURCE && _POSIX_C_SOURCE >= 200809L
-    ssize_t ret = getline(lineptr, n, stream);
-
-    return ret;
-#else
-    *lineptr = NULL;
-    *n = 0;
-    int c;
-
-    while (!feof(stream) && (c = fgetc(stream)) != '\n')
-    {
-        *lineptr = xrealloc(*lineptr, ++(*n));
-        (*lineptr)[(*n) - 1] = (char) c;
-    }
-
-    *lineptr = xrealloc(*lineptr, (*n) + 2);
-    (*lineptr)[(*n)++] = '\n';
-    (*lineptr)[(*n)++] = 0;
-    return (ssize_t) (*n);
-#endif
-}

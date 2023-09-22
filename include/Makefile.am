@@ -1,2 +1,4 @@
 noinst_HEADERS = http.h \
-				 lib.h
+				 lib.h \
+				 print.h \
+				 utils.h

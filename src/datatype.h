@@ -61,12 +61,12 @@ typedef struct value {
 
 void val_free(val_t *val);
 void print_val(val_t *val);
+void print_val_internal(val_t *val, bool quote_strings);
 const char *val_type_to_str(val_type_t type);
 val_t val_create(val_type_t type);
 val_t *val_create_heap(val_type_t type);
 void val_free_global();
 void val_free_force(val_t *val);
-void print_val_internal(val_t *val, bool quote_strings);
 val_t *val_copy_deep(val_t *orig);
 val_t val_init();
 val_t *val_init_heap();

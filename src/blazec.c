@@ -4,22 +4,25 @@
 
 #define _GNU_SOURCE
 
-#include <getopt.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "arch.h"
+#include "compile.h"
 #include "file.h"
 #include "lexer.h"
 #include "log.h"
 #include "parser.h"
 #include "utils.h"
+#include <getopt.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static struct option const long_options[] = {
     { "output",      required_argument, NULL, 'o' },
     { "assembly",    no_argument,       NULL, 'S' },
     { "compile",     no_argument,       NULL, 'c' },
     { "executable",  no_argument,       NULL, 'x' },
+    { "arch",  required_argument,       NULL, 'a' },
     { 0,             0,                 0,    0  }
 };
 
@@ -35,6 +38,7 @@ struct blazec_context
     char *outfile;
     char *infile;
     enum blazec_generation_mode mode;
+    enum blazec_arch arch;
 };
 
 static void blazec_context_free(struct blazec_context *context)
@@ -66,7 +70,7 @@ static void blazec_process_options(int argc, char **argv, struct blazec_context 
     while (true)
     {
         int option_index = 1;
-        c = getopt_long(argc, argv, ":o:Scx", long_options, &option_index);
+        c = getopt_long(argc, argv, ":o:Scxa:", long_options, &option_index);
 
         if (c == -1)
             break;
@@ -75,6 +79,10 @@ static void blazec_process_options(int argc, char **argv, struct blazec_context 
         {
             case 'o':
                 context->outfile = strdup(optarg);
+                break;
+
+            case 'a':
+                context->arch = arch_str_to_type(optarg);
                 break;
 
             case 'S':
@@ -115,6 +123,13 @@ static void blazec_compile_file(int argc, char **argv, struct blazec_context *co
 #ifndef NDEBUG
     blaze_debug__print_ast(&node);
 #endif
+    struct compilation_context compilation_context = compilation_context_create();
+    compilation_context.arch = context->arch;
+    asm_node_t asm_node = compile(&compilation_context, &node);
+    asm_print_header(stdout, &compilation_context.asm_data);
+    asm_print(stdout, context->arch, &asm_node);
+    asm_node_free_inner(&asm_node);
+    compilation_context_destroy(&compilation_context);
     parser_ast_free_inner(&node);
     parser_free(&parser);
     lex_free(&lex);
@@ -149,6 +164,11 @@ static char *blazec_determine_outfile_name(const char *restrict infile, const en
     return ret;
 }
 
+void blazec_context_set_default_arch(struct blazec_context *context)
+{
+    context->arch = arch_default_get();
+}
+
 int main(int argc, char **argv)
 {
     struct blazec_context context = { 0 };
@@ -163,11 +183,15 @@ int main(int argc, char **argv)
         context.infile = strdup(argv[optind]);
 
     if (context.outfile == NULL)
-        context.outfile = blazec_determine_outfile_name(context.infile, context.mode);
+        context.outfile = blazec_determine_outfile_name(basename(context.infile), context.mode);
 
-    log_info("Compiling '%s'", context.infile);
-    log_info("Generate  '%s'", context.outfile);
-    log_info("Mode      '%s'", blazec_generation_mode_to_str(context.mode));
+    if (context.arch == 0)
+        blazec_context_set_default_arch(&context);
+//
+//    log_info("Compiling    '%s'", context.infile);
+//    log_info("Generate     '%s'", context.outfile);
+//    log_info("Mode         '%s'", blazec_generation_mode_to_str(context.mode));
+//    log_info("Architecture '%s'", arch_to_str(context.arch));
 
     blazec_compile_file(argc, argv, &context);
     blazec_context_free(&context);

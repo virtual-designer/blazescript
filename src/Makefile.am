@@ -36,7 +36,11 @@ blazec_HEADERS_ = alloca.h \
 		  valmap.h \
 		  vector.h \
 		  map.h \
-		  valalloc.h
+		  compile.h \
+		  compile-x86_64.h \
+		  valalloc.h \
+		  asm.h \
+		  arch.h
 
 blazevm_HEADERS_ = bytecode.h \
 	      opcode.h \
@@ -75,6 +79,10 @@ blazec_SOURCES = alloca.c \
 			    datatype.c \
 			    map.c \
 			    valalloc.c \
+			    compile.c \
+			    compile-x86_64.c \
+			    asm.c \
+			    arch.c \
                 $(blazec_HEADERS_)
 
 blazevm_SOURCES = alloca.c \

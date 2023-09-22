@@ -34,4 +34,5 @@ static struct builtin_function builtin_functions[] = {
     { "exit", BUILTIN_FN_REF(exit), .fnval = NULL },
 };
 
+
 #endif /* BLAZESCRIPT_LIB_H */

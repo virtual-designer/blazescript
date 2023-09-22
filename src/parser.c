@@ -115,6 +115,7 @@ ast_node_t parser_create_ast_node(struct parser *parser)
 
     ast_node_t node;
 
+    node.filename = parser->filename;
     node.type = NODE_ROOT;
     node.root = root;
 
