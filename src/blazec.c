@@ -184,7 +184,7 @@ static void blazec_write_object_file(struct compilation_context *compilation_con
     char *command = NULL;
     asprintf(&command, ASSEMBLER_PATH " %s -o %s", tmp_file_name, filename);
 
-    if( !CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    if(!CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
         fatal_error("could not create new process: %s", strerror(errno));
 
     WaitForSingleObject(pi.hProcess, INFINITE);
