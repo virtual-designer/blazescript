@@ -2,7 +2,7 @@
 
 #include "http.h"
 #include "alloca.h"
-#include "src/utils.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,7 +1,3 @@
-#include "alloca.h"
-#include "datatype.h"
-#include "lib.h"
-#include "utils.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -9,16 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-void *xmalloc(size_t size)
-{
-    void *ptr = malloc(size);
-
-    if (ptr == NULL)
-        libblaze_fatal_error("could not allocate memory: %s", strerror(errno));
-
-    return ptr;
-}
+#include "datatype.h"
+#include "lib.h"
 
 val_t *libblaze_val_create(val_type_t type)
 {

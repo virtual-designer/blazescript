@@ -8,31 +8,27 @@ endif
 
 bin_PROGRAMS = blaze blazevm blazec
 
-blaze_HEADERS_ = alloca.h \
+blaze_HEADERS_ =
 	      ast.h \
 		  datatype.h \
 		  eval.h \
 		  file.h \
 		  lexer.h \
-		  log.h \
 		  parser.h \
 		  scope.h \
-		  utils.h \
 		  valmap.h \
 		  vector.h \
 		  map.h \
 		  valalloc.h
 
-blazec_HEADERS_ = alloca.h \
+blazec_HEADERS_ =
 	      ast.h \
 		  datatype.h \
 		  eval.h \
 		  file.h \
 		  lexer.h \
-		  log.h \
 		  parser.h \
 		  scope.h \
-		  utils.h \
 		  valmap.h \
 		  vector.h \
 		  map.h \
@@ -49,14 +45,11 @@ blazevm_HEADERS_ = bytecode.h \
           stack.h \
 		  valalloc.h
 
-blaze_SOURCES = alloca.c \
-                file.c \
+blaze_SOURCES = file.c \
                 lexer.c \
-                log.c \
                 blaze.c \
                 parser.c \
-                utils.c \
-                eval.c \
+				eval.c \
                 scope.c \
                 valmap.c \
                 vector.c \
@@ -65,14 +58,11 @@ blaze_SOURCES = alloca.c \
 			    valalloc.c \
                 $(blaze_HEADERS_)
 
-blazec_SOURCES = alloca.c \
-                file.c \
+blazec_SOURCES = file.c \
                 lexer.c \
-                log.c \
                 blazec.c \
                 parser.c \
-                utils.c \
-                eval.c \
+				eval.c \
                 scope.c \
                 valmap.c \
                 vector.c \
@@ -85,10 +75,7 @@ blazec_SOURCES = alloca.c \
 			    arch.c \
                 $(blazec_HEADERS_)
 
-blazevm_SOURCES = alloca.c \
-				  log.c \
-				  utils.c \
-				  vector.c \
+blazevm_SOURCES = vector.c \
 				  datatype.c \
 				  bytecode.c \
 				  opcode.c \
