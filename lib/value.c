@@ -27,24 +27,24 @@ val_t *libblaze_val_create(val_type_t type)
     return val;
 }
 
-__attribute_used__ void libblaze_val_set_strval(val_t *val, char *string)
+__attribute__((used)) void libblaze_val_set_strval(val_t *val, char *string)
 {
     val->strval = strdup(string);
 }
 
-__attribute_used__ val_t *libblaze_val_create_strval(char *string)
+__attribute__((used)) val_t *libblaze_val_create_strval(char *string)
 {
     val_t *val = libblaze_val_create(VAL_STRING);
     val->strval = strdup(string);
     return val;
 }
 
-__attribute_used__ void libblaze_val_alloc_str(val_t *val, size_t size)
+__attribute__((used)) void libblaze_val_alloc_str(val_t *val, size_t size)
 {
     val->strval = xmalloc(size);
 }
 
-__attribute_used__ void libblaze_fn_println(uint64_t argc, ...)
+__attribute__((used)) void libblaze_fn_println(uint64_t argc, ...)
 {
     va_list args;
     va_start(args, argc);
@@ -66,7 +66,7 @@ __attribute_used__ void libblaze_fn_println(uint64_t argc, ...)
     va_end(args);
 }
 
-__attribute_used__ void libblaze_val_free(val_t *val)
+__attribute__((used)) void libblaze_val_free(val_t *val)
 {
     assert(val != NULL);
 
