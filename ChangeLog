@@ -1,3 +1,12 @@
+## [2.23.6](https://github.com/virtual-designer/blazescript/compare/v2.23.5...v2.23.6) (2023-09-23)
+
+
+### Bug Fixes
+
+* **windows:** create processes in windows specific way ([c56cb8c](https://github.com/virtual-designer/blazescript/commit/c56cb8c7b80f0f71bc7e8f518f23714f20169547))
+
+
+
 ## [2.23.5](https://github.com/virtual-designer/blazescript/compare/v2.23.4...v2.23.5) (2023-09-23)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * **darwin:** `__attribute_used__` is not defined ([7921f90](https://github.com/virtual-designer/blazescript/commit/7921f90a0d2f295d3d1732eaf0e3560a6e9d6741))
-
-
-
-## [2.23.1](https://github.com/virtual-designer/blazescript/compare/v2.23.0...v2.23.1) (2023-09-23)
-
-
-### Bug Fixes
-
-* header include mismatch ([38e69dc](https://github.com/virtual-designer/blazescript/commit/38e69dcc89c8388ab46ea42dc0de43b47f9823d2))
 
 
 
