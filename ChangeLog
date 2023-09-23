@@ -1,3 +1,12 @@
+## [2.23.1](https://github.com/virtual-designer/blazescript/compare/v2.23.0...v2.23.1) (2023-09-23)
+
+
+### Bug Fixes
+
+* header include mismatch ([38e69dc](https://github.com/virtual-designer/blazescript/commit/38e69dcc89c8388ab46ea42dc0de43b47f9823d2))
+
+
+
 # [2.23.0](https://github.com/virtual-designer/blazescript/compare/v2.22.0...v2.23.0) (2023-09-23)
 
 
@@ -33,15 +42,6 @@
 ### Bug Fixes
 
 * memory management ([d114921](https://github.com/virtual-designer/blazescript/commit/d1149213299930064485c540ef25eebc03c3294f))
-
-
-
-## [2.21.3](https://github.com/virtual-designer/blazescript/compare/v2.21.2...v2.21.3) (2023-09-18)
-
-
-### Bug Fixes
-
-* restrict variable redeclaration in loops ([f0bfdf1](https://github.com/virtual-designer/blazescript/commit/f0bfdf11e9b31b76cc7e7793f07def320c200c68))
 
 
 
