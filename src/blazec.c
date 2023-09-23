@@ -24,6 +24,7 @@
 #if defined(__WIN32__)
 #define BLAZE_WINDOWS
 #include <windows.h>
+#include <io.h>
 #else
 #include <sys/wait.h>
 #endif
@@ -205,7 +206,12 @@ static void blazec_write_executable_file(struct compilation_context *compilation
 {
     char tmp_file_name[36] = "/tmp/blazec-compiled-obj-XXXXXX";
     int fd = mkstemp(tmp_file_name);
+#ifndef BLAZE_WINDOWS
     fchmod(fd, 0665);
+#else
+    if (_chmod(tmp_file_name, _S_IWRITE | _S_IREAD) == -1) 
+        fatal_error("could not set file permissions");
+#endif
     blazec_write_object_file(compilation_context, node, tmp_file_name);
 
 #ifndef BLAZE_WINDOWS
