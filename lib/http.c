@@ -2,9 +2,10 @@
 
 #include "http.h"
 #include "alloca.h"
-#include <string.h>
-#include <stdlib.h>
+#include "src/utils.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 size_t _http_write_callback(
     char* contents, size_t size,
