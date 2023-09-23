@@ -2,6 +2,7 @@
 #include "utils.h"
 
 #include <curl/curl.h>
+#include <stdlib.h>
 
 struct http_response
 {
