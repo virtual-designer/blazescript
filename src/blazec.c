@@ -4,13 +4,6 @@
 
 #define _GNU_SOURCE
 
-#include "arch.h"
-#include "compile.h"
-#include "file.h"
-#include "lexer.h"
-#include "log.h"
-#include "parser.h"
-#include "utils.h"
 #include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -20,6 +13,14 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <libgen.h>
+#include "arch.h"
+#include "compile.h"
+#include "file.h"
+#include "lexer.h"
+#include "log.h"
+#include "parser.h"
+#include "utils.h"
 
 // FIXME
 #define ASSEMBLER_PATH "/usr/bin/as"
