@@ -1,45 +1,7 @@
-## [2.23.5](https://github.com/virtual-designer/blazescript/compare/v2.23.4...v2.23.5) (2023-09-23)
+## [2.23.6](https://github.com/virtual-designer/blazescript/compare/v2.23.5...v2.23.6) (2023-09-23)
 
 
 ### Bug Fixes
 
-* **windows:** build errors ([a6fcb3d](https://github.com/virtual-designer/blazescript/commit/a6fcb3dc26961f2a026fef7bcbe95b0171729421))
-
-
-
-## [2.23.4](https://github.com/virtual-designer/blazescript/compare/v2.23.3...v2.23.4) (2023-09-23)
-
-
-### Bug Fixes
-
-* **windows:** build errors ([139a01e](https://github.com/virtual-designer/blazescript/commit/139a01e4b5dbb6307cc652f582493c21433ee3fe))
-
-
-
-## [2.23.3](https://github.com/virtual-designer/blazescript/compare/v2.23.2...v2.23.3) (2023-09-23)
-
-
-### Bug Fixes
-
-* include `<libgen.h>` ([40e7117](https://github.com/virtual-designer/blazescript/commit/40e7117136ca00b20566d2f9c6a04b9bcd311274))
-
-
-
-## [2.23.2](https://github.com/virtual-designer/blazescript/compare/v2.23.1...v2.23.2) (2023-09-23)
-
-
-### Bug Fixes
-
-* **darwin:** `__attribute_used__` is not defined ([7921f90](https://github.com/virtual-designer/blazescript/commit/7921f90a0d2f295d3d1732eaf0e3560a6e9d6741))
-
-
-
-## [2.23.1](https://github.com/virtual-designer/blazescript/compare/v2.23.0...v2.23.1) (2023-09-23)
-
-
-### Bug Fixes
-
-* header include mismatch ([38e69dc](https://github.com/virtual-designer/blazescript/commit/38e69dcc89c8388ab46ea42dc0de43b47f9823d2))
-
-
+* **windows:** create processes in windows specific way ([c56cb8c](https://github.com/virtual-designer/blazescript/commit/c56cb8c7b80f0f71bc7e8f518f23714f20169547))
 
