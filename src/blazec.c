@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <libgen.h>
 #include "arch.h"
@@ -21,6 +20,13 @@
 #include "log.h"
 #include "parser.h"
 #include "utils.h"
+
+#if defined(__WIN32__)
+#define BLAZE_WINDOWS
+#include <windows.h>
+#else
+#include <sys/wait.h>
+#endif
 
 // FIXME
 #define ASSEMBLER_PATH "/usr/bin/as"
@@ -150,6 +156,7 @@ static void blazec_write_object_file(struct compilation_context *compilation_con
     blazec_write_assembly(compilation_context, node, file);
     fclose(file);
 
+#ifndef BLAZE_WINDOWS
     pid_t pid = fork();
 
     if (pid < 0)
@@ -167,7 +174,30 @@ static void blazec_write_object_file(struct compilation_context *compilation_con
         if (code != 0)
             fatal_error("assembler failed with exit code %d\n", code);
     }
+#else
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
 
+    char *command = NULL;
+    asprintf(&command, ASSEMBLER_PATH " %s -o %s", tmp_file_name, filename);
+
+    if( !CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+        fatal_error("could not create new process: %s", strerror(errno));
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    free(command);
+
+    DWORD exitCode;
+
+    if (!GetExitCodeProcess(pi.hProcess, &exitCode))
+        fatal_error("failed to determine exit code of child process");
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+#endif
     unlink(tmp_file_name);
 }
 
@@ -177,6 +207,8 @@ static void blazec_write_executable_file(struct compilation_context *compilation
     int fd = mkstemp(tmp_file_name);
     fchmod(fd, 0665);
     blazec_write_object_file(compilation_context, node, tmp_file_name);
+
+#ifndef BLAZE_WINDOWS
     pid_t pid = fork();
 
     if (pid < 0)
@@ -196,6 +228,30 @@ static void blazec_write_executable_file(struct compilation_context *compilation
         if (code != 0)
             fatal_error("ld failed with exit code %d\n", code);
     }
+#else
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    char *command = NULL;
+    asprintf(&command, LINKER_PATH " -dynamic-linker " DYNAMIC_LINKER_PATH " %s " LIB_BLAZE_PATH " -lc -o %s", tmp_file_name, filename);
+
+    if( !CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+        fatal_error("could not create new process: %s", strerror(errno));
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    free(command);
+
+    DWORD exitCode;
+
+    if (!GetExitCodeProcess(pi.hProcess, &exitCode))
+        fatal_error("failed to determine exit code of child process");
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+#endif
 
     close(fd);
     unlink(tmp_file_name);
