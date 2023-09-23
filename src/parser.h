@@ -14,6 +14,7 @@ struct parser
     size_t token_count;
     struct lex_token *tokens;
     char *filename;
+    char *filebuf;
 };
 
 struct parser parser_init();

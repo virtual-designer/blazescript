@@ -11,15 +11,17 @@
 #include "lexer.h"
 #include "parser.h"
 #include "alloca.h"
+#include "errmsg.h"
 
 #include "ast.h"
 #include "log.h"
 #include "utils.h"
 
 #define PARSER_ERROR_ARGS(parser, fmt, ...) \
-    {                                    \
-        SYNTAX_ERROR_LINE_ARGS(parser->filename, parser_at(parser).line_start, parser_at(parser).column_start, fmt, __VA_ARGS__); \
-        exit(0);                                                \
+    {                                       \
+        const struct lex_token token = parser_at(parser);                                    \
+        errmsg_print_formatted(token.line_start, token.line_end + 1, token.column_start, token.column_end, parser->filebuf, parser->filename, ERR_SYNTAX, fmt, __VA_ARGS__);           \
+        exit(0);                            \
     }
 
 static ast_node_t parser_parse_stmt(struct parser *parser);
@@ -43,6 +45,7 @@ struct parser parser_init()
     parser.index = 0;
     parser.tokens = NULL;
     parser.filename = NULL;
+    parser.filebuf = NULL;
     return parser;
 }
 
@@ -52,6 +55,7 @@ struct parser parser_init_from_lex(struct lex *lex)
     parser.token_count = lex_get_token_count(lex);
     parser.tokens = lex_get_tokens(lex);
     parser.filename = strdup(lex_get_filename(lex));
+    parser.filebuf = strdup(lex->buf);
     return parser;
 }
 
@@ -245,6 +249,7 @@ ast_node_t *parser_ast_deep_copy(ast_node_t *node)
 void parser_free(struct parser *parser)
 {
     free(parser->filename);
+    free(parser->filebuf);
 }
 
 static ast_node_t *create_node()
@@ -252,12 +257,20 @@ static ast_node_t *create_node()
     return xcalloc(1, sizeof(ast_node_t));
 }
 
+static ast_node_t init_node(struct parser *parser, ast_type_t type)
+{
+    return (ast_node_t) {
+        .type = type,
+        .line_start = parser_at(parser).line_start,
+        .column_start = parser_at(parser).column_start,
+        .filename = parser->filename
+    };
+}
+
 static ast_node_t parser_parse_loop_stmt(struct parser *parser)
 {
     ast_loop_stmt_t *loop_stmt = xcalloc(1, sizeof(ast_loop_stmt_t));
-    ast_node_t node = {
-        .type = NODE_LOOP_STMT,
-    };
+    ast_node_t node = init_node(parser, NODE_LOOP_STMT);
 
     loop_stmt->iter_varname = NULL;
     loop_stmt->iter_count = NULL;
@@ -292,6 +305,8 @@ static ast_node_t parser_parse_loop_stmt(struct parser *parser)
     loop_stmt->body = create_node();
     memcpy(loop_stmt->body, &body, sizeof body);
     node.loop_stmt = loop_stmt;
+    node.line_end = parser_at(parser).line_end;
+    node.column_end = parser_at(parser).column_end;
     return node;
 }
 

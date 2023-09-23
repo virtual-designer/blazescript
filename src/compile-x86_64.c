@@ -188,9 +188,8 @@ static void x86_64_compile_root_start(asm_node_t *asm_node)
     });
 
     asm_push_inst_mono_op(asm_node, ASM_INST_CALL, ASM_SUF_QWORD, IDENTIFIER("main"));
-    asm_push_inst_bin_op(asm_node, ASM_INST_MOV, ASM_SUF_QWORD, IMM64(60), RAX);
     asm_push_inst_bin_op(asm_node, ASM_INST_MOV, ASM_SUF_QWORD, IMM64(0), REGISTER_X64(RDI));
-    asm_push_inst_no_op(asm_node, ASM_INST_SYSCALL, ASM_SUF_NONE);
+    asm_push_inst_mono_op(asm_node, ASM_INST_CALL, ASM_SUF_QWORD, IDENTIFIER("exit"));
 }
 
 static void x86_64_setup_frame(asm_node_t *asm_node)

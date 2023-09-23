@@ -8,42 +8,27 @@ endif
 
 bin_PROGRAMS = blaze blazevm blazec
 
-blaze_HEADERS_ =
-	      ast.h \
-		  datatype.h \
-		  eval.h \
-		  file.h \
-		  lexer.h \
-		  parser.h \
-		  scope.h \
-		  valmap.h \
-		  vector.h \
-		  map.h \
-		  valalloc.h
-
-blazec_HEADERS_ =
-	      ast.h \
-		  datatype.h \
-		  eval.h \
-		  file.h \
-		  lexer.h \
-		  parser.h \
-		  scope.h \
-		  valmap.h \
-		  vector.h \
-		  map.h \
-		  compile.h \
-		  compile-x86_64.h \
-		  valalloc.h \
-		  asm.h \
-		  arch.h
-
-blazevm_HEADERS_ = bytecode.h \
-	      opcode.h \
-          register.h \
-          disassemble.h \
-          stack.h \
-		  valalloc.h
+COMMON_HEADERS_ = arch.h \
+				  ast.h \
+				  compile.h \
+				  datatype.h \
+				  errmsg.h \
+				  file.h \
+				  map.h \
+				  parser.h \
+				  scope.h \
+				  valalloc.h \
+				  vector.h \
+				  asm.h \
+				  bytecode.h \
+				  compile-x86_64.h \
+				  disassemble.h \
+				  eval.h \
+				  lexer.h \
+				  opcode.h \
+				  register.h \
+				  stack.h \
+				  valmap.h
 
 blaze_SOURCES = file.c \
                 lexer.c \
@@ -56,7 +41,8 @@ blaze_SOURCES = file.c \
 			    datatype.c \
 			    map.c \
 			    valalloc.c \
-                $(blaze_HEADERS_)
+			    errmsg.c \
+                $(COMMON_HEADERS_)
 
 blazec_SOURCES = file.c \
                 lexer.c \
@@ -73,7 +59,8 @@ blazec_SOURCES = file.c \
 			    compile-x86_64.c \
 			    asm.c \
 			    arch.c \
-                $(blazec_HEADERS_)
+			    errmsg.c \
+                $(COMMON_HEADERS_)
 
 blazevm_SOURCES = vector.c \
 				  datatype.c \
@@ -90,7 +77,8 @@ blazevm_SOURCES = vector.c \
                   file.c \
                   stack.c \
 			      valalloc.c \
-                  $(blazevm_HEADERS_)
+			      errmsg.c \
+                  $(COMMON_HEADERS_)
 
 AM_CPPFLAGS = -std=gnu11 -I$(top_srcdir)/include $(GLOBAL_CPPFLAGS_)
 AM_LDFLAGS = -L$(top_srcdir)/lib $(GLOBAL_LDFLAGS_)
