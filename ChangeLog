@@ -1,3 +1,12 @@
+## [2.23.3](https://github.com/virtual-designer/blazescript/compare/v2.23.2...v2.23.3) (2023-09-23)
+
+
+### Bug Fixes
+
+* include `<libgen.h>` ([40e7117](https://github.com/virtual-designer/blazescript/commit/40e7117136ca00b20566d2f9c6a04b9bcd311274))
+
+
+
 ## [2.23.2](https://github.com/virtual-designer/blazescript/compare/v2.23.1...v2.23.2) (2023-09-23)
 
 
@@ -33,15 +42,6 @@
 * **blazec:** basic compiler ([b051f86](https://github.com/virtual-designer/blazescript/commit/b051f863a9d831ec10565742c625a840125b5ac6))
 * **blazec:** parse source code ([0a32762](https://github.com/virtual-designer/blazescript/commit/0a32762b62d523261e9850fabf2b37bdbf2e49ae))
 * introduce blazec ([c5a7497](https://github.com/virtual-designer/blazescript/commit/c5a7497411051028a7b7217fa57bf30327bdeb6e))
-
-
-
-## [2.21.5](https://github.com/virtual-designer/blazescript/compare/v2.21.4...v2.21.5) (2023-09-19)
-
-
-### Performance Improvements
-
-* **loop:** speedup loops ([3434c09](https://github.com/virtual-designer/blazescript/commit/3434c09fbf43ac5ab41f2d0fe52986bc8eb072ae))
 
 
 
