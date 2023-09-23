@@ -1,3 +1,12 @@
+## [2.23.2](https://github.com/virtual-designer/blazescript/compare/v2.23.1...v2.23.2) (2023-09-23)
+
+
+### Bug Fixes
+
+* **darwin:** `__attribute_used__` is not defined ([7921f90](https://github.com/virtual-designer/blazescript/commit/7921f90a0d2f295d3d1732eaf0e3560a6e9d6741))
+
+
+
 ## [2.23.1](https://github.com/virtual-designer/blazescript/compare/v2.23.0...v2.23.1) (2023-09-23)
 
 
@@ -33,15 +42,6 @@
 ### Performance Improvements
 
 * **loop:** speedup loops ([3434c09](https://github.com/virtual-designer/blazescript/commit/3434c09fbf43ac5ab41f2d0fe52986bc8eb072ae))
-
-
-
-## [2.21.4](https://github.com/virtual-designer/blazescript/compare/v2.21.3...v2.21.4) (2023-09-19)
-
-
-### Bug Fixes
-
-* memory management ([d114921](https://github.com/virtual-designer/blazescript/commit/d1149213299930064485c540ef25eebc03c3294f))
 
 
 
