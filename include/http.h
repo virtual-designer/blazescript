@@ -2,7 +2,7 @@
 #include "utils.h"
 
 #include <curl/curl.h>
-#include <stdlib.h>
+#include <stdbool.h>
 
 struct http_response
 {
