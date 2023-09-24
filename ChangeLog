@@ -1,3 +1,12 @@
+# [2.26.0](https://github.com/virtual-designer/blazescript/compare/v2.25.2...v2.26.0) (2023-09-24)
+
+
+### Features
+
+* **libblaze:** i386 support ([595cde8](https://github.com/virtual-designer/blazescript/commit/595cde8e611511c0901df8ea3c224ff34d43bf44))
+
+
+
 ## [2.25.2](https://github.com/virtual-designer/blazescript/compare/v2.25.1...v2.25.2) (2023-09-24)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * ensure NDEBUG is defined by default ([ba63509](https://github.com/virtual-designer/blazescript/commit/ba635095fefe08085e4761a477e33e1407250654))
-
-
-
-# [2.24.0](https://github.com/virtual-designer/blazescript/compare/v2.23.7...v2.24.0) (2023-09-23)
-
-
-### Features
-
-* better error messages ([9bb98a1](https://github.com/virtual-designer/blazescript/commit/9bb98a1f5c97c87381b662145c3971d76633df54))
 
 
 
