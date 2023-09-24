@@ -1,3 +1,12 @@
+# [2.25.0](https://github.com/virtual-designer/blazescript/compare/v2.24.1...v2.25.0) (2023-09-24)
+
+
+### Features
+
+* **libblaze:** add assembly files ([c927e1e](https://github.com/virtual-designer/blazescript/commit/c927e1e0bc91d8c56742196c3e920e157a2c7c07))
+
+
+
 ## [2.24.1](https://github.com/virtual-designer/blazescript/compare/v2.24.0...v2.24.1) (2023-09-23)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * **windows:** create processes in windows specific way ([c56cb8c](https://github.com/virtual-designer/blazescript/commit/c56cb8c7b80f0f71bc7e8f518f23714f20169547))
-
-
-
-## [2.23.5](https://github.com/virtual-designer/blazescript/compare/v2.23.4...v2.23.5) (2023-09-23)
-
-
-### Bug Fixes
-
-* **windows:** build errors ([a6fcb3d](https://github.com/virtual-designer/blazescript/commit/a6fcb3dc26961f2a026fef7bcbe95b0171729421))
 
 
 
