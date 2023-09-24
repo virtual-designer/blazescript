@@ -40,7 +40,6 @@ x86_64_libblaze_putc:
  * %rdi - the character to print
  */
 .globl x86_64_libblaze_putchar
-.type x86_64_libblaze_putchar, @function
 x86_64_libblaze_putchar:
     pushq %rbp
     movq %rsp, %rbp
@@ -55,7 +54,6 @@ x86_64_libblaze_putchar:
  * %rdi - pointer to the string to print
  */
 .globl x86_64_libblaze_putstr
-.type x86_64_libblaze_putstr, @function
 x86_64_libblaze_putstr:
     pushq %rbp
     movq %rsp, %rbp
@@ -79,7 +77,6 @@ x86_64_libblaze_putstr.end:
  * %rdi - pointer to the string to print
  */
 .globl x86_64_libblaze_puts
-.type x86_64_libblaze_puts, @function
 x86_64_libblaze_puts:
     pushq %rbp
     movq %rsp, %rbp
