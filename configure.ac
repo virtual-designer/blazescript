@@ -12,6 +12,7 @@ AM_SILENT_RULES([yes])
 
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_AS
 AC_PROG_RANLIB
 AM_PROG_AR
 
@@ -49,6 +50,16 @@ AC_ARG_ENABLE(
 )
 
 AM_CONDITIONAL([DEBUG], [test x"${DEBUG}" != x])
+
+if test "x$build" != "x$host"; then
+    BLAZE_TARGET_ARCH="$host"
+else
+    BLAZE_TARGET_ARCH="$build"
+fi
+
+AM_CONDITIONAL([LINUX], [test x"$(echo "$BLAZE_TARGET_ARCH" | grep linux)" != x])
+AM_CONDITIONAL([DARWIN], [test x"$(echo "$BLAZE_TARGET_ARCH" | grep darwin)" != x])
+AM_CONDITIONAL([WINDOWS], [test x"$(echo "$BLAZE_TARGET_ARCH" | grep win32)" != x || test x"$(echo "$BLAZE_TARGET_ARCH" | grep mingw)" != x])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile

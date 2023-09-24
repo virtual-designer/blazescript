@@ -7,6 +7,7 @@
 #include <string.h>
 #include "datatype.h"
 #include "lib.h"
+#include "x86_64/stdio.h"
 
 val_t *libblaze_val_create(val_type_t type)
 {
@@ -42,15 +43,15 @@ __attribute__((used)) void libblaze_fn_println(uint64_t argc, ...)
         val_t *val = va_arg(args, val_t *);
 
         if (val->type == VAL_STRING)
-            printf("%s", val->strval);
+            x86_64_libblaze_putstr(val->strval);
         else
             print_val(val);
 
         if (i != argc - 1)
-            putchar(' ');
+            x86_64_libblaze_putchar(' ');
     }
 
-    putchar('\n');
+    x86_64_libblaze_putchar('\n');
     va_end(args);
 }
 
