@@ -1,3 +1,17 @@
+# [2.27.0](https://github.com/virtual-designer/blazescript/compare/v2.26.0...v2.27.0) (2023-09-24)
+
+
+### Bug Fixes
+
+* **libblaze:** stack corruption ([c201345](https://github.com/virtual-designer/blazescript/commit/c201345e0458fac8e3d0a37a400e4b0fc081ab4c))
+
+
+### Features
+
+* **blazec:** support integers ([89d3fa2](https://github.com/virtual-designer/blazescript/commit/89d3fa2233bc3783aafdd305786d446479c0bbc1))
+
+
+
 # [2.26.0](https://github.com/virtual-designer/blazescript/compare/v2.25.2...v2.26.0) (2023-09-24)
 
 
@@ -31,15 +45,6 @@
 ### Features
 
 * **libblaze:** add assembly files ([c927e1e](https://github.com/virtual-designer/blazescript/commit/c927e1e0bc91d8c56742196c3e920e157a2c7c07))
-
-
-
-## [2.24.1](https://github.com/virtual-designer/blazescript/compare/v2.24.0...v2.24.1) (2023-09-23)
-
-
-### Bug Fixes
-
-* ensure NDEBUG is defined by default ([ba63509](https://github.com/virtual-designer/blazescript/commit/ba635095fefe08085e4761a477e33e1407250654))
 
 
 
