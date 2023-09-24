@@ -44,6 +44,7 @@ __attribute__((used)) void libblaze_fn_println(uint64_t argc, ...)
 {
     va_list args;
     va_start(args, argc);
+    bool newline = true;
 
     for (uint64_t i = 0; i < argc; i++)
     {
@@ -52,13 +53,18 @@ __attribute__((used)) void libblaze_fn_println(uint64_t argc, ...)
         if (val->type == VAL_STRING)
             x86_64_libblaze_putstr(val->strval);
         else
+        {
             print_val(val);
+            newline = false;
+        }
 
         if (i != argc - 1)
             x86_64_libblaze_putchar(' ');
     }
 
-    x86_64_libblaze_putchar('\n');
+    if (newline)
+        x86_64_libblaze_putchar('\n');
+
     va_end(args);
 }
 

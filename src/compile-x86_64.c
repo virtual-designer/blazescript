@@ -36,6 +36,15 @@ static asm_node_t x86_64_compile_expr(struct compilation_context *context, ast_n
 
     switch (node->type)
     {
+        case NODE_INT_LIT:
+        {
+            asm_push_inst_bin_op(&asm_node, ASM_INST_MOV, ASM_SUF_QWORD,
+                                 IMM64(node->integer->intval), REGISTER_X64(RDI));
+            asm_push_inst_mono_op(&asm_node, ASM_INST_CALL, ASM_SUF_QWORD,
+                                  IDENTIFIER("libblaze_val_create_intval"));
+        }
+        break;
+
         case NODE_STRING:
         {
             char *label = NULL;

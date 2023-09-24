@@ -84,3 +84,4 @@ i386_libblaze_puts:
     pop %ebp
     ret
 
+.section .note.GNU-stack,"",%progbits

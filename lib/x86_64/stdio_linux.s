@@ -80,3 +80,5 @@ x86_64_libblaze_puts:
     movq %rbp, %rsp
     popq %rbp
     ret
+
+.section .note.GNU-stack,"",%progbits
