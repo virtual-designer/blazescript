@@ -1,3 +1,12 @@
+## [2.25.2](https://github.com/virtual-designer/blazescript/compare/v2.25.1...v2.25.2) (2023-09-24)
+
+
+### Bug Fixes
+
+* add missing `%` before register name ([16bb695](https://github.com/virtual-designer/blazescript/commit/16bb695956a334805eea7da03a70c1570256d353))
+
+
+
 ## [2.25.1](https://github.com/virtual-designer/blazescript/compare/v2.25.0...v2.25.1) (2023-09-24)
 
 
@@ -31,15 +40,6 @@
 ### Features
 
 * better error messages ([9bb98a1](https://github.com/virtual-designer/blazescript/commit/9bb98a1f5c97c87381b662145c3971d76633df54))
-
-
-
-## [2.23.7](https://github.com/virtual-designer/blazescript/compare/v2.23.6...v2.23.7) (2023-09-23)
-
-
-### Bug Fixes
-
-* **windows:** undefined reference to `fchmod` ([f196b03](https://github.com/virtual-designer/blazescript/commit/f196b03540da7543563c9f8d3f98c6388de57cfd))
 
 
 
