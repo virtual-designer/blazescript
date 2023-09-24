@@ -1,3 +1,12 @@
+## [2.25.1](https://github.com/virtual-designer/blazescript/compare/v2.25.0...v2.25.1) (2023-09-24)
+
+
+### Bug Fixes
+
+* **libstd:** remove unsupported assembler directives ([446b63b](https://github.com/virtual-designer/blazescript/commit/446b63b3f2b2a383feb15e7593f52d2addc5231a))
+
+
+
 # [2.25.0](https://github.com/virtual-designer/blazescript/compare/v2.24.1...v2.25.0) (2023-09-24)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * **windows:** undefined reference to `fchmod` ([f196b03](https://github.com/virtual-designer/blazescript/commit/f196b03540da7543563c9f8d3f98c6388de57cfd))
-
-
-
-## [2.23.6](https://github.com/virtual-designer/blazescript/compare/v2.23.5...v2.23.6) (2023-09-23)
-
-
-### Bug Fixes
-
-* **windows:** create processes in windows specific way ([c56cb8c](https://github.com/virtual-designer/blazescript/commit/c56cb8c7b80f0f71bc7e8f518f23714f20169547))
 
 
 
