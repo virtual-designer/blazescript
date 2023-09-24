@@ -12,7 +12,7 @@ x86_64_libblaze_putc:
     pushq %rax
     movq $1, %rax
     movq $1, %rdi
-    leaq -16(%rbp), %rsi
+    leaq 24(%rsp), %rsi
     movq $1, %rdx
     syscall
     popq %rax
@@ -46,6 +46,8 @@ x86_64_libblaze_putchar:
 x86_64_libblaze_putstr:
     pushq %rbp
     movq %rsp, %rbp
+    pushq %rbx
+    pushq %rax
     movq %rdi, %rbx
 x86_64_libblaze_putstr.loop:
     movb (%rbx), %al
@@ -56,6 +58,8 @@ x86_64_libblaze_putstr.loop:
     inc %rbx
     jmp x86_64_libblaze_putstr.loop
 x86_64_libblaze_putstr.end:
+    popq %rax
+    popq %rbx
     movq %rbp, %rsp
     popq %rbp
     ret

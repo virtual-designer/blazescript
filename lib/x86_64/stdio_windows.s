@@ -24,7 +24,7 @@ x86_64_libblaze_putc:
 .x86_64_libblaze_putc.write:
     movq %rax, %rdi
     movq $0x40, %rax
-    leaq -16(%rbp), %rsi
+    leaq 24(%rsp), %rsi
     xor %r8, %r8
     xor %rcx, %rcx
     syscall
@@ -57,6 +57,8 @@ x86_64_libblaze_putchar:
 x86_64_libblaze_putstr:
     pushq %rbp
     movq %rsp, %rbp
+    pushq %rbx
+    pushq %rax
     movq %rdi, %rbx
 x86_64_libblaze_putstr.loop:
     movb (%rbx), %al
@@ -67,6 +69,8 @@ x86_64_libblaze_putstr.loop:
     inc %rbx
     jmp x86_64_libblaze_putstr.loop
 x86_64_libblaze_putstr.end:
+    popq %rax
+    popq %rbx
     movq %rbp, %rsp
     popq %rbp
     ret

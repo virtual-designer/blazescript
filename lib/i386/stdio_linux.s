@@ -47,6 +47,8 @@ i386_libblaze_putchar:
 i386_libblaze_putstr:
     push %ebp
     mov %esp, %ebp
+    push %eax
+    push %ebx
     mov 8(%ebp), %ebx
 i386_libblaze_putstr.loop:
     movb (%ebx), %al
@@ -57,6 +59,8 @@ i386_libblaze_putstr.loop:
     inc %ebx
     jmp i386_libblaze_putstr.loop
 i386_libblaze_putstr.end:
+    pop %ebx
+    pop %eax
     mov %ebp, %esp
     pop %ebp
     ret

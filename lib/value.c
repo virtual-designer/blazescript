@@ -28,6 +28,13 @@ __attribute__((used)) val_t *libblaze_val_create_strval(char *string)
     return val;
 }
 
+__attribute__((used)) val_t *libblaze_val_create_intval(uint64_t value)
+{
+    val_t *val = libblaze_val_create(VAL_INTEGER);
+    val->intval = value;
+    return val;
+}
+
 __attribute__((used)) void libblaze_val_alloc_str(val_t *val, size_t size)
 {
     val->strval = xmalloc(size);

@@ -28,5 +28,5 @@ AM_LDFLAGS = $(GLOBAL_LDFLAGS_)
 AM_CCASFLAGS = -g
 
 noinst_LIBRARIES = libblazestd.a libblazert.a
-libblazert_a_SOURCES = value.c print.c utils.c alloca.c $(SRC_ADD)
+libblazert_a_SOURCES = value.c print.c utils.c alloca.c log.c $(SRC_ADD)
 libblazestd_a_SOURCES = lib.c print.c http.c utils.c alloca.c log.c
