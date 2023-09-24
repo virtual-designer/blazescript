@@ -15,7 +15,7 @@ x86_64_libblaze_putc:
     pushq %rdx
     pushq %rax
     movq stdout_fd(%rip), %rax
-    cmpq $0, rax
+    cmpq $0, %rax
     jne .x86_64_libblaze_putc.write
     movq $2, %rax
     movq $-11, %rcx
