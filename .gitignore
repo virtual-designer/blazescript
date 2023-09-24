@@ -43,3 +43,4 @@ stamp-*
 *.a
 *#
 *.#*
+.dirstamp
